@@ -1,7 +1,7 @@
 'use strict';
 angular.module('BudgetSupervisor.controllers', [])
 
-.controller('DashCtrl', function($scope) {
+.controller('DashCtrl', function() {
 })
 
 .controller('FriendsCtrl', function($scope, Friends) {
@@ -12,5 +12,5 @@ angular.module('BudgetSupervisor.controllers', [])
   $scope.friend = Friends.get($stateParams.friendId);
 })
 
-.controller('AccountCtrl', function($scope) {
+.controller('AccountCtrl', function() {
 });
