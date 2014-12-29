@@ -254,7 +254,7 @@ module.exports = function (grunt) {
         dest: 'www/',
         src: [
           '**/*',
-          '!**/*.(scss,sass,css)',
+          '!**/*.(scss,sass,css)'
         ]
       },
       tmp: {
@@ -509,7 +509,7 @@ module.exports = function (grunt) {
     'htmlmin'
   ]);
 
-  grunt.registerTask('coverage', ['karma:continuous', 'connect:coverage:keepalive']);
+  grunt.registerTask('coverage', ['karma:continuous', 'connect:coverage']);
 
   grunt.registerTask('default', [
     'newer:jshint',
