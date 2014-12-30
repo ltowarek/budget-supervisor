@@ -35,15 +35,16 @@
     "win-spawn": "~2.0.0"
   },
   "devDependencies": {
-    "ionic": "^1.2.7",
-    "ripple-emulator": "~0.9.23",
     "grunt-karma": "~0.8.0",
+    "grunt-karma-coveralls": "^2.5.3",
+    "ionic": "^1.2.7",
     "karma": "~0.12.0",
-    "karma-mocha": "~0.1.3",
     "karma-chai": "~0.1.0",
     "karma-chrome-launcher": "~0.1.2",
+    "karma-coverage": "~0.2.0",
+    "karma-mocha": "~0.1.3",
     "karma-phantomjs-launcher": "~0.1.2",
-    "karma-coverage": "~0.2.0"
+    "ripple-emulator": "~0.9.23"
   },
   "engines": {
     "node": "~0.10.0"

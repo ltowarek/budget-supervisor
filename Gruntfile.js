@@ -343,7 +343,7 @@ module.exports = function (grunt) {
         },
         coverageReporter: {
           reporters: [
-            { type: 'html', dir: 'coverage/' },
+            { type: 'lcov', dir: 'coverage/' },
             { type: 'text-summary' }
           ]
         }
@@ -357,6 +357,16 @@ module.exports = function (grunt) {
       continuous: {
         browsers: ['PhantomJS'],
         singleRun: true
+      }
+    },
+
+    coveralls: {
+      options: {
+        debug: false,
+        coverageDir: 'coverage',
+        dryRun: false,
+        force: true,
+        recursive: true
       }
     },
 
@@ -491,7 +501,6 @@ module.exports = function (grunt) {
     'newer:copy:app',
     'newer:copy:tmp'
   ]);
-
 
   grunt.registerTask('compress', [
     'clean',
