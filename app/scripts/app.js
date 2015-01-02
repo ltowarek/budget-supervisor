@@ -42,19 +42,19 @@ angular.module('BudgetSupervisor', ['ionic', 'config', 'BudgetSupervisor.control
       controller: 'TransactionsController'
     })
 
-    .state('transactions.transaction-details', {
+    .state('transaction-details', {
       url: '/transactions/:id',
       templateUrl: '/templates/transactiondetails.html',
       controller: 'TransactionDetailsController'
     })
 
-    .state('transactions.categories', {
+    .state('categories', {
       url: '/categories',
       templateUrl: '/templates/categories.html',
       controller: 'CategoriesController'
     })
 
-    .state('transactions.tags', {
+    .state('tags', {
       url: '/tags',
       templateUrl: '/templates/tags.html',
       controller: 'TagsController'
@@ -87,7 +87,7 @@ angular.module('BudgetSupervisor', ['ionic', 'config', 'BudgetSupervisor.control
 
     // if none of the above states are matched, use this as the fallback
 
-    $urlRouterProvider.otherwise('/');
+  $urlRouterProvider.otherwise('/');
 
 });
 
