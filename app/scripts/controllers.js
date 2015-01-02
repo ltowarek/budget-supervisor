@@ -1,16 +1,33 @@
 'use strict';
+
 angular.module('BudgetSupervisor.controllers', [])
 
-.controller('DashCtrl', function() {
-})
+  .controller('LoginController', function () {
+  })
 
-.controller('FriendsCtrl', function($scope, Friends) {
-  $scope.friends = Friends.all();
-})
+  .controller('SignUpController', function () {
+  })
 
-.controller('FriendDetailCtrl', function($scope, $stateParams, Friends) {
-  $scope.friend = Friends.get($stateParams.friendId);
-})
+  .controller('HomeController', function () {
+  })
 
-.controller('AccountCtrl', function() {
-});
+  .controller('TransactionDetailsController', function () {
+  })
+
+  .controller('CategoriesController', function () {
+  })
+
+  .controller('TagsController', function () {
+  })
+
+  .controller('RemindersController', function () {
+  })
+
+  .controller('ReminderDetailsController', function () {
+  })
+
+  .controller('StatisticsController', function () {
+  })
+
+  .controller('StatisticsBalanceController', function () {
+  });
