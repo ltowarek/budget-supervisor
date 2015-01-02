@@ -11,6 +11,9 @@ angular.module('BudgetSupervisor.controllers', [])
   .controller('HomeController', function () {
   })
 
+  .controller('TransactionsController', function () {
+  })
+
   .controller('TransactionDetailsController', function () {
   })
 

@@ -39,7 +39,7 @@ angular.module('BudgetSupervisor', ['ionic', 'config', 'BudgetSupervisor.control
     .state('transactions', {
       url: '/transactions',
       templateUrl: '/templates/transactions.html',
-      abstract: true
+      controller: 'TransactionsController'
     })
 
     .state('transactions.transaction-details', {
