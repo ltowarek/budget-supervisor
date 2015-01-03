@@ -1,13 +1,13 @@
 <ion-view title="Categories" ng-controller="CategoriesController">
-  <ion-nav-buttons side="primary">
+  <ion-footer-bar class="bar-positive">
     <a href="#/categories/" class="button button-icon icon ion-plus-circled"></a>
     <button class="button button-icon icon ion-minus-circled" ng-click="toggleDelete()"></button>
     <button class="button button-icon icon ion-drag" ng-click="toggleReorder()"></button>
-  </ion-nav-buttons>
+  </ion-footer-bar>
   <ion-content padding="true" class="has-header">
     <ion-list show-delete="config.showDelete" show-reorder="config.showReorder">
       <ion-item ng-repeat="category in categories">
-        <a href="#/categories/{{ category.id }}">{{ category.title }}</a>
+        <a href="#/categories/{{ category.id }}" class="button button-positive button-clear button-block">{{ category.title }}</a>
         <ion-delete-button class="ion-minus-circled" ng-click="remove(category.id)"></ion-delete-button>
         <ion-reorder-button class="ion-drag" on-reorder="reorder(category, $fromIndex, $toIndex)"></ion-reorder-button>
       </ion-item>
