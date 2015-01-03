@@ -22,8 +22,32 @@ angular.module('BudgetSupervisor.controllers', [])
 .controller('TransactionDetailsController', function () {
 })
 
-.controller('CategoriesController', function () {
-})
+.controller('CategoriesController', ['$scope', 'CategoriesService', function ($scope, CategoriesService) {
+  $scope.config = {
+    showDelete: false,
+    showReorder: false
+  };
+
+  $scope.categories = CategoriesService.query();
+
+  $scope.toggleDelete = function() {
+    $scope.config.showReorder = false;
+    $scope.config.showDelete = !$scope.config.showDelete;
+  };
+
+  $scope.toggleReorder = function() {
+    $scope.config.showDelete = false;
+    $scope.config.showReorder = !$scope.config.showReorder;
+  };
+
+  $scope.remove = function(id) {
+    CategoriesService.remove(id);
+  };
+
+  $scope.reorder = function(item, fromIndex, toIndex) {
+    CategoriesService.reorder(item, fromIndex, toIndex);
+  };
+}])
 
 .controller('TagsController', function () {
 })
