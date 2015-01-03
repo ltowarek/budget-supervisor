@@ -38,6 +38,8 @@ angular.module('BudgetSupervisor.services', [])
 
   return {
     get: function(id) {
+      $log.debug('Get function executed with id: ' + id);
+
       var categoryIndex = -1;
 
       for (var i = 0; i < categories.length; i++) {
@@ -47,12 +49,49 @@ angular.module('BudgetSupervisor.services', [])
         }
       }
 
+      $log.debug('Category index: ' + categoryIndex);
+
       if (categoryIndex > -1) {
         return categories[categoryIndex];
+      } else {
+        return { id: -1, title: ''};
       }
     },
     save: function(category) {
-      categories.push(category);
+      var i = 0;
+
+      if (category.id === -1) {
+        var actualId = -1;
+
+        for (i = 0; i < categories.length; i++) {
+          if (categories[i].id > actualId) {
+            actualId = categories[i].id;
+          }
+        }
+
+        actualId++;
+
+        category.id = actualId;
+        categories.push(category);
+      } else {
+        var categoryIndex = -1;
+
+        for (i = 0; i < categories.length; i++) {
+          if (categories[i].id === category.id) {
+            categoryIndex = i;
+            break;
+          }
+        }
+
+        $log.debug('Category index: ' + categoryIndex);
+
+        if (categoryIndex > -1) {
+          categories[categoryIndex] = category;
+        }
+      }
+
+      $log.debug('Categories state after save function:');
+      $log.debug(categories);
     },
     query: function() {
       return categories;

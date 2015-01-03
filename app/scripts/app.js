@@ -54,6 +54,12 @@ angular.module('BudgetSupervisor', ['ionic', 'config', 'BudgetSupervisor.control
       controller: 'CategoriesController'
     })
 
+    .state('category-details', {
+      url: '/categories/:id',
+      templateUrl: '/templates/categorydetails.html',
+      controller: 'CategoryDetailsController'
+    })
+
     .state('tags', {
       url: '/tags',
       templateUrl: '/templates/tags.html',

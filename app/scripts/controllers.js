@@ -49,6 +49,19 @@ angular.module('BudgetSupervisor.controllers', [])
   };
 }])
 
+.controller('CategoryDetailsController', ['$scope', '$state', '$stateParams', '$log', 'CategoriesService', function ($scope, $state, $stateParams, $log, CategoriesService) {
+  $log.debug('State parameters:');
+  $log.debug($stateParams);
+
+  $scope.category = CategoriesService.get(parseInt($stateParams.id));
+
+  $scope.save = function(category) {
+    CategoriesService.save(category);
+    //TODO: Handle form validation errors
+    $state.go('categories');
+  };
+}])
+
 .controller('TagsController', function () {
 })
 

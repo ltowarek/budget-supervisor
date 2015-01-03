@@ -1,0 +1,13 @@
+<ion-view title="Category" ng-controller="CategoryDetailsController">
+  <ion-content padding="true" class="has-header">
+    <form ng-submit="save(category)">
+      <ion-list>
+        <label class="item item-input">
+          <span class="input-label">Title</span>
+          <input type="text" placeholder="" ng-model="category.title" required>
+        </label>
+      </ion-list>
+      <input type="submit" class="button button-stable button-block" value="Save" />
+    </form>
+  </ion-content>
+</ion-view>
