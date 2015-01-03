@@ -33,6 +33,9 @@ angular.module('BudgetSupervisor.controllers', [])
 .controller('ReminderDetailsController', function () {
 })
 
+.controller('SettingsController', function () {
+})
+
 .controller('StatisticsController', function () {
 })
 

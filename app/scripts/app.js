@@ -83,6 +83,12 @@ angular.module('BudgetSupervisor', ['ionic', 'config', 'BudgetSupervisor.control
       templateUrl: '/templates/statisticsbalance.html',
       controller: 'StatisticsBalanceController'
     })
+
+    .state('settings', {
+      url: '/settings',
+      templateUrl: '/templates/settings.html',
+      controller: 'SettingsController'
+    })
   ;
 
     // if none of the above states are matched, use this as the fallback
