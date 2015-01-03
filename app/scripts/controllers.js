@@ -12,8 +12,9 @@ angular.module('BudgetSupervisor.controllers', [])
 .controller('SignUpController', function () {
 })
 
-.controller('HomeController', function () {
-})
+.controller('HomeController', ['$log', function ($log) {
+  $log.debug('Test');
+}])
 
 .controller('TransactionsController', function () {
 })
