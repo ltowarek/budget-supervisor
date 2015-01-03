@@ -118,8 +118,20 @@ angular.module('BudgetSupervisor.services', [])
       $log.debug(categories);
     },
     reorder: function(item, fromIndex, toIndex) {
+      $log.debug('Reorder function executed with parameters: item, fromIndex, toIndex');
+
+      $log.debug(item);
+      $log.debug(fromIndex);
+      $log.debug(toIndex);
+
+      $log.debug('Categories state before reload function:');
+      $log.debug(categories);
+
       categories.splice(fromIndex, 1);
       categories.splice(toIndex, 0, item);
+
+      $log.debug('Categories state after reload function:');
+      $log.debug(categories);
     }
   };
 }]);
