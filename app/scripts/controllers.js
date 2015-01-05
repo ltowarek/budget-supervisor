@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('BudgetSupervisor.controllers', ['ngMessages'])
+angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
 
 .controller('LoginController', function () {
 })
@@ -17,7 +17,7 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages'])
 .controller('TransactionDetailsController', function () {
 })
 
-.controller('CategoriesController', ['$scope', 'CategoriesService', function ($scope, CategoriesService) {
+.controller('CategoriesController', ['$scope', '$ionicPopup', 'CategoriesService', function ($scope, $ionicPopup, CategoriesService) {
   $scope.config = {
     showDelete: false
   };
@@ -29,7 +29,16 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages'])
   };
 
   $scope.remove = function(id) {
-    CategoriesService.remove(id);
+    var confirmPopup = $ionicPopup.confirm({
+      title: 'Delete category',
+      template: 'Are you sure you want to delete this category?'
+    });
+
+    confirmPopup.then(function(response) {
+      if (response) {
+        CategoriesService.remove(id);
+      }
+    });
   };
 }])
 
