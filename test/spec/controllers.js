@@ -31,7 +31,7 @@ describe('Controller: CategoriesController', function () {
     expect($scope.config, 'config').to.have.property('showDelete', false);
   });
 
-  it('should show delete buttons and hide reorder buttons', function () {
+  it('should show delete buttons', function () {
     $scope.toggleDelete();
 
     expect($scope.config.showDelete, 'showDelete').equal(true);
