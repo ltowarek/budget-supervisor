@@ -48,7 +48,7 @@ angular.module('BudgetSupervisor.controllers', [])
   $log.debug('State parameters:');
   $log.debug($stateParams);
 
-  $scope.category = CategoriesService.get(parseInt($stateParams.id));
+  $scope.category = CategoriesService.get(parseInt($stateParams.id) || -1) || { id: -1, title: ''};
 
   $scope.save = function(category) {
     CategoriesService.save(category);
