@@ -1,4 +1,5 @@
 'use strict';
+
 angular.module('BudgetSupervisor.services', [])
 
 .factory('CategoriesService', ['$log', function($log) {
@@ -27,9 +28,11 @@ angular.module('BudgetSupervisor.services', [])
       $log.debug('Category index: ' + categoryIndex);
 
       if (categoryIndex > -1) {
+        $log.debug('Category found');
         return categories[categoryIndex];
       } else {
-        return { id: -1, title: ''};
+        $log.debug('Category not found');
+        return null;
       }
     },
     save: function(category) {
@@ -46,6 +49,7 @@ angular.module('BudgetSupervisor.services', [])
 
         actualId++;
 
+        $log.debug('Creating category');
         category.id = actualId;
         categories.push(category);
       } else {
@@ -61,6 +65,7 @@ angular.module('BudgetSupervisor.services', [])
         $log.debug('Category index: ' + categoryIndex);
 
         if (categoryIndex > -1) {
+          $log.debug('Updating category');
           categories[categoryIndex] = category;
         }
       }
@@ -86,6 +91,7 @@ angular.module('BudgetSupervisor.services', [])
       $log.debug('Category index: ' + categoryIndex);
 
       if (categoryIndex > -1) {
+        $log.debug('Removing category');
         categories.splice(categoryIndex, 1);
       }
 
@@ -102,6 +108,7 @@ angular.module('BudgetSupervisor.services', [])
       $log.debug('Categories state before reload function:');
       $log.debug(categories);
 
+      $log.debug('Reordering categories');
       categories.splice(fromIndex, 1);
       categories.splice(toIndex, 0, item);
 
