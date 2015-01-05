@@ -37,7 +37,12 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages'])
   $log.debug('State parameters:');
   $log.debug($stateParams);
 
-  $scope.category = CategoriesService.get(parseInt($stateParams.id) || -1) || { id: -1, title: ''};
+  var id = parseInt($stateParams.id);
+  if (isNaN(id)) {
+    id = -1;
+  }
+
+  $scope.category = CategoriesService.get(id) || { id: -1, title: ''};
 
   $scope.save = function(category) {
     CategoriesService.save(category);

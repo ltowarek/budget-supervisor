@@ -63,23 +63,23 @@ describe('Controller: CategoryDetailsController', function () {
 
     $controller('CategoryDetailsController', {
       $scope: $scope,
-      $stateParams: {id: 1}
+      $stateParams: {id: '1'}
     });
   }));
 
   it('should attach an existing category to the scope', function () {
     var stub = sinon.stub(service, 'get', function () {
-      return {id: 1, title: 'Salary'};
+      return {id: 0, title: 'Salary'};
     });
 
     $controller('CategoryDetailsController', {
       $scope: $scope,
-      $stateParams: {id: '1'}
+      $stateParams: {id: '0'}
     });
 
     expect(stub.callCount, 'get function call counts').to.equal(1);
-    expect(stub.args[0][0], 'category id').to.equal(1);
-    expect($scope.category).to.eql({id: 1, title: 'Salary'});
+    expect(stub.args[0][0], 'category id').to.equal(0);
+    expect($scope.category).to.eql({id: 0, title: 'Salary'});
   });
 
   it('should attach a new category to the scope', function () {
