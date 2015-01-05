@@ -52,7 +52,6 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages'])
 
   $scope.save = function(category) {
     CategoriesService.save(category);
-    //TODO: Handle form validation errors
     $state.go('categories');
   };
 }])
