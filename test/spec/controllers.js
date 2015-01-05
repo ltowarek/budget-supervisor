@@ -74,16 +74,13 @@ describe('Controller: CategoryDetailsController', function () {
   beforeEach(module('BudgetSupervisor'));
 
   var service,
-    serviceGetStub,
+    $controller,
     $scope;
 
-  beforeEach(inject(function ($controller, $rootScope, $injector) {
+  beforeEach(inject(function (_$controller_, $rootScope, $injector) {
+    $controller = _$controller_;
     $scope = $rootScope.$new();
     service = $injector.get('CategoriesService');
-
-    serviceGetStub = sinon.stub(service, 'get', function () {
-      return {id: 1, title: 'Salary'};
-    });
 
     $controller('CategoryDetailsController', {
       $scope: $scope,
@@ -91,10 +88,34 @@ describe('Controller: CategoryDetailsController', function () {
     });
   }));
 
-  it('should attach a category to the scope', function () {
-    expect(serviceGetStub.callCount, 'get function call counts').to.equal(1);
-    expect(serviceGetStub.args[0][0], 'category id').to.equal(1);
+  it('should attach an existing category to the scope', function () {
+    var stub = sinon.stub(service, 'get', function () {
+      return {id: 1, title: 'Salary'};
+    });
+
+    $controller('CategoryDetailsController', {
+      $scope: $scope,
+      $stateParams: {id: '1'}
+    });
+
+    expect(stub.callCount, 'get function call counts').to.equal(1);
+    expect(stub.args[0][0], 'category id').to.equal(1);
     expect($scope.category).to.eql({id: 1, title: 'Salary'});
+  });
+
+  it('should attach a new category to the scope', function () {
+    var stub = sinon.stub(service, 'get', function () {
+      return null;
+    });
+
+    $controller('CategoryDetailsController', {
+      $scope: $scope,
+      $stateParams: {id: ''}
+    });
+
+    expect(stub.callCount, 'get function call counts').to.equal(1);
+    expect(stub.args[0][0], 'category id').to.equal(-1);
+    expect($scope.category).to.eql({id: -1, title: ''});
   });
 
   it('should save category', function () {
