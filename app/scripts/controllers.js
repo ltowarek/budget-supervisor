@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('BudgetSupervisor.controllers', [])
+angular.module('BudgetSupervisor.controllers', ['ngMessages'])
 
 .controller('LoginController', function () {
 })

@@ -323,6 +323,7 @@ module.exports = function (grunt) {
         frameworks: ['mocha', 'chai', 'sinon'],
         files: [
           '<%= yeoman.app %>/lib/angular/angular.js',
+          '<%= yeoman.app %>/lib/angular-messages/angular-messages.js',
           '<%= yeoman.app %>/lib/angular-animate/angular-animate.js',
           '<%= yeoman.app %>/lib/angular-sanitize/angular-sanitize.js',
           '<%= yeoman.app %>/lib/angular-ui-router/release/angular-ui-router.js',
