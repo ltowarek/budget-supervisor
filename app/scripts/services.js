@@ -1,7 +1,16 @@
 'use strict';
 
+/**
+ * @namespace BudgetSupervisor.services
+ */
 angular.module('BudgetSupervisor.services', [])
 
+/**
+ * @class BudgetSupervisor.services.CategoriesService
+ * @memberOf BudgetSupervisor.services
+ * @description
+ * The service is able to manage categories.
+ */
 .factory('CategoriesService', ['$log', function($log) {
   var categories = [
     { id: 0, title: 'Food'},
@@ -13,6 +22,13 @@ angular.module('BudgetSupervisor.services', [])
   $log.debug(categories);
 
   return {
+    /**
+     * @name get
+     * @method
+     * @memberOf BudgetSupervisor.services.CategoriesService
+     * @param {number} id Category id.
+     * @returns {?Object} Category object or null if a category is not found.
+     */
     get: function(id) {
       $log.debug('Get function executed with id: ' + id);
 
@@ -35,6 +51,14 @@ angular.module('BudgetSupervisor.services', [])
         return null;
       }
     },
+    /**
+     * @name save
+     * @method
+     * @memberOf BudgetSupervisor.services.CategoriesService
+     * @param {Object} category Category object.
+     * @description
+     * The method creates a new category or updates existing one.
+     */
     save: function(category) {
       var i = 0;
 
@@ -73,9 +97,23 @@ angular.module('BudgetSupervisor.services', [])
       $log.debug('Categories state after save function:');
       $log.debug(categories);
     },
+    /**
+     * @name query
+     * @method
+     * @memberOf BudgetSupervisor.services.CategoriesService
+     * @returns {Object[]} Categories list.
+     */
     query: function() {
       return categories;
     },
+    /**
+     * @name remove
+     * @method
+     * @memberOf BudgetSupervisor.services.CategoriesService
+     * @param {number} id Category id.
+     * @description
+     * The method removes category from categories list.
+     */
     remove: function(id) {
       $log.debug('Remove function executed with id: ' + id);
 
@@ -98,6 +136,16 @@ angular.module('BudgetSupervisor.services', [])
       $log.debug('Categories state after remove function:');
       $log.debug(categories);
     },
+    /**
+     * @name remove
+     * @method
+     * @memberOf BudgetSupervisor.services.CategoriesService
+     * @param {Object} item Category object.
+     * @param {number} fromIndex Category's old array index.
+     * @param {number} toIndex Category's new array index.
+     * @description
+     * The method reorders categories list.
+     */
     reorder: function(item, fromIndex, toIndex) {
       $log.debug('Reorder function executed with parameters: item, fromIndex, toIndex');
 

@@ -1,5 +1,8 @@
 'use strict';
 
+/**
+ * @namespace BudgetSupervisor
+ */
 angular.module('BudgetSupervisor', ['ionic', 'config', 'BudgetSupervisor.controllers', 'BudgetSupervisor.services'])
 
 .run(function($ionicPlatform) {
