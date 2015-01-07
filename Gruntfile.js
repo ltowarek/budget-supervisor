@@ -382,8 +382,18 @@ module.exports = function (grunt) {
           dest: '.tmp/concat/<%= yeoman.scripts %>'
         }]
       }
-    }
+    },
 
+    jsdoc : {
+      dist : {
+        src: [
+          '<%= yeoman.app %>/<%= yeoman.scripts %>/**/*.js',
+        ],
+        options: {
+          destination: 'docs/api'
+        }
+      }
+    }
   });
 
   // Register tasks for all Cordova commands
@@ -524,6 +534,7 @@ module.exports = function (grunt) {
   grunt.registerTask('default', [
     'newer:jshint',
     'karma:continuous',
+    'jsdoc',
     'compress'
   ]);
 };
