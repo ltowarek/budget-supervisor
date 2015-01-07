@@ -91,6 +91,13 @@ module.exports = function (grunt) {
           base: 'www'
         }
       },
+      test: {
+        options: {
+          hostname: 'localhost',
+          port: 9001,
+          base: '<%= yeoman.app %>'
+        }
+      },
       coverage: {
         options: {
           port: 9002,
@@ -384,13 +391,21 @@ module.exports = function (grunt) {
       }
     },
 
-    jsdoc : {
-      dist : {
+    jsdoc: {
+      all: {
         src: [
           '<%= yeoman.app %>/<%= yeoman.scripts %>/**/*.js',
         ],
         options: {
           destination: 'docs/api'
+        }
+      }
+    },
+
+    protractor: {
+      all: {
+        options: {
+          configFile: 'e2e-tests/protractor.conf.js'
         }
       }
     }
@@ -480,6 +495,8 @@ module.exports = function (grunt) {
     'concurrent:test',
     'autoprefixer',
     'karma:unit:start',
+    'connect:test',
+    'protractor',
     'watch:karma'
   ]);
 
@@ -534,6 +551,8 @@ module.exports = function (grunt) {
   grunt.registerTask('default', [
     'newer:jshint',
     'karma:continuous',
+    'connect:test',
+    'protractor',
     'jsdoc',
     'compress'
   ]);
