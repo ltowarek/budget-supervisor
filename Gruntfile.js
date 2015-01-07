@@ -553,7 +553,6 @@ module.exports = function (grunt) {
     'karma:continuous',
     'connect:test',
     'protractor',
-    'jsdoc',
     'compress'
   ]);
 };
