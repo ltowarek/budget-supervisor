@@ -40,4 +40,36 @@ describe('Budget Supervisor', function() {
       expect(element.all(by.repeater('category in categories')).count()).toEqual(3);
     });
   });
+
+  describe('Category Details View', function() {
+    it('should display existing category\'s details', function() {
+      browser.get('index.html#/categories/0');
+
+      expect(element(by.model('category.title')).getAttribute('value')).toEqual('Food');
+    });
+
+    it('should display a new category template if category does not exist', function() {
+      browser.get('index.html#/categories/wrongid');
+
+      expect(element(by.model('category.title')).getAttribute('value')).toEqual('');
+    });
+
+    it('should update existing category', function() {
+      browser.get('index.html#/categories/0');
+      element(by.model('category.title')).sendKeys('Updated');
+      element(by.id('submit')).click();
+
+      expect(browser.getLocationAbsUrl()).toMatch('/categories');
+      expect(element(by.css('#categoriesList > div > ion-item:nth-child(1) > div.item-content > a')).getText()).toEqual('FoodUpdated');
+    });
+
+    it('should create a new category', function() {
+      browser.get('index.html#/categories/');
+      element(by.model('category.title')).sendKeys('New');
+      element(by.id('submit')).click();
+
+      expect(browser.getLocationAbsUrl()).toMatch('/categories');
+      expect(element.all(by.repeater('category in categories')).count()).toEqual(4);
+    });
+  });
 });
