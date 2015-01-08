@@ -495,8 +495,6 @@ module.exports = function (grunt) {
     'concurrent:test',
     'autoprefixer',
     'karma:unit:start',
-    'connect:test',
-    'protractor',
     'watch:karma'
   ]);
 
