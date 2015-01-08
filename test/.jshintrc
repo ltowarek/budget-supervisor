@@ -29,6 +29,7 @@
     "expect": false,
     "inject": false,
     "it": false,
+    "xit": false,
     "jasmine": false,
     "spyOn": false
   }
