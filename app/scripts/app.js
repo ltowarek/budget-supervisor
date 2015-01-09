@@ -1,17 +1,12 @@
 'use strict';
-// Ionic Starter App
 
-// angular.module is a global place for creating, registering and retrieving Angular modules
-// 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
-// the 2nd parameter is an array of 'requires'
-// 'starter.services' is found in services.js
-// 'starter.controllers' is found in controllers.js
+/**
+ * @namespace BudgetSupervisor
+ */
 angular.module('BudgetSupervisor', ['ionic', 'config', 'BudgetSupervisor.controllers', 'BudgetSupervisor.services'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
-    // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
-    // for form inputs)
     if(window.cordova && window.cordova.plugins.Keyboard) {
       cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
     }
@@ -24,62 +19,90 @@ angular.module('BudgetSupervisor', ['ionic', 'config', 'BudgetSupervisor.control
 
 .config(function($stateProvider, $urlRouterProvider) {
 
-  // Ionic uses AngularUI Router which uses the concept of states
-  // Learn more here: https://github.com/angular-ui/ui-router
-  // Set up the various states which the app can be in.
-  // Each state's controller can be found in controllers.js
   $stateProvider
 
-    // setup an abstract state for the tabs directive
-    .state('tab', {
-      url: '/tab',
-      abstract: true,
-      templateUrl: 'templates/tabs.html'
+    .state('login', {
+      url: '/login',
+      templateUrl: 'templates/login.html',
+      controller: 'LoginController'
     })
 
-    // Each tab has its own nav history stack:
-
-    .state('tab.dash', {
-      url: '/dash',
-      views: {
-        'tab-dash': {
-          templateUrl: 'templates/tab-dash.html',
-          controller: 'DashCtrl'
-        }
-      }
+    .state('sign-up', {
+      url: '/signup',
+      templateUrl: 'templates/signup.html',
+      controller: 'SignUpController'
     })
 
-    .state('tab.friends', {
-      url: '/friends',
-      views: {
-        'tab-friends': {
-          templateUrl: 'templates/tab-friends.html',
-          controller: 'FriendsCtrl'
-        }
-      }
-    })
-    .state('tab.friend-detail', {
-      url: '/friend/:friendId',
-      views: {
-        'tab-friends': {
-          templateUrl: 'templates/friend-detail.html',
-          controller: 'FriendDetailCtrl'
-        }
-      }
+    .state('home', {
+      url: '/',
+      templateUrl: 'templates/home.html',
+      controller: 'HomeController'
     })
 
-    .state('tab.account', {
-      url: '/account',
-      views: {
-        'tab-account': {
-          templateUrl: 'templates/tab-account.html',
-          controller: 'AccountCtrl'
-        }
-      }
-    });
+    .state('transactions', {
+      url: '/transactions',
+      templateUrl: 'templates/transactions.html',
+      controller: 'TransactionsController'
+    })
 
-  // if none of the above states are matched, use this as the fallback
-  $urlRouterProvider.otherwise('/tab/dash');
+    .state('transaction-details', {
+      url: '/transactions/:id',
+      templateUrl: 'templates/transactiondetails.html',
+      controller: 'TransactionDetailsController'
+    })
+
+    .state('categories', {
+      url: '/categories',
+      templateUrl: 'templates/categories.html',
+      controller: 'CategoriesController'
+    })
+
+    .state('category-details', {
+      url: '/categories/:id',
+      templateUrl: 'templates/categorydetails.html',
+      controller: 'CategoryDetailsController'
+    })
+
+    .state('tags', {
+      url: '/tags',
+      templateUrl: 'templates/tags.html',
+      controller: 'TagsController'
+    })
+
+    .state('reminders', {
+      url: '/reminders',
+      templateUrl: 'templates/reminders.html',
+      controller: 'RemindersController'
+    })
+
+    .state('reminder-details', {
+      url: '/reminders/:id',
+      templateUrl: 'templates/reminderdetails.html',
+      controller: 'ReminderDetailsController'
+    })
+
+    .state('statistics', {
+      url: '/statistics',
+      templateUrl: 'templates/statistics.html',
+      controller: 'StatisticsController'
+    })
+
+    .state('statistics-balance', {
+      url: '/statistics/balance',
+      templateUrl: 'templates/statisticsbalance.html',
+      controller: 'StatisticsBalanceController'
+    })
+
+    .state('settings', {
+      url: '/settings',
+      templateUrl: 'templates/settings.html',
+      controller: 'SettingsController'
+    })
+  ;
+
+    // if none of the above states are matched, use this as the fallback
+
+  $urlRouterProvider.otherwise('/');
 
 });
 

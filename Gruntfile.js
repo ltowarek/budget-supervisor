@@ -91,6 +91,13 @@ module.exports = function (grunt) {
           base: 'www'
         }
       },
+      test: {
+        options: {
+          hostname: 'localhost',
+          port: 9001,
+          base: '<%= yeoman.app %>'
+        }
+      },
       coverage: {
         options: {
           port: 9002,
@@ -320,9 +327,10 @@ module.exports = function (grunt) {
     karma: {
       options: {
         basePath: '',
-        frameworks: ['mocha', 'chai'],
+        frameworks: ['mocha', 'chai', 'sinon'],
         files: [
           '<%= yeoman.app %>/lib/angular/angular.js',
+          '<%= yeoman.app %>/lib/angular-messages/angular-messages.js',
           '<%= yeoman.app %>/lib/angular-animate/angular-animate.js',
           '<%= yeoman.app %>/lib/angular-sanitize/angular-sanitize.js',
           '<%= yeoman.app %>/lib/angular-ui-router/release/angular-ui-router.js',
@@ -381,8 +389,26 @@ module.exports = function (grunt) {
           dest: '.tmp/concat/<%= yeoman.scripts %>'
         }]
       }
-    }
+    },
 
+    jsdoc: {
+      all: {
+        src: [
+          '<%= yeoman.app %>/<%= yeoman.scripts %>/**/*.js',
+        ],
+        options: {
+          destination: 'docs/api'
+        }
+      }
+    },
+
+    protractor: {
+      all: {
+        options: {
+          configFile: 'e2e-tests/protractor.conf.js'
+        }
+      }
+    }
   });
 
   // Register tasks for all Cordova commands
@@ -523,6 +549,8 @@ module.exports = function (grunt) {
   grunt.registerTask('default', [
     'newer:jshint',
     'karma:continuous',
+    'connect:test',
+    'protractor',
     'compress'
   ]);
 };
