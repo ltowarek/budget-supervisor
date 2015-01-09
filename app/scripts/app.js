@@ -1,5 +1,8 @@
 'use strict';
 
+/**
+ * @namespace BudgetSupervisor
+ */
 angular.module('BudgetSupervisor', ['ionic', 'config', 'BudgetSupervisor.controllers', 'BudgetSupervisor.services'])
 
 .run(function($ionicPlatform) {
@@ -20,73 +23,79 @@ angular.module('BudgetSupervisor', ['ionic', 'config', 'BudgetSupervisor.control
 
     .state('login', {
       url: '/login',
-      templateUrl: '/templates/login.html',
+      templateUrl: 'templates/login.html',
       controller: 'LoginController'
     })
 
     .state('sign-up', {
       url: '/signup',
-      templateUrl: '/templates/signup.html',
+      templateUrl: 'templates/signup.html',
       controller: 'SignUpController'
     })
 
     .state('home', {
       url: '/',
-      templateUrl: '/templates/home.html',
+      templateUrl: 'templates/home.html',
       controller: 'HomeController'
     })
 
     .state('transactions', {
       url: '/transactions',
-      templateUrl: '/templates/transactions.html',
+      templateUrl: 'templates/transactions.html',
       controller: 'TransactionsController'
     })
 
     .state('transaction-details', {
       url: '/transactions/:id',
-      templateUrl: '/templates/transactiondetails.html',
+      templateUrl: 'templates/transactiondetails.html',
       controller: 'TransactionDetailsController'
     })
 
     .state('categories', {
       url: '/categories',
-      templateUrl: '/templates/categories.html',
+      templateUrl: 'templates/categories.html',
       controller: 'CategoriesController'
+    })
+
+    .state('category-details', {
+      url: '/categories/:id',
+      templateUrl: 'templates/categorydetails.html',
+      controller: 'CategoryDetailsController'
     })
 
     .state('tags', {
       url: '/tags',
-      templateUrl: '/templates/tags.html',
+      templateUrl: 'templates/tags.html',
       controller: 'TagsController'
     })
 
     .state('reminders', {
       url: '/reminders',
-      templateUrl: '/templates/reminders.html',
+      templateUrl: 'templates/reminders.html',
       controller: 'RemindersController'
     })
 
     .state('reminder-details', {
       url: '/reminders/:id',
-      templateUrl: '/templates/reminderdetails.html',
+      templateUrl: 'templates/reminderdetails.html',
       controller: 'ReminderDetailsController'
     })
 
     .state('statistics', {
       url: '/statistics',
-      templateUrl: '/templates/statistics.html',
+      templateUrl: 'templates/statistics.html',
       controller: 'StatisticsController'
     })
 
     .state('statistics-balance', {
       url: '/statistics/balance',
-      templateUrl: '/templates/statisticsbalance.html',
+      templateUrl: 'templates/statisticsbalance.html',
       controller: 'StatisticsBalanceController'
     })
 
     .state('settings', {
       url: '/settings',
-      templateUrl: '/templates/settings.html',
+      templateUrl: 'templates/settings.html',
       controller: 'SettingsController'
     })
   ;

@@ -1,9 +1,14 @@
-<ion-view title="Categories">
+<ion-view title="Categories" ng-controller="CategoriesController">
+  <ion-footer-bar class="bar-positive">
+    <button id="toggleDeleteButton" class="button button-icon icon ion-minus-circled" ng-click="toggleDelete()"></button>
+    <a id="addCategoryButton" href="#/categories/" class="button button-icon icon ion-plus-circled"></a>
+  </ion-footer-bar>
   <ion-content padding="true" class="has-header">
-    <ion-list>
-      <ion-item>Food</ion-item>
-      <ion-item>Salary</ion-item>
-      <ion-item>Miscellaneous</ion-item>
+    <ion-list id="categoriesList" show-delete="config.showDelete" show-reorder="config.showReorder">
+      <ion-item ng-repeat="category in categories">
+        <a href="#/categories/{{ category.id }}" class="button button-positive button-clear button-block">{{ category.title }}</a>
+        <ion-delete-button class="ion-minus-circled" ng-click="remove(category.id)"></ion-delete-button>
+      </ion-item>
     </ion-list>
   </ion-content>
 </ion-view>
