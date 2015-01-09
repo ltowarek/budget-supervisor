@@ -1,6 +1,6 @@
 {
   "name": "BudgetSupervisor",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "dependencies": {
     "express": "~4.4.3",
@@ -32,13 +32,13 @@
     "mkdirp": "~0.5.0",
     "ncp": "~0.6.0",
     "orchestrator": "~0.3.7",
+    "grunt-protractor-runner": "^1.1.4",
     "win-spawn": "~2.0.0"
   },
   "devDependencies": {
     "grunt-jsdoc": "^0.5.7",
     "grunt-karma": "~0.8.0",
     "grunt-karma-coveralls": "^2.5.3",
-    "grunt-protractor-runner": "^1.1.4",
     "ionic": "^1.2.7",
     "karma": "~0.12.0",
     "karma-chai": "~0.1.0",
