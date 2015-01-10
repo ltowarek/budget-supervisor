@@ -106,8 +106,57 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
   };
 }])
 
-.controller('TagsController', function () {
-})
+/**
+ * @class BudgetSupervisor.controllers.TagsController
+ * @memberOf BudgetSupervisor.controllers
+ * @description
+ * The controller is able to list all tags or delete existing ones.
+ */
+.controller('TagsController', ['$scope', '$ionicPopup', 'TagsService', function ($scope, $ionicPopup, TagsService) {
+  $scope.config = {
+    showDelete: false
+  };
+
+  /**
+   * @name $scope.tags
+   * @method
+   * @memberOf BudgetSupervisor.controllers.TagsController
+   * @returns {Object[]} Tags list.
+   */
+  $scope.tags = TagsService.query();
+
+  /**
+   * @name $scope.toggleDelete
+   * @method
+   * @memberOf BudgetSupervisor.controllers.TagsController
+   * @description
+   * The method toggles delete buttons.
+   */
+  $scope.toggleDelete = function() {
+    $scope.config.showDelete = !$scope.config.showDelete;
+  };
+
+  /**
+   * @name $scope.remove
+   * @method
+   * @memberOf BudgetSupervisor.controllers.TagsController
+   * @param {number} id Tags id.
+   * @description
+   * The method shows deletion confirmation and if it is confirmed removes tag.
+   */
+  $scope.remove = function(id) {
+    var confirmPopup = $ionicPopup.confirm({
+      title: 'Delete tag',
+      template: 'Are you sure you want to delete this tag?'
+    });
+
+    confirmPopup.then(function(response) {
+      if (response) {
+        TagsService.remove(id);
+      }
+    });
+  };
+}])
 
 .controller('RemindersController', function () {
 })
