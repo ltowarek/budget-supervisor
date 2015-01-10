@@ -115,3 +115,119 @@ describe('Controller: CategoryDetailsController', function () {
     expect(stub.callCount, 'state go call counts').to.equal(1);
   }));
 });
+
+describe('Controller: TagsController', function () {
+
+  beforeEach(module('BudgetSupervisor'));
+
+  var service,
+    serviceQueryStub,
+    $scope;
+
+  beforeEach(inject(function ($controller, $rootScope, $injector) {
+    $scope = $rootScope.$new();
+    service = $injector.get('TagsService');
+    serviceQueryStub = sinon.stub(service, 'query', function () {
+      return [
+        { id: 0, title: 'Tesco'},
+        { id: 1, title: 'Part-time job'},
+      ];
+    });
+    $controller('TagsController', {
+      $scope: $scope
+    });
+  }));
+
+  it('should attach a list of tags to the scope', function () {
+    expect(serviceQueryStub.callCount, 'query function call counts').to.equal(1);
+    expect($scope.tags, 'tags').to.have.length(2);
+  });
+
+  it('should attach a list of config values to the scope', function () {
+    expect($scope.config, 'config').to.have.property('showDelete', false);
+  });
+
+  it('should show delete buttons', function () {
+    $scope.toggleDelete();
+
+    expect($scope.config.showDelete, 'showDelete').equal(true);
+  });
+
+  //TODO: there is an issue with $httpBackend which stops promises testing (Unexpected request: GET ...)
+  it.skip('should remove tag', function () {
+    var stub = sinon.stub(service, 'remove');
+
+    $scope.remove(0);
+
+    expect(stub.callCount, 'remove function call counts').to.equal(1);
+    expect(stub.args[0][0], 'removed tag id').to.equal(0);
+    expect($scope.config.showDelete, 'showDelete').equal(false);
+  });
+});
+
+describe('Controller: TagDetailsController', function () {
+
+  beforeEach(module('BudgetSupervisor'));
+
+  var service,
+    $controller,
+    $scope;
+
+  beforeEach(inject(function (_$controller_, $rootScope, $injector) {
+    $controller = _$controller_;
+    $scope = $rootScope.$new();
+    service = $injector.get('TagsService');
+
+    $controller('TagDetailsController', {
+      $scope: $scope,
+      $stateParams: {id: '1'}
+    });
+  }));
+
+  it('should attach an existing tag to the scope', function () {
+    var stub = sinon.stub(service, 'get', function () {
+      return {id: 0, title: 'Tesco'};
+    });
+
+    $controller('TagDetailsController', {
+      $scope: $scope,
+      $stateParams: {id: '0'}
+    });
+
+    expect(stub.callCount, 'get function call counts').to.equal(1);
+    expect(stub.args[0][0], 'tag id').to.equal(0);
+    expect($scope.tag).to.eql({id: 0, title: 'Tesco'});
+  });
+
+  it('should attach a new tag to the scope', function () {
+    var stub = sinon.stub(service, 'get', function () {
+      return null;
+    });
+
+    $controller('TagDetailsController', {
+      $scope: $scope,
+      $stateParams: {id: ''}
+    });
+
+    expect(stub.callCount, 'get function call counts').to.equal(1);
+    expect(stub.args[0][0], 'tag id').to.equal(-1);
+    expect($scope.tag).to.eql({id: -1, title: ''});
+  });
+
+  it('should save tag', function () {
+    var stub = sinon.stub(service, 'save');
+
+    $scope.save({});
+
+    expect(stub.callCount, 'save function call counts').to.equal(1);
+    expect(stub.args[0][0], 'tag object').to.eql({});
+  });
+
+  it('should change state after saving tag', inject(function ($state) {
+    var stub = sinon.stub($state, 'go');
+
+    $scope.save({});
+
+    expect(stub.callCount, 'state go call counts').to.equal(1);
+  }));
+});
