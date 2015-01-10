@@ -72,4 +72,75 @@ describe('Budget Supervisor', function() {
       expect(element.all(by.repeater('category in categories')).count()).toEqual(4);
     });
   });
+
+  describe('Tags view', function() {
+    beforeEach(function() {
+      browser.get('index.html#/tags');
+    });
+
+    it('should redirect to the tags view', function () {
+      expect(browser.getLocationAbsUrl()).toMatch('/tags');
+    });
+
+    //TODO: Protractor clicks an element, chrome displays information about the new url in the bottom left corner, but url does not change. Cannot reproduce it without protractor.
+    xit('should open a new tag view', function () {
+      element(by.id('addTagButton')).click();
+
+      expect(browser.getLocationAbsUrl()).toMatch('/tags/');
+    });
+
+    it('should open a tag\'s details view', function () {
+      element.all(by.css('#tagsList ion-item')).first().click();
+
+      expect(browser.getLocationAbsUrl()).toMatch('/tags/0');
+    });
+
+    it('should delete a tag', function () {
+      element(by.id('toggleDeleteButton')).click();
+      element.all(by.css('.item-delete.active')).first().click();
+      element(by.css('body > div.popup-container.popup-showing.active > div > div.popup-buttons > button.button.ng-binding.button-positive')).click();
+
+      expect(element.all(by.repeater('tag in tags')).count()).toEqual(2);
+    });
+
+    it('should cancel a tag deletion', function () {
+      element(by.id('toggleDeleteButton')).click();
+      element.all(by.css('.item-delete.active')).first().click();
+      element(by.css('body > div.popup-container.popup-showing.active > div > div.popup-buttons > button.button.ng-binding.button-default')).click();
+
+      expect(element.all(by.repeater('tag in tags')).count()).toEqual(3);
+    });
+  });
+
+  describe('Tag Details View', function() {
+    it('should display existing tag\'s details', function() {
+      browser.get('index.html#/tags/0');
+
+      expect(element(by.model('tag.title')).getAttribute('value')).toEqual('Tesco');
+    });
+
+    it('should display a new tag template if tag does not exist', function() {
+      browser.get('index.html#/tags/wrongid');
+
+      expect(element(by.model('tag.title')).getAttribute('value')).toEqual('');
+    });
+
+    it('should update existing tag', function() {
+      browser.get('index.html#/tags/0');
+      element(by.model('tag.title')).sendKeys('Updated');
+      element(by.id('submit')).click();
+
+      expect(browser.getLocationAbsUrl()).toMatch('/tags');
+      expect(element(by.css('#tagsList > div > ion-item:nth-child(1) > div.item-content > a')).getText()).toEqual('TescoUpdated');
+    });
+
+    it('should create a new tag', function() {
+      browser.get('index.html#/tags/');
+      element(by.model('tag.title')).sendKeys('New');
+      element(by.id('submit')).click();
+
+      expect(browser.getLocationAbsUrl()).toMatch('/tags');
+      expect(element.all(by.repeater('tag in tags')).count()).toEqual(4);
+    });
+  });
 });
