@@ -1,6 +1,6 @@
 {
   "name": "BudgetSupervisor",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "dependencies": {
     "express": "~4.4.3",
