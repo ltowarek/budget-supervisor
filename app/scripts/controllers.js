@@ -158,6 +158,40 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
   };
 }])
 
+/**
+ * @class BudgetSupervisor.controllers.TagDetailsController
+ * @memberOf BudgetSupervisor.controllers
+ * @description
+ * The controller is able to edit existing tag or create a new one.
+ *
+ * If a tag id is not present in $stateParams or is a NaN or is not present in TagsService then a new tag template will be used.
+ * Otherwise existing editable tag will be fetched.
+ */
+.controller('TagDetailsController', ['$scope', '$state', '$stateParams', '$log', 'TagsService', function ($scope, $state, $stateParams, $log, TagsService) {
+  $log.debug('State parameters:');
+  $log.debug($stateParams);
+
+  var id = parseInt($stateParams.id);
+  if (isNaN(id)) {
+    id = -1;
+  }
+
+  $scope.tag = TagsService.get(id) || { id: -1, title: ''};
+
+  /**
+   * @name $scope.save
+   * @method
+   * @memberOf BudgetSupervisor.controllers.TagDetailsController
+   * @param {Object} tag Tag object.
+   * @description
+   * The method saves tag and redirects to tags state.
+   */
+  $scope.save = function(tag) {
+    TagsService.save(tag);
+    $state.go('tags');
+  };
+}])
+
 .controller('RemindersController', function () {
 })
 
