@@ -69,6 +69,12 @@ angular.module('BudgetSupervisor', ['ionic', 'config', 'BudgetSupervisor.control
       controller: 'TagsController'
     })
 
+    .state('tag-details', {
+      url: '/tags/:id',
+      templateUrl: 'templates/tagdetails.html',
+      controller: 'TagDetailsController'
+    })
+
     .state('reminders', {
       url: '/reminders',
       templateUrl: 'templates/reminders.html',
