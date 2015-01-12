@@ -26,10 +26,9 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
   };
 
   /**
-   * @name $scope.tags
-   * @method
+   * @name $scope.transactions
+   * @property {Object[]} Transactions list.
    * @memberOf BudgetSupervisor.controllers.TransactionsController
-   * @returns {Object[]} Transaction list.
    */
   $scope.transactions = TransactionsService.query();
 
@@ -118,9 +117,8 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
 
   /**
    * @name $scope.categories
-   * @method
+   * @property {Object[]} Categories list.
    * @memberOf BudgetSupervisor.controllers.CategoriesController
-   * @returns {Object[]} Categories list.
    */
   $scope.categories = CategoriesService.query();
 
@@ -204,9 +202,8 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
 
   /**
    * @name $scope.tags
-   * @method
+   * @property {Object[]} Tags list.
    * @memberOf BudgetSupervisor.controllers.TagsController
-   * @returns {Object[]} Tags list.
    */
   $scope.tags = TagsService.query();
 
