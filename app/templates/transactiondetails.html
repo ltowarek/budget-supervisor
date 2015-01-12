@@ -1,30 +1,63 @@
 <ion-view title="Transaction">
   <ion-content padding="true" class="has-header">
-    <form>
+    <form name="transactionDetailsForm" ng-submit="save(transaction)">
       <label class="item item-input">
         <span class="input-label">Title</span>
-        <input type="text" placeholder="">
+        <input type="text" placeholder="" name="title" ng-model="transaction.title" required>
       </label>
+      <div ng-messages="transactionDetailsForm.title.$error"
+           ng-messages-include="templates/errormessages.html"
+           ng-if="transactionDetailsForm.title.$touched">
+      </div>
+
       <label class="item item-input">
         <span class="input-label">Value</span>
-        <input type="number" placeholder="">
+        <input type="number" placeholder="" name="value" ng-model="transaction.value" required>
       </label>
+      <div ng-messages="transactionDetailsForm.value.$error"
+           ng-messages-include="templates/errormessages.html"
+           ng-if="transactionDetailsForm.value.$touched">
+      </div>
+
       <label class="item item-input">
         <span class="input-label">Date</span>
-        <input type="date" placeholder="">
+        <input type="date" placeholder="" name="date" ng-model="transaction.date" required>
       </label>
+      <div ng-messages="transactionDetailsForm.date.$error"
+           ng-messages-include="templates/errormessages.html"
+           ng-if="transactionDetailsForm.date.$touched">
+      </div>
+
       <label class="item item-select">
         <span class="input-label">Category</span>
-        <select></select>
+        <select name="category" ng-model="transaction.category" required>
+          <option ng-repeat="category in categories">{{ category.title }}</option>
+        </select>
       </label>
+      <div ng-messages="transactionDetailsForm.category.$error"
+           ng-messages-include="templates/errormessages.html"
+           ng-if="transactionDetailsForm.category.$touched">
+      </div>
+
       <label class="item item-select">
         <span class="input-label">Tags</span>
-        <select></select>
+        <select name="tags" ng-model="transaction.tags">
+          <option ng-repeat="tag in tags">{{ tag.title }}</option>
+        </select>
       </label>
+      <div ng-messages="transactionDetailsForm.tags.$error"
+           ng-messages-include="templates/errormessages.html"
+           ng-if="transactionDetailsForm.tags.$touched">
+      </div>
+
       <label class="item item-input">
         <span class="input-label">Description</span>
-        <textarea placeholder=""> </textarea>
+        <textarea name="description" ng-model="transaction.description"></textarea>
       </label>
+      <div ng-messages="transactionDetailsForm.description.$error"
+           ng-messages-include="templates/errormessages.html"
+           ng-if="transactionDetailsForm.description.$touched">
+      </div>
     </form>
   </ion-content>
 </ion-view>
