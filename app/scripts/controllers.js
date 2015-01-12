@@ -84,7 +84,7 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
     id = -1;
   }
 
-  $scope.transaction = TransactionsService.get(id) || { id: -1 };
+  $scope.transaction = TransactionsService.get(id) || { id: -1, title: null, value: null, date: '', category: null, tags: null, description: null};
   $scope.categories = CategoriesService.query();
   $scope.tags = TagsService.query();
 
