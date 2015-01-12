@@ -66,8 +66,41 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
   };
 }])
 
-.controller('TransactionDetailsController', function () {
-})
+/**
+ * @class BudgetSupervisor.controllers.TransactionDetailsController
+ * @memberOf BudgetSupervisor.controllers
+ * @description
+ * The controller is able to edit existing transaction or create a new one.
+ *
+ * If a transaction id is not present in $stateParams or is a NaN or is not present in TransactionsService then a new category template will be used.
+ * Otherwise existing editable transaction will be fetched.
+ */
+.controller('TransactionDetailsController', ['$scope', '$state', '$stateParams', '$log', 'TransactionsService', 'CategoriesService', 'TagsService',  function ($scope, $state, $stateParams, $log, TransactionsService, CategoriesService, TagsService) {
+  $log.debug('State parameters:');
+  $log.debug($stateParams);
+
+  var id = parseInt($stateParams.id);
+  if (isNaN(id)) {
+    id = -1;
+  }
+
+  $scope.transaction = TransactionsService.get(id) || { id: -1 };
+  $scope.categories = CategoriesService.query();
+  $scope.tags = TagsService.query();
+
+    /**
+   * @name $scope.save
+   * @method
+   * @memberOf BudgetSupervisor.controllers.TransactionDetailsController
+   * @param {Object} transaction Transaction object.
+   * @description
+   * The method saves transaction and redirects to transactions state.
+   */
+  $scope.save = function(transaction) {
+    TransactionsService.save(transaction);
+    $state.go('transactions');
+  };
+}])
 
 /**
  * @class BudgetSupervisor.controllers.CategoriesController
