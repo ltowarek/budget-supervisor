@@ -31,7 +31,7 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
    * @memberOf BudgetSupervisor.controllers.TransactionsController
    * @returns {Object[]} Transaction list.
    */
-  $scope.tags = TransactionsService.query();
+  $scope.transactions = TransactionsService.query();
 
   /**
    * @name $scope.toggleDelete
