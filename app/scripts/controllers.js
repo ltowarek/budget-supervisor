@@ -88,7 +88,10 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
   $scope.categories = CategoriesService.query();
   $scope.tags = TagsService.query();
 
-    /**
+  // Parse a date
+  $scope.transaction.date = new Date($scope.transaction.date);
+
+  /**
    * @name $scope.save
    * @method
    * @memberOf BudgetSupervisor.controllers.TransactionDetailsController
