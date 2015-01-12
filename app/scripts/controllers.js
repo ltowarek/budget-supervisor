@@ -83,7 +83,7 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
     id = -1;
   }
 
-  $scope.transaction = TransactionsService.get(id) || { id: -1, title: null, value: null, date: '', category: null, tags: null, description: null};
+  $scope.transaction = angular.copy(TransactionsService.get(id)) || { id: -1, title: null, value: null, date: '', category: null, tags: null, description: null};
   $scope.categories = CategoriesService.query();
   $scope.tags = TagsService.query();
 
@@ -173,7 +173,7 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
     id = -1;
   }
 
-  $scope.category = CategoriesService.get(id) || { id: -1, title: ''};
+  $scope.category = angular.copy(CategoriesService.get(id)) || { id: -1, title: ''};
 
   /**
    * @name $scope.save
@@ -258,7 +258,7 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
     id = -1;
   }
 
-  $scope.tag = TagsService.get(id) || { id: -1, title: ''};
+  $scope.tag = angular.copy(TagsService.get(id)) || { id: -1, title: ''};
 
   /**
    * @name $scope.save
