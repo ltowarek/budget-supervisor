@@ -335,9 +335,9 @@ angular.module('BudgetSupervisor.services', [])
  */
 .factory('TransactionsService', ['$log', function($log) {
   var transactions = [
-    { id: 0, title: 'Eggs', value: 5.50, date: 'Sep 3, 2010', category: { id: 0, title: 'Food'}, tags: [{ id: 0, title: 'Tesco'}], description: '10 eggs'},
-    { id: 1, title: 'Tesco salary', value: 2000.00, date: 'Sep 10, 2010', category: { id: 1, title: 'Salary'}, tags: [{ id: 0, title: 'Tesco'}, { id: 1, title: 'Part-time job'}], description: ''},
-    { id: 2, title: 'Lottery', value: 3.50, date: 'Sep 8, 2010', category: { id: 0, title: 'Miscellaneous'}, tags: [], description: 'Number: 1, 2, 3, 4, 5\nLottery day: Sep 9, 2010'}
+    { id: 0, title: 'Eggs', value: -5.50, date: '2010-09-03', category: { id: 0, title: 'Food'}, tags: [{ id: 0, title: 'Tesco'}], description: '10 eggs'},
+    { id: 1, title: 'Tesco salary', value: 2000.00, date: '2010-09-10', category: { id: 1, title: 'Salary'}, tags: [{ id: 0, title: 'Tesco'}, { id: 1, title: 'Part-time job'}], description: ''},
+    { id: 2, title: 'Lottery', value: -3.50, date: '2010-09-23', category: { id: 0, title: 'Miscellaneous'}, tags: [], description: 'Number: 1, 2, 3, 4, 5\nLottery day: Sep 24, 2010'}
   ];
 
   $log.debug('Initial transactions state:');
