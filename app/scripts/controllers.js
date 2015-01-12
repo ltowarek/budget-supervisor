@@ -14,8 +14,57 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
 .controller('HomeController', [function () {
 }])
 
-.controller('TransactionsController', function () {
-})
+/**
+ * @class BudgetSupervisor.controllers.TransactionsController
+ * @memberOf BudgetSupervisor.controllers
+ * @description
+ * The controller is able to list all transactions or delete existing ones.
+ */
+.controller('TransactionsController', ['$scope', '$ionicPopup', 'TransactionsService', function ($scope, $ionicPopup, TransactionsService) {
+  $scope.config = {
+    showDelete: false
+  };
+
+  /**
+   * @name $scope.tags
+   * @method
+   * @memberOf BudgetSupervisor.controllers.TransactionsController
+   * @returns {Object[]} Transaction list.
+   */
+  $scope.tags = TransactionsService.query();
+
+  /**
+   * @name $scope.toggleDelete
+   * @method
+   * @memberOf BudgetSupervisor.controllers.TransactionsController
+   * @description
+   * The method toggles delete buttons.
+   */
+  $scope.toggleDelete = function() {
+    $scope.config.showDelete = !$scope.config.showDelete;
+  };
+
+  /**
+   * @name $scope.remove
+   * @method
+   * @memberOf BudgetSupervisor.controllers.TransactionsController
+   * @param {number} id Transactions id.
+   * @description
+   * The method shows deletion confirmation and if it is confirmed removes transaction.
+   */
+  $scope.remove = function(id) {
+    var confirmPopup = $ionicPopup.confirm({
+      title: 'Delete transaction',
+      template: 'Are you sure you want to delete this transaction?'
+    });
+
+    confirmPopup.then(function(response) {
+      if (response) {
+        TransactionsService.remove(id);
+      }
+    });
+  };
+}])
 
 .controller('TransactionDetailsController', function () {
 })
