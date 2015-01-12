@@ -1,9 +1,14 @@
-<ion-view title="Transactions">
+<ion-view title="Transactions" ng-controller="TransactionsController">
+  <ion-footer-bar class="bar-positive">
+    <button id="toggleDeleteButton" class="button button-icon icon ion-minus-circled" ng-click="toggleDelete()"></button>
+    <a id="addTransactionButton" href="#/transactions/" class="button button-icon icon ion-plus-circled"></a>
+  </ion-footer-bar>
   <ion-content padding="true" class="has-header">
-    <ion-list>
-      <ion-item href="#/transactions/1">Eggs</ion-item>
-      <ion-item href="#/transactions/2">Salary</ion-item>
-      <ion-item href="#/transactions/3">Energy bill</ion-item>
+    <ion-list id="transactionsList" show-delete="config.showDelete">
+      <ion-item ng-repeat="transaction in transactions">
+        <a href="#/transactions/{{ transaction.id }}" class="button button-positive button-clear button-block">{{ transaction.title }}</a>
+        <ion-delete-button class="ion-minus-circled" ng-click="remove(transaction.id)"></ion-delete-button>
+      </ion-item>
     </ion-list>
   </ion-content>
 </ion-view>
