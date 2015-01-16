@@ -99,6 +99,8 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
    * The method saves transaction and redirects to transactions state.
    */
   $scope.save = function(transaction) {
+    // Parse a date
+    transaction.date = transaction.date.toISOString().split('T')[0];
     TransactionsService.save(transaction);
     $state.go('transactions');
   };

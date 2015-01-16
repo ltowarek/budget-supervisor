@@ -368,16 +368,16 @@ describe('Controller: TransactionDetailsController', function () {
   it('should save tag', function () {
     var stub = sinon.stub(transactionsService, 'save');
 
-    $scope.save({});
+    $scope.save({ id: 0, title: 'Eggs', value: -5.50, date: new Date('2010-09-03'), category: { id: 0, title: 'Food'}, tags: [{ id: 0, title: 'Tesco'}], description: '10 eggs'});
 
     expect(stub.callCount, 'save function call counts').to.equal(1);
-    expect(stub.args[0][0], 'transaction object').to.eql({});
+    expect(stub.args[0][0], 'transaction object').to.eql({ id: 0, title: 'Eggs', value: -5.50, date: '2010-09-03', category: { id: 0, title: 'Food'}, tags: [{ id: 0, title: 'Tesco'}], description: '10 eggs'});
   });
 
   it('should change state after saving tag', inject(function ($state) {
     var stub = sinon.stub($state, 'go');
 
-    $scope.save({});
+    $scope.save({ id: 0, title: 'Eggs', value: -5.50, date: new Date('2010-09-03'), category: { id: 0, title: 'Food'}, tags: [{ id: 0, title: 'Tesco'}], description: '10 eggs'});
 
     expect(stub.callCount, 'state go call counts').to.equal(1);
   }));
