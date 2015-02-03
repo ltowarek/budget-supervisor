@@ -6,7 +6,11 @@
   <ion-content padding="true" class="has-header">
     <ion-list id="transactionsList" show-delete="config.showDelete">
       <ion-item ng-repeat="transaction in transactions">
-        <a href="#/transactions/{{ transaction.id }}" class="button button-positive button-clear button-block">{{ transaction.title }}</a>
+        <a href="#/transactions/{{ transaction.id }}" class="button button-positive button-clear button-block">
+            <span class="float-left">{{ transaction.date | date }}</span>
+            {{ transaction.title }}
+            <span class="float-right">{{ transaction.value | currency}}</span>
+        </a>
         <ion-delete-button class="ion-minus-circled" ng-click="remove(transaction.id)"></ion-delete-button>
       </ion-item>
     </ion-list>
