@@ -213,7 +213,7 @@ describe('Budget Supervisor', function() {
       element(by.id('submit')).click();
 
       expect(browser.getLocationAbsUrl()).toMatch('/transactions');
-      expect(element(by.css('#transactionsList > div > ion-item:nth-child(1) > div.item-content > a')).getText()).toEqual('EggsUpdated');
+      expect(element(by.css('#transactionsList > div > ion-item:nth-child(1) > div.item-content > a')).getText()).toEqual('Sep 3, 2010\nEggsUpdated\n($5.50)');
     });
 
     it('should create a new transaction', function() {
