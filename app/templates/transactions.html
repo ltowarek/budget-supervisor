@@ -3,9 +3,18 @@
     <button id="toggleDeleteButton" class="button button-icon icon ion-minus-circled" ng-click="toggleDelete()"></button>
     <a id="addTransactionButton" href="#/transactions/" class="button button-icon icon ion-plus-circled"></a>
   </ion-footer-bar>
-  <ion-content padding="true" class="has-header">
+
+  <div class="bar bar-subheader item-input-inset">
+    <label class="item-input-wrapper">
+      <i class="icon ion-search placeholder-icon"></i>
+      <input id="searchKey" type="search" placeholder="Search" ng-model="searchKey">
+    </label>
+    <button class="button button-clear" ng-click="searchKey = ''">X</button>
+  </div>
+
+  <ion-content padding="true" class="has-header has-subheader">
     <ion-list id="transactionsList" show-delete="config.showDelete">
-      <ion-item ng-repeat="transaction in transactions">
+      <ion-item ng-repeat="transaction in transactions | filter: searchKey">
         <a href="#/transactions/{{ transaction.id }}" class="button button-positive button-clear button-block">
             <span class="float-left">{{ transaction.date | date }}</span>
             {{ transaction.title }}
