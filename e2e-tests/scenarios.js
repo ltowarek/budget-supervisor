@@ -182,6 +182,12 @@ describe('Budget Supervisor', function() {
       expect(element.all(by.repeater('transaction in transactions')).count()).toEqual(3);
     });
 
+    it('should filter transactions', function () {
+      element(by.id('searchKey')).sendKeys('Egg');
+
+      expect(element.all(by.repeater('transaction in transactions')).count()).toEqual(1);
+    });
+
     it('should order transactions by date', function () {
       var lastDate = new Date();
       element.all(by.repeater('transaction in transactions')).each(function(element) {
