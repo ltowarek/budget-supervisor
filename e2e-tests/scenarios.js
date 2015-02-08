@@ -163,7 +163,7 @@ describe('Budget Supervisor', function() {
     it('should open a transaction\'s details view', function () {
       element.all(by.css('#transactionsList ion-item')).first().click();
 
-      expect(browser.getLocationAbsUrl()).toMatch('/transactions/0');
+      expect(browser.getLocationAbsUrl()).toMatch('/transactions/2');
     });
 
     it('should delete a transaction', function () {
@@ -230,7 +230,7 @@ describe('Budget Supervisor', function() {
       element(by.id('submit')).click();
 
       expect(browser.getLocationAbsUrl()).toMatch('/transactions');
-      expect(element(by.css('#transactionsList > div > ion-item:nth-child(1) > div.item-content > a')).getText()).toEqual('Sep 3, 2010\nEggsUpdated\n($5.50)');
+      expect(element(by.css('#transactionsList > div > ion-item:nth-child(3) > div.item-content > a')).getText()).toEqual('Sep 3, 2010\nEggsUpdated\n($5.50)');
     });
 
     it('should create a new transaction', function() {
