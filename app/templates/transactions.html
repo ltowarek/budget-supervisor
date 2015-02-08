@@ -14,7 +14,7 @@
 
   <ion-content padding="true" class="has-header has-subheader">
     <ion-list id="transactionsList" show-delete="config.showDelete">
-      <ion-item ng-repeat="transaction in transactions | filter: searchKey">
+      <ion-item ng-repeat="transaction in transactions | filter: searchKey | orderBy: 'date': true">
         <a href="#/transactions/{{ transaction.id }}" class="button button-positive button-clear button-block">
             <span class="float-left">{{ transaction.date | date }}</span>
             {{ transaction.title }}
