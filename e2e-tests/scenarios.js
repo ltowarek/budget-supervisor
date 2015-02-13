@@ -143,4 +143,108 @@ describe('Budget Supervisor', function() {
       expect(element.all(by.repeater('tag in tags')).count()).toEqual(4);
     });
   });
+
+  describe('Transactions view', function() {
+    beforeEach(function() {
+      browser.get('index.html#/transactions');
+    });
+
+    it('should redirect to the transactions view', function () {
+      expect(browser.getLocationAbsUrl()).toMatch('/transactions');
+    });
+
+    //TODO: Protractor clicks an element, chrome displays information about the new url in the bottom left corner, but url does not change. Cannot reproduce it without protractor.
+    xit('should open a new transaction view', function () {
+      element(by.id('addTransactionButton')).click();
+
+      expect(browser.getLocationAbsUrl()).toMatch('/transactions/');
+    });
+
+    it('should open a transaction\'s details view', function () {
+      element.all(by.css('#transactionsList ion-item')).first().click();
+
+      expect(browser.getLocationAbsUrl()).toMatch('/transactions/2');
+    });
+
+    it('should delete a transaction', function () {
+      element(by.id('toggleDeleteButton')).click();
+      element.all(by.css('.item-delete.active')).first().click();
+      element(by.css('body > div.popup-container.popup-showing.active > div > div.popup-buttons > button.button.ng-binding.button-positive')).click();
+
+      expect(element.all(by.repeater('transaction in transactions')).count()).toEqual(2);
+    });
+
+    it('should cancel a transaction deletion', function () {
+      element(by.id('toggleDeleteButton')).click();
+      element.all(by.css('.item-delete.active')).first().click();
+      element(by.css('body > div.popup-container.popup-showing.active > div > div.popup-buttons > button.button.ng-binding.button-default')).click();
+
+      expect(element.all(by.repeater('transaction in transactions')).count()).toEqual(3);
+    });
+
+    it('should filter transactions', function () {
+      element(by.id('searchKey')).sendKeys('Egg');
+
+      expect(element.all(by.repeater('transaction in transactions')).count()).toEqual(1);
+    });
+
+    it('should order transactions by date', function () {
+      var lastDate = new Date();
+      element.all(by.repeater('transaction in transactions')).each(function(element) {
+       element.getText().then(function(text) {
+         var actualDate = new Date(text.split('\n', 1));
+         expect(actualDate <= lastDate).toBeTruthy();
+         lastDate = actualDate;
+       });
+      });
+    });
+  });
+
+  describe('Transaction Details View', function() {
+    it('should display existing transaction\'s details', function() {
+      browser.get('index.html#/transactions/0');
+
+      expect(element(by.model('transaction.title')).getAttribute('value')).toEqual('Eggs');
+      expect(element(by.model('transaction.value')).getAttribute('value')).toEqual('-5.5');
+      expect(element(by.model('transaction.date')).getAttribute('value')).toEqual('2010-09-03');
+      expect(element(by.model('transaction.category')).getAttribute('value')).toEqual('0');
+      //TODO: Handle multiple tags
+      expect(element(by.model('transaction.tags')).getAttribute('value')).toEqual('0');
+      expect(element(by.model('transaction.description')).getAttribute('value')).toEqual('10 eggs');
+    });
+
+    it('should display a new transaction template if tag does not exist', function() {
+      browser.get('index.html#/transactions/wrongid');
+
+      expect(element(by.model('transaction.title')).getAttribute('value')).toEqual('');
+      expect(element(by.model('transaction.value')).getAttribute('value')).toEqual('');
+      expect(element(by.model('transaction.date')).getAttribute('value')).toEqual('');
+      expect(element(by.model('transaction.category')).getAttribute('value')).toEqual('');
+      expect(element(by.model('transaction.tags')).getAttribute('value')).toEqual('');
+      expect(element(by.model('transaction.description')).getAttribute('value')).toEqual('');
+    });
+
+    it('should update existing transaction', function() {
+      browser.get('index.html#/transactions/0');
+      element(by.model('transaction.title')).sendKeys('Updated');
+      element(by.id('submit')).click();
+
+      expect(browser.getLocationAbsUrl()).toMatch('/transactions');
+      expect(element(by.css('#transactionsList > div > ion-item:nth-child(3) > div.item-content > a')).getText()).toEqual('Sep 3, 2010\nEggsUpdated\n($5.50)');
+    });
+
+    it('should create a new transaction', function() {
+      browser.get('index.html#/transactions/');
+      element(by.model('transaction.title')).sendKeys('New');
+      element(by.model('transaction.value')).sendKeys('-5.00');
+      element(by.model('transaction.date')).sendKeys('2010-01-20');
+      element(by.model('transaction.category')).element(by.cssContainingText('option', 'Food')).click();
+      element(by.model('transaction.tags')).element(by.cssContainingText('option', 'Tesco')).click();
+      element(by.model('transaction.description')).sendKeys('Description');
+      element(by.id('submit')).click();
+
+      expect(browser.getLocationAbsUrl()).toMatch('/transactions');
+      expect(element.all(by.repeater('transaction in transactions')).count()).toEqual(4);
+    });
+  });
 });

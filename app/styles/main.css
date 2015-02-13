@@ -1,1 +1,7 @@
-/* Your application styles go here */
+.float-left {
+  float: left;
+}
+
+.float-right {
+  float: right;
+}

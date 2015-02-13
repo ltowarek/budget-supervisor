@@ -325,4 +325,166 @@ angular.module('BudgetSupervisor.services', [])
       $log.debug(tags);
     }
   };
-}]);
+}])
+
+/**
+ * @class BudgetSupervisor.services.TransactionsService
+ * @memberOf BudgetSupervisor.services
+ * @description
+ * The service is able to manage transactions.
+ */
+.factory('TransactionsService', ['$log', function($log) {
+  var transactions = [
+    { id: 0, title: 'Eggs', value: -5.50, date: '2010-09-03', category: { id: 0, title: 'Food'}, tags: [{ id: 0, title: 'Tesco'}], description: '10 eggs'},
+    { id: 1, title: 'Tesco salary', value: 2000.00, date: '2010-09-10', category: { id: 1, title: 'Salary'}, tags: [{ id: 0, title: 'Tesco'}, { id: 1, title: 'Part-time job'}], description: ''},
+    { id: 2, title: 'Lottery', value: -3.50, date: '2010-09-23', category: { id: 0, title: 'Miscellaneous'}, tags: [], description: 'Number: 1, 2, 3, 4, 5\nLottery day: Sep 24, 2010'}
+  ];
+
+  $log.debug('Initial transactions state:');
+  $log.debug(transactions);
+
+  return {
+    /**
+     * @name get
+     * @method
+     * @memberOf BudgetSupervisor.services.TransactionsService
+     * @param {number} id Transaction id.
+     * @returns {?Object} Transaction object or null if a transaction is not found.
+     */
+    get: function(id) {
+      $log.debug('Get function executed with id: ' + id);
+
+      var transactionIndex = -1;
+
+      for (var i = 0; i < transactions.length; i++) {
+        if (transactions[i].id === id) {
+          transactionIndex = i;
+          break;
+        }
+      }
+
+      $log.debug('Transaction index: ' + transactionIndex);
+
+      if (transactionIndex > -1) {
+        $log.debug('Transaction found');
+        return transactions[transactionIndex];
+      } else {
+        $log.debug('Transaction not found');
+        return null;
+      }
+    },
+    /**
+     * @name save
+     * @method
+     * @memberOf BudgetSupervisor.services.TransactionsService
+     * @param {Object} transaction Transaction object.
+     * @description
+     * The method creates a new transaction or updates existing one.
+     */
+    save: function(transaction) {
+      var i = 0;
+
+      if (transaction.id === -1) {
+        var actualId = -1;
+
+        for (i = 0; i < transactions.length; i++) {
+          if (transactions[i].id > actualId) {
+            actualId = transactions[i].id;
+          }
+        }
+
+        actualId++;
+
+        $log.debug('Creating transaction');
+        transaction.id = actualId;
+        transactions.push(transaction);
+      } else {
+        var transactionIndex = -1;
+
+        for (i = 0; i < transactions.length; i++) {
+          if (transactions[i].id === transaction.id) {
+            transactionIndex = i;
+            break;
+          }
+        }
+
+        $log.debug('Transaction index: ' + transactionIndex);
+
+        if (transactionIndex > -1) {
+          $log.debug('Updating transaction');
+          transactions[transactionIndex] = transaction;
+        }
+      }
+
+      $log.debug('Transactions state after save function:');
+      $log.debug(transactions);
+    },
+    /**
+     * @name query
+     * @method
+     * @memberOf BudgetSupervisor.services.TransactionsService
+     * @returns {Object[]} Transactions list.
+     */
+    query: function() {
+      return transactions;
+    },
+    /**
+     * @name remove
+     * @method
+     * @memberOf BudgetSupervisor.services.TransactionsService
+     * @param {number} id Transaction id.
+     * @description
+     * The method removes transaction from transactions list.
+     */
+    remove: function(id) {
+      $log.debug('Remove function executed with id: ' + id);
+
+      var transactionIndex = -1;
+
+      for (var i = 0; i < transactions.length; i++) {
+        if (transactions[i].id === id) {
+          transactionIndex = i;
+          break;
+        }
+      }
+
+      $log.debug('Transaction index: ' + transactionIndex);
+
+      if (transactionIndex > -1) {
+        $log.debug('Removing transaction');
+        transactions.splice(transactionIndex, 1);
+      }
+
+      $log.debug('Transactions state after remove function:');
+      $log.debug(transactions);
+    },
+    /**
+     * @name reorder
+     * @method
+     * @memberOf BudgetSupervisor.services.TransactionsService
+     * @param {Object} item Transaction object.
+     * @param {number} fromIndex Transaction's old array index.
+     * @param {number} toIndex Transaction's new array index.
+     * @description
+     * The method reorders transactions list.
+     */
+    reorder: function(item, fromIndex, toIndex) {
+      $log.debug('Reorder function executed with parameters: item, fromIndex, toIndex');
+
+      $log.debug(item);
+      $log.debug(fromIndex);
+      $log.debug(toIndex);
+
+      $log.debug('Transactions state before reload function:');
+      $log.debug(transactions);
+
+      $log.debug('Reordering transactions');
+      transactions.splice(fromIndex, 1);
+      transactions.splice(toIndex, 0, item);
+
+      $log.debug('Transactions state after reload function:');
+      $log.debug(transactions);
+    }
+  };
+}])
+;

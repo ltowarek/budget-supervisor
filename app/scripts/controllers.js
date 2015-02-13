@@ -14,11 +14,97 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
 .controller('HomeController', [function () {
 }])
 
-.controller('TransactionsController', function () {
-})
+/**
+ * @class BudgetSupervisor.controllers.TransactionsController
+ * @memberOf BudgetSupervisor.controllers
+ * @description
+ * The controller is able to list all transactions or delete existing ones.
+ */
+.controller('TransactionsController', ['$scope', '$ionicPopup', 'TransactionsService', function ($scope, $ionicPopup, TransactionsService) {
+  $scope.config = {
+    showDelete: false
+  };
 
-.controller('TransactionDetailsController', function () {
-})
+  /**
+   * @name $scope.transactions
+   * @property {Object[]} Transactions list.
+   * @memberOf BudgetSupervisor.controllers.TransactionsController
+   */
+  $scope.transactions = TransactionsService.query();
+
+  /**
+   * @name $scope.toggleDelete
+   * @method
+   * @memberOf BudgetSupervisor.controllers.TransactionsController
+   * @description
+   * The method toggles delete buttons.
+   */
+  $scope.toggleDelete = function() {
+    $scope.config.showDelete = !$scope.config.showDelete;
+  };
+
+  /**
+   * @name $scope.remove
+   * @method
+   * @memberOf BudgetSupervisor.controllers.TransactionsController
+   * @param {number} id Transactions id.
+   * @description
+   * The method shows deletion confirmation and if it is confirmed removes transaction.
+   */
+  $scope.remove = function(id) {
+    var confirmPopup = $ionicPopup.confirm({
+      title: 'Delete transaction',
+      template: 'Are you sure you want to delete this transaction?'
+    });
+
+    confirmPopup.then(function(response) {
+      if (response) {
+        TransactionsService.remove(id);
+      }
+    });
+  };
+}])
+
+/**
+ * @class BudgetSupervisor.controllers.TransactionDetailsController
+ * @memberOf BudgetSupervisor.controllers
+ * @description
+ * The controller is able to edit existing transaction or create a new one.
+ *
+ * If a transaction id is not present in $stateParams or is a NaN or is not present in TransactionsService then a new category template will be used.
+ * Otherwise existing editable transaction will be fetched.
+ */
+.controller('TransactionDetailsController', ['$scope', '$state', '$stateParams', '$log', 'TransactionsService', 'CategoriesService', 'TagsService',  function ($scope, $state, $stateParams, $log, TransactionsService, CategoriesService, TagsService) {
+  $log.debug('State parameters:');
+  $log.debug($stateParams);
+
+  var id = parseInt($stateParams.id);
+  if (isNaN(id)) {
+    id = -1;
+  }
+
+  $scope.transaction = angular.copy(TransactionsService.get(id)) || { id: -1, title: null, value: null, date: '', category: null, tags: null, description: null};
+  $scope.categories = CategoriesService.query();
+  $scope.tags = TagsService.query();
+
+  // Parse a date
+  $scope.transaction.date = new Date($scope.transaction.date);
+
+  /**
+   * @name $scope.save
+   * @method
+   * @memberOf BudgetSupervisor.controllers.TransactionDetailsController
+   * @param {Object} transaction Transaction object.
+   * @description
+   * The method saves transaction and redirects to transactions state.
+   */
+  $scope.save = function(transaction) {
+    // Parse a date
+    transaction.date = transaction.date.toISOString().split('T')[0];
+    TransactionsService.save(transaction);
+    $state.go('transactions');
+  };
+}])
 
 /**
  * @class BudgetSupervisor.controllers.CategoriesController
@@ -33,9 +119,8 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
 
   /**
    * @name $scope.categories
-   * @method
+   * @property {Object[]} Categories list.
    * @memberOf BudgetSupervisor.controllers.CategoriesController
-   * @returns {Object[]} Categories list.
    */
   $scope.categories = CategoriesService.query();
 
@@ -90,7 +175,7 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
     id = -1;
   }
 
-  $scope.category = CategoriesService.get(id) || { id: -1, title: ''};
+  $scope.category = angular.copy(CategoriesService.get(id)) || { id: -1, title: ''};
 
   /**
    * @name $scope.save
@@ -119,9 +204,8 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
 
   /**
    * @name $scope.tags
-   * @method
+   * @property {Object[]} Tags list.
    * @memberOf BudgetSupervisor.controllers.TagsController
-   * @returns {Object[]} Tags list.
    */
   $scope.tags = TagsService.query();
 
@@ -176,7 +260,7 @@ angular.module('BudgetSupervisor.controllers', ['ngMessages', 'ionic'])
     id = -1;
   }
 
-  $scope.tag = TagsService.get(id) || { id: -1, title: ''};
+  $scope.tag = angular.copy(TagsService.get(id)) || { id: -1, title: ''};
 
   /**
    * @name $scope.save
