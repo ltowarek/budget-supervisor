@@ -1,0 +1,9 @@
+{% if transaction_list %}
+    <ul>
+    {% for transaction in transaction_list %}
+        <li><a href="{% url 'transactions:transaction_update' transaction.id %}">{{ transaction.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No transactions are available.</p>
+{% endif %}
