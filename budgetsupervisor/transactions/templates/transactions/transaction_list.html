@@ -1,9 +1,20 @@
-{% if transaction_list %}
-    <ul>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Payee</th>
+        <th>Category</th>
+    </tr>
     {% for transaction in transaction_list %}
-        <li><a href="{% url 'transactions:transaction_update' transaction.id %}">{{ transaction.name }}</a></li>
+    <tr> 
+        <td><a href="{% url 'transactions:transaction_update' transaction.id %}">{{ transaction.name }}</a></td>
+        <td>{{ transaction.date }}</td>
+        <td>{{ transaction.transaction_type }}</td>
+        <td>{{ transaction.amount }}</td>
+        <td>{{ transaction.payee }}</td>
+        <td>{{ transaction.category }}</td>
+    </tr>
     {% endfor %}
-    </ul>
-{% else %}
-    <p>No transactions are available.</p>
-{% endif %}
+</table>
