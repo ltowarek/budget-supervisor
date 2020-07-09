@@ -25,7 +25,6 @@ class Transaction(models.Model):
         DEPOSIT = 'D', _('Deposit')
         TRANSFER = 'T', _('Transfer')
 
-    name = models.CharField(max_length=200)
     date = models.DateField('transaction date')
     transaction_type = models.CharField(max_length=1, choices=TransactionType.choices, default=TransactionType.WITHDRAWAL)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
@@ -33,4 +32,4 @@ class Transaction(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.name
+        return str(self.id)

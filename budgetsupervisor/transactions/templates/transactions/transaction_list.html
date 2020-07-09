@@ -1,6 +1,6 @@
 <table>
     <tr>
-        <th>Name</th>
+        <th>ID</th>
         <th>Date</th>
         <th>Type</th>
         <th>Amount</th>
@@ -9,7 +9,7 @@
     </tr>
     {% for transaction in transaction_list %}
     <tr> 
-        <td><a href="{% url 'transactions:transaction_update' transaction.id %}">{{ transaction.name }}</a></td>
+        <td><a href="{% url 'transactions:transaction_update' transaction.id %}">{{ transaction.id }}</a></td>
         <td>{{ transaction.date }}</td>
         <td>{{ transaction.transaction_type }}</td>
         <td>{{ transaction.amount }}</td>
