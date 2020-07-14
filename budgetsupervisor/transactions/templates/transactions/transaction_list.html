@@ -2,7 +2,6 @@
     <tr>
         <th>ID</th>
         <th>Date</th>
-        <th>Type</th>
         <th>Amount</th>
         <th>Payee</th>
         <th>Category</th>
@@ -11,7 +10,6 @@
     <tr> 
         <td><a href="{% url 'transactions:transaction_update' transaction.id %}">{{ transaction.id }}</a></td>
         <td>{{ transaction.date }}</td>
-        <td>{{ transaction.transaction_type }}</td>
         <td>{{ transaction.amount }}</td>
         <td>{{ transaction.payee }}</td>
         <td>{{ transaction.category }}</td>

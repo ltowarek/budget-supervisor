@@ -14,11 +14,13 @@ class TransactionListView(generic.ListView):
 class TransactionCreate(CreateView):
     model = Transaction
     fields = '__all__'
+    success_url = reverse_lazy('transactions:transaction_list')
 
 
 class TransactionUpdate(UpdateView):
     model = Transaction
     fields = '__all__'
+    success_url = reverse_lazy('transactions:transaction_list')
 
 
 class TransactionDelete(DeleteView):
@@ -34,11 +36,13 @@ class CategoryListView(generic.ListView):
 class CategoryCreate(CreateView):
     model = Category
     fields = '__all__'
+    success_url = reverse_lazy('transactions:category')
 
 
 class CategoryUpdate(UpdateView):
     model = Category
     fields = '__all__'
+    success_url = reverse_lazy('transactions:category')
 
 
 class CategoryDelete(DeleteView):
