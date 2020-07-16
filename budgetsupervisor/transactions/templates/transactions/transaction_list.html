@@ -5,6 +5,7 @@
         <th>Amount</th>
         <th>Payee</th>
         <th>Category</th>
+        <th>Description</th>
     </tr>
     {% for transaction in transaction_list %}
     <tr> 
@@ -13,6 +14,7 @@
         <td>{{ transaction.amount }}</td>
         <td>{{ transaction.payee }}</td>
         <td>{{ transaction.category }}</td>
+        <td>{{ transaction.description }}</td>
     </tr>
     {% endfor %}
 </table>

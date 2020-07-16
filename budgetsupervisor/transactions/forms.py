@@ -1,5 +1,6 @@
 from django import forms
 from django.conf import settings
+from django.utils.dateparse import parse_datetime
 import os
 from .saltedge import SaltEdge
 from .models import Transaction, Category
@@ -13,12 +14,21 @@ class ImportTransactionsForm(forms.Form):
         response = app.get(url)
         data = response.json()
 
-        transactions = []
+        already_imported_ids = Transaction.objects.filter(external_id__isnull=False).values_list("external_id", flat=True)
+
         for imported_transaction in data['data']:
-            t = Transaction()
-            t.date = imported_transaction['made_on']
-            t.amount = imported_transaction['amount']
-            t.payee = ""
-            t.category = Category.objects.get(name="Uncategorized")
-            transactions.append(t)
-        Transaction.objects.bulk_create(transactions)
+            imported_id = int(imported_transaction['id'])
+
+            if imported_id in already_imported_ids:
+                continue
+
+            t, created = Transaction.objects.update_or_create(
+                external_id=imported_id,
+                defaults={
+                    "date": imported_transaction['made_on'],
+                    "amount": imported_transaction['amount'],
+                    "payee": "",
+                    "category": Category.objects.get(name="Uncategorized"),
+                    "description": imported_transaction['description'],
+                }
+            )
