@@ -14,12 +14,14 @@ class ImportTransactionsForm(forms.Form):
         response = app.get(url)
         data = response.json()
 
+        uncategorized = Category.objects.get(name="Uncategorized")
+
         for imported_transaction in data['data']:
             imported_id = int(imported_transaction['id'])
 
             escaped_category = imported_transaction["category"].replace("_", " ")
             category = Category.objects.filter(name__iexact=escaped_category)
-            category = category[0] if category else Category.objects.get(name="Uncategorized")
+            category = category[0] if category else uncategorized
 
             t, created = Transaction.objects.update_or_create(
                 external_id=imported_id,
