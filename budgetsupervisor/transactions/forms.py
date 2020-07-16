@@ -22,13 +22,17 @@ class ImportTransactionsForm(forms.Form):
             if imported_id in already_imported_ids:
                 continue
 
+            escaped_category = imported_transaction["category"].replace("_", " ")
+            category = Category.objects.filter(name__iexact=escaped_category)
+            category = category[0] if category else Category.objects.get(name="Uncategorized")
+
             t, created = Transaction.objects.update_or_create(
                 external_id=imported_id,
                 defaults={
                     "date": imported_transaction['made_on'],
                     "amount": imported_transaction['amount'],
                     "payee": "",
-                    "category": Category.objects.get(name="Uncategorized"),
+                    "category": category,
                     "description": imported_transaction['description'],
                 }
             )
