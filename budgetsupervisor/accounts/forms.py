@@ -58,5 +58,8 @@ class ImportTransactionsForm(forms.Form):
                     "payee": "",
                     "category": category,
                     "description": imported_transaction["description"],
+                    "account_id": Account.objects.get(
+                        external_id=imported_transaction["account_id"]
+                    ).id,
                 },
             )

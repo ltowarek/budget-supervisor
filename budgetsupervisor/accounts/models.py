@@ -34,6 +34,7 @@ class Transaction(models.Model):
     payee = models.CharField(max_length=200, blank=True, default="")
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     description = models.CharField(max_length=200, blank=True, default="")
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
     external_id = models.BigIntegerField(blank=True, null=True, editable=False)
 
     def __str__(self):
