@@ -1,0 +1,14 @@
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Type</th>
+    </tr>
+    {% for account in account_list %}
+    <tr> 
+        <td><a href="{% url 'accounts:account_update' account.id %}">{{ account.id }}</a></td>
+        <td>{{ account.name }}</td>
+        <td>{{ account.get_account_type_display }}</td>
+    </tr>
+    {% endfor %}
+</table>

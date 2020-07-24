@@ -7,23 +7,27 @@ import django.utils.timezone
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('transactions', '0001_initial'),
+        ("transactions", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='transaction',
-            name='created_at',
-            field=models.DateTimeField(default=django.utils.timezone.now, editable=False),
+            model_name="transaction",
+            name="created_at",
+            field=models.DateTimeField(
+                default=django.utils.timezone.now, editable=False
+            ),
         ),
         migrations.AddField(
-            model_name='transaction',
-            name='external_id',
+            model_name="transaction",
+            name="external_id",
             field=models.BigIntegerField(blank=True, editable=False, null=True),
         ),
         migrations.AddField(
-            model_name='transaction',
-            name='updated_at',
-            field=models.DateTimeField(default=django.utils.timezone.now, editable=False),
+            model_name="transaction",
+            name="updated_at",
+            field=models.DateTimeField(
+                default=django.utils.timezone.now, editable=False
+            ),
         ),
     ]
