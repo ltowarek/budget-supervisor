@@ -2,7 +2,7 @@ from django import forms
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
 import os
-from .saltedge import SaltEdge
+from saltedge.saltedge import SaltEdge
 from .models import Transaction, Category
 from decimal import Decimal
 
@@ -10,7 +10,7 @@ from decimal import Decimal
 class ImportTransactionsForm(forms.Form):
     def import_transactions(self):
         app = SaltEdge(
-            os.environ["APP_ID"], os.environ["SECRET"], "transactions/private.pem"
+            os.environ["APP_ID"], os.environ["SECRET"], "saltedge/private.pem"
         )
         url = "https://www.saltedge.com/api/v5/transactions?connection_id={}&account_id={}".format(
             os.environ["CONNECTION_ID"], os.environ["ACCOUNT_ID"]
