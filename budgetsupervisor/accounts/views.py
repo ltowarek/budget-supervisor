@@ -40,24 +40,54 @@ class ImportAccountsView(FormView):
 
 class TransactionListView(generic.ListView):
     def get_queryset(self):
-        return Transaction.objects.all()
+        return Transaction.objects.filter(account_id=self.kwargs["account_id"])
 
 
 class TransactionCreate(CreateView):
     model = Transaction
     fields = "__all__"
-    success_url = reverse_lazy("accounts:transaction_list")
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "accounts:transaction_list",
+            kwargs={"account_id": self.kwargs["account_id"]},
+        )
+
+    def get_queryset(self):
+        return Transaction.objects.filter(
+            account_id=self.kwargs["account_id"], pk=self.kwargs["pk"]
+        )
 
 
 class TransactionUpdate(UpdateView):
     model = Transaction
     fields = "__all__"
-    success_url = reverse_lazy("accounts:transaction_list")
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "accounts:transaction_list",
+            kwargs={"account_id": self.kwargs["account_id"]},
+        )
+
+    def get_queryset(self):
+        return Transaction.objects.filter(
+            account_id=self.kwargs["account_id"], pk=self.kwargs["pk"]
+        )
 
 
 class TransactionDelete(DeleteView):
     model = Transaction
-    success_url = reverse_lazy("accounts:transaction_list")
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "accounts:transaction_list",
+            kwargs={"account_id": self.kwargs["account_id"]},
+        )
+
+    def get_queryset(self):
+        return Transaction.objects.filter(
+            account_id=self.kwargs["account_id"], pk=self.kwargs["pk"]
+        )
 
 
 class CategoryListView(generic.ListView):
@@ -85,8 +115,14 @@ class CategoryDelete(DeleteView):
 class ImportTransactionsView(FormView):
     template_name = "accounts/transaction_import.html"
     form_class = ImportTransactionsForm
-    success_url = reverse_lazy("accounts:transaction_list")
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "accounts:transaction_list",
+            kwargs={"account_id": self.kwargs["account_id"]},
+        )
 
     def form_valid(self, form):
-        form.import_transactions()
+        account = Account.objects.get(pk=self.kwargs["account_id"])
+        form.import_transactions(account.external_id)
         return super().form_valid(form)

@@ -31,12 +31,12 @@ class ImportAccountsForm(forms.Form):
 
 
 class ImportTransactionsForm(forms.Form):
-    def import_transactions(self):
+    def import_transactions(self, account_id):
         app = SaltEdge(
             os.environ["APP_ID"], os.environ["SECRET"], "saltedge/private.pem"
         )
         url = "https://www.saltedge.com/api/v5/transactions?connection_id={}&account_id={}".format(
-            os.environ["CONNECTION_ID"], os.environ["ACCOUNT_ID"]
+            os.environ["CONNECTION_ID"], account_id
         )
         response = app.get(url)
         data = response.json()

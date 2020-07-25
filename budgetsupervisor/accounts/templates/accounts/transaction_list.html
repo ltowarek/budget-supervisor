@@ -9,7 +9,7 @@
     </tr>
     {% for transaction in transaction_list %}
     <tr> 
-        <td><a href="{% url 'accounts:transaction_update' transaction.id %}">{{ transaction.id }}</a></td>
+        <td><a href="{% url 'accounts:transaction_update' pk=transaction.id account_id=transaction.account_id%}">{{ transaction.id }}</a></td>
         <td>{{ transaction.date }}</td>
         <td>{{ transaction.amount }}</td>
         <td>{{ transaction.payee }}</td>
