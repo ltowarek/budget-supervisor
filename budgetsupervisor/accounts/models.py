@@ -3,6 +3,14 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
+class Connection(models.Model):
+    provider = models.CharField(max_length=200, editable=False)
+    external_id = models.BigIntegerField(blank=True, null=True, editable=False)
+
+    def __str__(self):
+        return str(self.id)
+
+
 class Account(models.Model):
     class AccountType(models.TextChoices):
         ACCOUNT = "A", _("Bank account")

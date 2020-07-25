@@ -1,0 +1,12 @@
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Provider</th>
+    </tr>
+    {% for connection in connection_list %}
+    <tr> 
+        <td><a href="{% url 'connections:connection_update' connection.id %}">{{ connection.id }}</a></td>
+        <td>{{ connection.provider }}</td>
+    </tr>
+    {% endfor %}
+</table>

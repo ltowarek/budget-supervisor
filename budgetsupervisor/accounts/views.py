@@ -2,8 +2,49 @@ from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.urls import reverse_lazy
 
-from .models import Account, Category, Transaction
-from .forms import ImportAccountsForm, ImportTransactionsForm
+from .models import Account, Category, Connection, Transaction
+from .forms import (
+    CreateConnectionForm,
+    ImportAccountsForm,
+    ImportConnectionsForm,
+    ImportTransactionsForm,
+)
+
+
+class ConnectionsListView(generic.ListView):
+    def get_queryset(self):
+        return Connection.objects.all()
+
+
+class ConnectionCreate(FormView):
+    template_name = "accounts/connection_create.html"
+    form_class = CreateConnectionForm
+    success_url = reverse_lazy("connections:connection_import")
+
+    def form_valid(self, form):
+        redirect_url = self.request.build_absolute_uri(str(self.success_url))
+        return form.create_connection(redirect_url)
+
+
+class ConnectionUpdate(UpdateView):
+    model = Connection
+    fields = "__all__"
+    success_url = reverse_lazy("connections:connection_list")
+
+
+class ConnectionDelete(DeleteView):
+    model = Connection
+    success_url = reverse_lazy("connections:connection_list")
+
+
+class ImportConnectionsView(FormView):
+    template_name = "accounts/connection_import.html"
+    form_class = ImportConnectionsForm
+    success_url = reverse_lazy("connections:connection_list")
+
+    def form_valid(self, form):
+        form.import_connections()
+        return super().form_valid(form)
 
 
 class AccountListView(generic.ListView):
@@ -34,6 +75,7 @@ class ImportAccountsView(FormView):
     success_url = reverse_lazy("accounts:account_list")
 
     def form_valid(self, form):
+        # TODO: Select connection to import from.
         form.import_accounts()
         return super().form_valid(form)
 
@@ -69,6 +111,7 @@ class ImportTransactionsView(FormView):
     success_url = reverse_lazy("transactions:transaction_list")
 
     def form_valid(self, form):
+        # TODO: Select account to import from.
         account = Account.objects.get(pk=self.kwargs["account_id"])
         form.import_transactions(account.external_id)
         return super().form_valid(form)

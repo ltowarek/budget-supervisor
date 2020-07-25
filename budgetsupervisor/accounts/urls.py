@@ -48,8 +48,30 @@ categories_patterns = (
     "categories",
 )
 
+connections_patterns = (
+    [
+        path("", views.ConnectionsListView.as_view(), name="connection_list"),
+        path("create/", views.ConnectionCreate.as_view(), name="connection_create"),
+        path(
+            "<int:pk>/update",
+            views.ConnectionUpdate.as_view(),
+            name="connection_update",
+        ),
+        path(
+            "<int:pk>/delete",
+            views.ConnectionDelete.as_view(),
+            name="connection_delete",
+        ),
+        path(
+            "import", views.ImportConnectionsView.as_view(), name="connection_import",
+        ),
+    ],
+    "connections",
+)
+
 urlpatterns = [
     path("accounts/", include(accounts_patterns)),
     path("transactions/", include(transactions_patterns)),
     path("categories/", include(categories_patterns)),
+    path("connections/", include(connections_patterns)),
 ]
