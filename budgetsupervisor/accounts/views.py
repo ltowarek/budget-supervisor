@@ -49,7 +49,7 @@ class TransactionCreate(CreateView):
 
     def get_success_url(self):
         return reverse_lazy(
-            "accounts:transaction_list",
+            "transactions:transaction_list",
             kwargs={"account_id": self.kwargs["account_id"]},
         )
 
@@ -65,7 +65,7 @@ class TransactionUpdate(UpdateView):
 
     def get_success_url(self):
         return reverse_lazy(
-            "accounts:transaction_list",
+            "transactions:transaction_list",
             kwargs={"account_id": self.kwargs["account_id"]},
         )
 
@@ -80,7 +80,7 @@ class TransactionDelete(DeleteView):
 
     def get_success_url(self):
         return reverse_lazy(
-            "accounts:transaction_list",
+            "transactions:transaction_list",
             kwargs={"account_id": self.kwargs["account_id"]},
         )
 
@@ -88,6 +88,22 @@ class TransactionDelete(DeleteView):
         return Transaction.objects.filter(
             account_id=self.kwargs["account_id"], pk=self.kwargs["pk"]
         )
+
+
+class ImportTransactionsView(FormView):
+    template_name = "accounts/transaction_import.html"
+    form_class = ImportTransactionsForm
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "transactions:transaction_list",
+            kwargs={"account_id": self.kwargs["account_id"]},
+        )
+
+    def form_valid(self, form):
+        account = Account.objects.get(pk=self.kwargs["account_id"])
+        form.import_transactions(account.external_id)
+        return super().form_valid(form)
 
 
 class CategoryListView(generic.ListView):
@@ -98,31 +114,15 @@ class CategoryListView(generic.ListView):
 class CategoryCreate(CreateView):
     model = Category
     fields = "__all__"
-    success_url = reverse_lazy("accounts:category")
+    success_url = reverse_lazy("categories:category_list")
 
 
 class CategoryUpdate(UpdateView):
     model = Category
     fields = "__all__"
-    success_url = reverse_lazy("accounts:category")
+    success_url = reverse_lazy("categories:category_list")
 
 
 class CategoryDelete(DeleteView):
     model = Category
-    success_url = reverse_lazy("accounts:category")
-
-
-class ImportTransactionsView(FormView):
-    template_name = "accounts/transaction_import.html"
-    form_class = ImportTransactionsForm
-
-    def get_success_url(self):
-        return reverse_lazy(
-            "accounts:transaction_list",
-            kwargs={"account_id": self.kwargs["account_id"]},
-        )
-
-    def form_valid(self, form):
-        account = Account.objects.get(pk=self.kwargs["account_id"])
-        form.import_transactions(account.external_id)
-        return super().form_valid(form)
+    success_url = reverse_lazy("categories:category_list")
