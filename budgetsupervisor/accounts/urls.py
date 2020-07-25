@@ -49,7 +49,7 @@ categories_patterns = (
 )
 
 urlpatterns = [
-    path("", include(accounts_patterns)),
-    path("<int:account_id>/transactions/", include(transactions_patterns)),
+    path("accounts/", include(accounts_patterns)),
+    path("accounts/<int:account_id>/transactions/", include(transactions_patterns)),
     path("categories/", include(categories_patterns)),
 ]
