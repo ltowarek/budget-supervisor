@@ -50,6 +50,6 @@ categories_patterns = (
 
 urlpatterns = [
     path("accounts/", include(accounts_patterns)),
-    path("accounts/<int:account_id>/transactions/", include(transactions_patterns)),
+    path("transactions/", include(transactions_patterns)),
     path("categories/", include(categories_patterns)),
 ]
