@@ -70,6 +70,7 @@ connections_patterns = (
 )
 
 urlpatterns = [
+    path("", views.IndexView.as_view(), name="accounts_index"),
     path("accounts/", include(accounts_patterns)),
     path("transactions/", include(transactions_patterns)),
     path("categories/", include(categories_patterns)),

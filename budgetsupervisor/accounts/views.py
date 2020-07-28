@@ -1,4 +1,4 @@
-from django.views import generic
+from django.views.generic import TemplateView, ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.urls import reverse_lazy
 
@@ -11,7 +11,11 @@ from .forms import (
 )
 
 
-class ConnectionsListView(generic.ListView):
+class IndexView(TemplateView):
+    template_name = "accounts/index.html"
+
+
+class ConnectionsListView(ListView):
     def get_queryset(self):
         return Connection.objects.all()
 
@@ -47,7 +51,7 @@ class ImportConnectionsView(FormView):
         return super().form_valid(form)
 
 
-class AccountListView(generic.ListView):
+class AccountListView(ListView):
     def get_queryset(self):
         return Account.objects.all()
 
@@ -80,7 +84,7 @@ class ImportAccountsView(FormView):
         return super().form_valid(form)
 
 
-class TransactionListView(generic.ListView):
+class TransactionListView(ListView):
     def get_queryset(self):
         accounts = self.request.GET.getlist("account_id")
         if accounts:
@@ -116,7 +120,7 @@ class ImportTransactionsView(FormView):
         return super().form_valid(form)
 
 
-class CategoryListView(generic.ListView):
+class CategoryListView(ListView):
     def get_queryset(self):
         return Category.objects.all()
 
