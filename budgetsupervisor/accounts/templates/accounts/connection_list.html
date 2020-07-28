@@ -1,13 +1,24 @@
-<a href="{% url 'connections:connection_import' %}">Import</a>
+<ul>
+    <li><a href="{% url 'connections:connection_create' %}">Create</a></li>
+    <li><a href="{% url 'connections:connection_import' %}">Import</a></li>
+</ul>
+
 <table>
     <tr>
         <th>ID</th>
         <th>Provider</th>
+        <th>Actions</th>
     </tr>
     {% for connection in connection_list %}
     <tr> 
-        <td><a href="{% url 'connections:connection_update' connection.id %}">{{ connection.id }}</a></td>
+        <td>{{ connection.id }}</td>
         <td>{{ connection.provider }}</td>
+        <td>
+            <ul>
+                <li><a href="{% url 'connections:connection_update' connection.id %}">Update</a></li>
+                <li><a href="{% url 'connections:connection_delete' connection.id %}">Delete</a></li>
+            </ul>
+        </td>
     </tr>
     {% endfor %}
 </table>

@@ -8,7 +8,7 @@ class Connection(models.Model):
     external_id = models.BigIntegerField(blank=True, null=True, editable=False)
 
     def __str__(self):
-        return str(self.id)
+        return str(self.provider)
 
 
 class Account(models.Model):
@@ -33,7 +33,7 @@ class Category(models.Model):
         verbose_name_plural = "Categories"
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 
 class Transaction(models.Model):

@@ -1,9 +1,23 @@
-{% if category_list %}
-    <ul>
+<ul>
+    <li><a href="{% url 'categories:category_create' %}">Create</a></li>
+</ul>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Actions</th>
+    </tr>
     {% for category in category_list %}
-        <li><a href="{% url 'categories:category_update' category.id %}">{{ category.name }}</a></li>
+    <tr> 
+        <td>{{ category.id }}</td>
+        <td>{{ category.name }}</td>
+        <td>
+            <ul>
+                <li><a href="{% url 'categories:category_update' category.id %}">Update</a></li>
+                <li><a href="{% url 'categories:category_delete' category.id %}">Delete</a></li>
+            </ul>
+        </td>
+    </tr>
     {% endfor %}
-    </ul>
-{% else %}
-    <p>No categories are available.</p>
-{% endif %}
+</table>

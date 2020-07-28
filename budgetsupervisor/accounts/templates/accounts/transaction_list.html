@@ -1,4 +1,8 @@
-<a href="{% url 'transactions:transaction_import' %}">Import</a>
+<ul>
+    <li><a href="{% url 'transactions:transaction_create' %}">Create</a></li>
+    <li><a href="{% url 'transactions:transaction_import' %}">Import</a></li>
+</ul>
+
 <table>
     <tr>
         <th>ID</th>
@@ -7,15 +11,22 @@
         <th>Payee</th>
         <th>Category</th>
         <th>Description</th>
+        <th>Actions</th>
     </tr>
     {% for transaction in transaction_list %}
     <tr> 
-        <td><a href="{% url 'transactions:transaction_update' transaction.id%}">{{ transaction.id }}</a></td>
+        <td>{{ transaction.id }}</td>
         <td>{{ transaction.date }}</td>
         <td>{{ transaction.amount }}</td>
         <td>{{ transaction.payee }}</td>
         <td>{{ transaction.category }}</td>
         <td>{{ transaction.description }}</td>
+        <td>
+            <ul>
+                <li><a href="{% url 'transactions:transaction_update' transaction.id %}">Update</a></li>
+                <li><a href="{% url 'transactions:transaction_delete' transaction.id %}">Delete</a></li>
+            </ul>
+        </td>
     </tr>
     {% endfor %}
 </table>
