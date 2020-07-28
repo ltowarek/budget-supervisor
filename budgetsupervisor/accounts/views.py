@@ -75,8 +75,8 @@ class ImportAccountsView(FormView):
     success_url = reverse_lazy("accounts:account_list")
 
     def form_valid(self, form):
-        # TODO: Select connection to import from.
-        form.import_accounts()
+        connection = form.cleaned_data["connection"]
+        form.import_accounts(connection.external_id)
         return super().form_valid(form)
 
 
@@ -111,8 +111,7 @@ class ImportTransactionsView(FormView):
     success_url = reverse_lazy("transactions:transaction_list")
 
     def form_valid(self, form):
-        # TODO: Select account to import from.
-        account = Account.objects.get(pk=self.kwargs["account_id"])
+        account = form.cleaned_data["account"]
         form.import_transactions(account.external_id)
         return super().form_valid(form)
 

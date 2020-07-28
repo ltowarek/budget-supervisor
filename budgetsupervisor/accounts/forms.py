@@ -7,15 +7,28 @@ from saltedge.saltedge import SaltEdge
 from .models import Account, Category, Connection, Transaction
 from decimal import Decimal
 from django.shortcuts import redirect
+from .models import Account, Connection
+
+
+class ConnectionModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.provider
+
+
+class AccountModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.name
 
 
 class ImportAccountsForm(forms.Form):
-    def import_accounts(self):
+    connection = ConnectionModelChoiceField(Connection.objects.all())
+
+    def import_accounts(self, connection_id):
         app = SaltEdge(
             os.environ["APP_ID"], os.environ["SECRET"], "saltedge/private.pem"
         )
         url = "https://www.saltedge.com/api/v5/accounts?connection_id={}".format(
-            os.environ["CONNECTION_ID"]
+            connection_id
         )
         response = app.get(url)
         data = response.json()
@@ -33,6 +46,8 @@ class ImportAccountsForm(forms.Form):
 
 
 class ImportTransactionsForm(forms.Form):
+    account = AccountModelChoiceField(Account.objects.all())
+
     def import_transactions(self, account_id):
         app = SaltEdge(
             os.environ["APP_ID"], os.environ["SECRET"], "saltedge/private.pem"
