@@ -1,3 +1,6 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
 <ul>
     <li><a href="{% url 'accounts:account_create' %}">Create</a></li>
     <li><a href="{% url 'accounts:account_import' %}">Import</a></li>
@@ -11,7 +14,7 @@
         <th>Actions</th>
     </tr>
     {% for account in account_list %}
-    <tr> 
+    <tr>
         <td>{{ account.id }}</td>
         <td>{{ account.name }}</td>
         <td>{{ account.get_account_type_display }}</td>
@@ -24,3 +27,4 @@
     </tr>
     {% endfor %}
 </table>
+{% endblock %}

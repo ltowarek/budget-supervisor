@@ -1,3 +1,6 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
 <ul>
     <li><a href="{% url 'categories:category_create' %}">Create</a></li>
 </ul>
@@ -21,3 +24,4 @@
     </tr>
     {% endfor %}
 </table>
+{% endblock %}

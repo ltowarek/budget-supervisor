@@ -1,3 +1,6 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
 <ul>
     <li><a href="{% url 'connections:connection_create' %}">Create</a></li>
     <li><a href="{% url 'connections:connection_import' %}">Import</a></li>
@@ -22,3 +25,4 @@
     </tr>
     {% endfor %}
 </table>
+{% endblock %}
