@@ -1,5 +1,11 @@
 from django.views.generic import TemplateView, ListView
-from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
+from django.views.generic.edit import (
+    CreateView,
+    UpdateView,
+    DeleteView,
+    FormView,
+    FormMixin,
+)
 from django.urls import reverse_lazy
 
 from .models import Account, Category, Connection, Transaction
@@ -143,23 +149,29 @@ class CategoryDelete(DeleteView):
     success_url = reverse_lazy("categories:category_list")
 
 
-class ReportBalanceView(FormView):
+class ReportBalanceView(FormMixin, TemplateView):
     template_name = "accounts/report_balance.html"
     form_class = ReportBalanceForm
-    success_url = reverse_lazy("reports:report_balance")
 
-    def get_initial(self):
-        return {
-            "accounts": self.request.GET.getlist("accounts"),
-            "from_date": self.request.GET.get("from_date"),
-            "to_date": self.request.GET.get("to_date"),
-        }
+    def get(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["results"] = self.form_class.get_balance(
-            self.request.GET.getlist("accounts"),
-            self.request.GET.get("from_date"),
-            self.request.GET.get("to_date"),
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.GET:
+            kwargs["data"] = self.request.GET
+        return kwargs
+
+    def form_valid(self, form):
+        balance = form.get_balance(
+            form.cleaned_data["accounts"],
+            form.cleaned_data["from_date"],
+            form.cleaned_data["to_date"],
         )
-        return context
+        return self.render_to_response(
+            self.get_context_data(form=form, balance=balance)
+        )
