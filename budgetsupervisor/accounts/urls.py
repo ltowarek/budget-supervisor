@@ -69,10 +69,16 @@ connections_patterns = (
     "connections",
 )
 
+reports_patterns = (
+    [path("balance/", views.ReportBalanceView.as_view(), name="report_balance"),],
+    "reports",
+)
+
 urlpatterns = [
     path("", views.IndexView.as_view(), name="accounts_index"),
     path("accounts/", include(accounts_patterns)),
     path("transactions/", include(transactions_patterns)),
     path("categories/", include(categories_patterns)),
     path("connections/", include(connections_patterns)),
+    path("reports/", include(reports_patterns)),
 ]

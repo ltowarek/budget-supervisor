@@ -8,6 +8,7 @@ from .models import Account, Category, Connection, Transaction
 from decimal import Decimal
 from django.shortcuts import redirect
 from .models import Account, Connection
+from django.db.models import Sum
 
 
 class ConnectionModelChoiceField(forms.ModelChoiceField):
@@ -16,6 +17,11 @@ class ConnectionModelChoiceField(forms.ModelChoiceField):
 
 
 class AccountModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.name
+
+
+class AccountModelMultipleChoiceField(forms.ModelMultipleChoiceField):
     def label_from_instance(self, obj):
         return obj.name
 
@@ -121,3 +127,26 @@ class ImportConnectionsForm(forms.Form):
                 external_id=imported_id,
                 defaults={"provider": imported_connection["provider_name"]},
             )
+
+
+class ReportBalanceForm(forms.Form):
+    accounts = AccountModelMultipleChoiceField(Account.objects.all())
+    from_date = forms.DateField(required=False)
+    to_date = forms.DateField(required=False)
+
+    @classmethod
+    def get_balance(cls, accounts, from_date=None, to_date=None):
+        q = {"account__in": accounts}
+        if from_date:
+            q["date__gte"] = from_date
+        if to_date:
+            q["date__lte"] = to_date
+
+        queryset = (
+            Transaction.objects.filter(**q)
+            .values("category__name")
+            .annotate(Sum("amount"))
+        )
+        balance = {d["category__name"]: d["amount__sum"] for d in queryset}
+        balance["Total"] = sum(balance.values())
+        return balance

@@ -8,6 +8,7 @@ from .forms import (
     ImportAccountsForm,
     ImportConnectionsForm,
     ImportTransactionsForm,
+    ReportBalanceForm,
 )
 
 
@@ -140,3 +141,25 @@ class CategoryUpdate(UpdateView):
 class CategoryDelete(DeleteView):
     model = Category
     success_url = reverse_lazy("categories:category_list")
+
+
+class ReportBalanceView(FormView):
+    template_name = "accounts/report_balance.html"
+    form_class = ReportBalanceForm
+    success_url = reverse_lazy("reports:report_balance")
+
+    def get_initial(self):
+        return {
+            "accounts": self.request.GET.getlist("accounts"),
+            "from_date": self.request.GET.get("from_date"),
+            "to_date": self.request.GET.get("to_date"),
+        }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["results"] = self.form_class.get_balance(
+            self.request.GET.getlist("accounts"),
+            self.request.GET.get("from_date"),
+            self.request.GET.get("to_date"),
+        )
+        return context
