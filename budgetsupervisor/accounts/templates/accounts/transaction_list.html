@@ -19,7 +19,7 @@
     {% for transaction in transaction_list %}
     <tr> 
         <td>{{ transaction.id }}</td>
-        <td>{{ transaction.date }}</td>
+        <td>{{ transaction.date|date:"SHORT_DATE_FORMAT"}}</td>
         <td>{{ transaction.amount }}</td>
         <td>{{ transaction.payee }}</td>
         <td>{{ transaction.category }}</td>
