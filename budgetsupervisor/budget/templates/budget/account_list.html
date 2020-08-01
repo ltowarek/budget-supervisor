@@ -1,0 +1,48 @@
+{% extends "budget/base.html" %}
+
+{% block content %}
+<ul>
+    <li><a href="{% url 'accounts:account_create' %}">Create</a></li>
+    <li><a href="{% url 'accounts:account_import' %}">Import</a></li>
+</ul>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Actions</th>
+    </tr>
+    {% for account in account_list %}
+    <tr>
+        <td>{{ account.id }}</td>
+        <td>{{ account.name }}</td>
+        <td>{{ account.get_account_type_display }}</td>
+        <td>
+            <ul>
+                <li><a href="{% url 'accounts:account_update' account.id %}">Update</a></li>
+                <li><a href="{% url 'accounts:account_delete' account.id %}">Delete</a></li>
+            </ul>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "budget/base.html" %}
+
+{% block content %}
+<ul>
+    <li><a href="{% url 'transactions:transaction_create' %}">Create</a></li>
+    <li><a href="{% url 'transactions:transaction_import' %}">Import</a></li>
+</ul>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Date</th>
+        <th>Amount</th>
+        <th>Payee</th>
+        <th>Category</th>
+        <th>Description</th>
+        <th>Actions</th>
+    </tr>
+    {% for transaction in transaction_list %}
+    <tr> 
+        <td>{{ transaction.id }}</td>
+        <td>{{ transaction.date|date:"SHORT_DATE_FORMAT"}}</td>
+        <td>{{ transaction.amount }}</td>
+        <td>{{ transaction.payee }}</td>
+        <td>{{ transaction.category }}</td>
+        <td>{{ transaction.description }}</td>
+        <td>
+            <ul>
+                <li><a href="{% url 'transactions:transaction_update' transaction.id %}">Update</a></li>
+                <li><a href="{% url 'transactions:transaction_delete' transaction.id %}">Delete</a></li>
+            </ul>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+{% endblock %}
