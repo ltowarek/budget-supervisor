@@ -7,6 +7,7 @@ from django.views.generic.edit import (
     FormMixin,
 )
 from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from .models import Account, Category, Connection, Transaction
 from .forms import (
@@ -18,18 +19,18 @@ from .forms import (
 )
 
 
-class IndexView(TemplateView):
+class IndexView(LoginRequiredMixin, TemplateView):
     template_name = "budget/index.html"
 
 
-class ConnectionsListView(ListView):
+class ConnectionsListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        return Connection.objects.all()
+        return Connection.objects.filter(user=self.request.user).order_by("provider")
 
 
-class ConnectionCreate(FormView):
+class ConnectionCreate(LoginRequiredMixin, FormView):
     template_name = "budget/connection_create.html"
     form_class = CreateConnectionForm
     success_url = reverse_lazy("connections:connection_import")
@@ -39,125 +40,193 @@ class ConnectionCreate(FormView):
         return form.create_connection(redirect_url)
 
 
-class ConnectionUpdate(UpdateView):
+class ConnectionUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Connection
-    fields = "__all__"
+    fields = []
+    success_url = reverse_lazy("connections:connection_list")
+
+    def test_func(self):
+        obj = self.get_object()
+        return obj.user == self.request.user
+
+
+class ConnectionDelete(LoginRequiredMixin, DeleteView):
+    model = Connection
     success_url = reverse_lazy("connections:connection_list")
 
 
-class ConnectionDelete(DeleteView):
-    model = Connection
-    success_url = reverse_lazy("connections:connection_list")
-
-
-class ImportConnectionsView(FormView):
+class ImportConnectionsView(LoginRequiredMixin, FormView):
     template_name = "budget/connection_import.html"
     form_class = ImportConnectionsForm
     success_url = reverse_lazy("connections:connection_list")
 
     def form_valid(self, form):
-        form.import_connections()
+        form.import_connections(self.request.user)
         return super().form_valid(form)
 
 
-class AccountListView(ListView):
+class AccountListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        return Account.objects.all()
+        return Account.objects.filter(user=self.request.user).order_by("name")
 
 
-class AccountCreate(CreateView):
+class AccountCreate(LoginRequiredMixin, CreateView):
     model = Account
-    fields = "__all__"
+    fields = [
+        "name",
+        "account_type",
+    ]
     success_url = reverse_lazy("accounts:account_list")
 
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
 
-class AccountUpdate(UpdateView):
+
+class AccountUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Account
-    fields = "__all__"
+    fields = ["name", "account_type"]
     success_url = reverse_lazy("accounts:account_list")
 
+    def test_func(self):
+        obj = self.get_object()
+        return obj.user == self.request.user
 
-class AccountDelete(DeleteView):
+
+class AccountDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Account
     success_url = reverse_lazy("accounts:account_list")
 
+    def test_func(self):
+        obj = self.get_object()
+        return obj.user == self.request.user
 
-class ImportAccountsView(FormView):
+
+class ImportAccountsView(LoginRequiredMixin, FormView):
     template_name = "budget/account_import.html"
     form_class = ImportAccountsForm
     success_url = reverse_lazy("accounts:account_list")
 
     def form_valid(self, form):
         connection = form.cleaned_data["connection"]
-        form.import_accounts(connection.external_id)
+        form.import_accounts(connection.external_id, self.request.user)
         return super().form_valid(form)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
-class TransactionListView(ListView):
+
+class TransactionListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        accounts = self.request.GET.getlist("account_id")
-        if accounts:
-            return Transaction.objects.filter(account_id__in=accounts)
-        return Transaction.objects.all()
+        return Transaction.objects.filter(user=self.request.user).order_by("-date")
 
 
-class TransactionCreate(CreateView):
+class TransactionCreate(LoginRequiredMixin, CreateView):
     model = Transaction
-    fields = "__all__"
+    fields = ["date", "amount", "payee", "category", "description", "account"]
     success_url = reverse_lazy("transactions:transaction_list")
 
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
 
-class TransactionUpdate(UpdateView):
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        form.fields["account"].queryset = Account.objects.filter(user=self.request.user)
+        form.fields["category"].queryset = Category.objects.filter(
+            user=self.request.user
+        )
+        return form
+
+
+class TransactionUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Transaction
-    fields = "__all__"
+    fields = ["date", "amount", "payee", "category", "description", "account"]
     success_url = reverse_lazy("transactions:transaction_list")
 
+    def test_func(self):
+        obj = self.get_object()
+        return obj.user == self.request.user
 
-class TransactionDelete(DeleteView):
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        form.fields["account"].queryset = Account.objects.filter(user=self.request.user)
+        form.fields["category"].queryset = Category.objects.filter(
+            user=self.request.user
+        )
+        return form
+
+
+class TransactionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Transaction
     success_url = reverse_lazy("transactions:transaction_list")
 
+    def test_func(self):
+        obj = self.get_object()
+        return obj.user == self.request.user
 
-class ImportTransactionsView(FormView):
+
+class ImportTransactionsView(LoginRequiredMixin, FormView):
     template_name = "budget/transaction_import.html"
     form_class = ImportTransactionsForm
     success_url = reverse_lazy("transactions:transaction_list")
 
     def form_valid(self, form):
         account = form.cleaned_data["account"]
-        form.import_transactions(account.external_id, account.connection.external_id)
+        form.import_transactions(
+            account.external_id, account.connection.external_id, self.request.user
+        )
         return super().form_valid(form)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
-class CategoryListView(ListView):
+
+class CategoryListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        return Category.objects.all()
+        return Category.objects.filter(user=self.request.user).order_by("name")
 
 
-class CategoryCreate(CreateView):
+class CategoryCreate(LoginRequiredMixin, CreateView):
     model = Category
-    fields = "__all__"
+    fields = ["name"]
     success_url = reverse_lazy("categories:category_list")
 
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
 
-class CategoryUpdate(UpdateView):
+
+class CategoryUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Category
-    fields = "__all__"
+    fields = ["name"]
     success_url = reverse_lazy("categories:category_list")
 
+    def test_func(self):
+        obj = self.get_object()
+        return obj.user == self.request.user
 
-class CategoryDelete(DeleteView):
+
+class CategoryDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Category
     success_url = reverse_lazy("categories:category_list")
 
+    def test_func(self):
+        obj = self.get_object()
+        return obj.user == self.request.user
 
-class ReportBalanceView(FormMixin, TemplateView):
+
+class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
     template_name = "budget/report_balance.html"
     form_class = ReportBalanceForm
 
@@ -172,11 +241,13 @@ class ReportBalanceView(FormMixin, TemplateView):
         kwargs = super().get_form_kwargs()
         if self.request.GET:
             kwargs["data"] = self.request.GET
+        kwargs["user"] = self.request.user
         return kwargs
 
     def form_valid(self, form):
         balance = form.get_balance(
             form.cleaned_data["accounts"],
+            self.request.user,
             form.cleaned_data["from_date"],
             form.cleaned_data["to_date"],
         )

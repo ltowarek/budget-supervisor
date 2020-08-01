@@ -9,6 +9,7 @@ from decimal import Decimal
 from django.shortcuts import redirect
 from .models import Account, Connection
 from django.db.models import Sum
+from django.contrib.auth.models import User
 
 
 class ConnectionModelChoiceField(forms.ModelChoiceField):
@@ -27,9 +28,14 @@ class AccountModelMultipleChoiceField(forms.ModelMultipleChoiceField):
 
 
 class ImportAccountsForm(forms.Form):
-    connection = ConnectionModelChoiceField(Connection.objects.all())
+    connection = ConnectionModelChoiceField(Connection.objects.none())
 
-    def import_accounts(self, connection_id):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        self.fields["connection"].queryset = Connection.objects.filter(user=user)
+
+    def import_accounts(self, connection_id, user):
         app = SaltEdge(
             os.environ["APP_ID"], os.environ["SECRET"], "saltedge/private.pem"
         )
@@ -48,6 +54,7 @@ class ImportAccountsForm(forms.Form):
                     "name": imported_account["name"],
                     "account_type": Account.AccountType.ACCOUNT,
                     "connection": Connection.objects.get(external_id=connection_id),
+                    "user": user,
                 },
             )
 
@@ -55,7 +62,12 @@ class ImportAccountsForm(forms.Form):
 class ImportTransactionsForm(forms.Form):
     account = AccountModelChoiceField(Account.objects.all())
 
-    def import_transactions(self, account_id, connection_id):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        self.fields["account"].queryset = Account.objects.filter(user=user)
+
+    def import_transactions(self, account_id, connection_id, user):
         app = SaltEdge(
             os.environ["APP_ID"], os.environ["SECRET"], "saltedge/private.pem"
         )
@@ -66,7 +78,6 @@ class ImportTransactionsForm(forms.Form):
         data = response.json()
 
         uncategorized = Category.objects.get(name="Uncategorized")
-        print(data)
 
         for imported_transaction in data["data"]:
             imported_id = int(imported_transaction["id"])
@@ -86,6 +97,7 @@ class ImportTransactionsForm(forms.Form):
                     "account_id": Account.objects.get(
                         external_id=imported_transaction["account_id"]
                     ).id,
+                    "user": user,
                 },
             )
 
@@ -112,7 +124,7 @@ class CreateConnectionForm(forms.Form):
 
 
 class ImportConnectionsForm(forms.Form):
-    def import_connections(self):
+    def import_connections(self, user):
         app = SaltEdge(
             os.environ["APP_ID"], os.environ["SECRET"], "saltedge/private.pem"
         )
@@ -127,18 +139,26 @@ class ImportConnectionsForm(forms.Form):
 
             c, created = Connection.objects.update_or_create(
                 external_id=imported_id,
-                defaults={"provider": imported_connection["provider_name"]},
+                defaults={
+                    "provider": imported_connection["provider_name"],
+                    "user": user,
+                },
             )
 
 
 class ReportBalanceForm(forms.Form):
-    accounts = AccountModelMultipleChoiceField(Account.objects.all())
+    accounts = AccountModelMultipleChoiceField(Account.objects.none())
     from_date = forms.DateField(required=False)
     to_date = forms.DateField(required=False)
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        self.fields["accounts"].queryset = Account.objects.filter(user=user)
+
     @classmethod
-    def get_balance(cls, accounts, from_date=None, to_date=None):
-        q = {"account__in": accounts}
+    def get_balance(cls, accounts, user, from_date=None, to_date=None):
+        q = {"account__in": accounts, "user": user}
         if from_date:
             q["date__gte"] = from_date
         if to_date:

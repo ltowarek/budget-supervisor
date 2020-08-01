@@ -1,11 +1,13 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 
 class Connection(models.Model):
     provider = models.CharField(max_length=200, editable=False)
     external_id = models.BigIntegerField(blank=True, null=True, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.provider)
@@ -24,6 +26,7 @@ class Account(models.Model):
     connection = models.ForeignKey(
         Connection, on_delete=models.CASCADE, blank=True, null=True, editable=False
     )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.name)
@@ -31,6 +34,7 @@ class Account(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     class Meta:
         verbose_name_plural = "Categories"
@@ -47,6 +51,7 @@ class Transaction(models.Model):
     description = models.CharField(max_length=200, blank=True, default="")
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     external_id = models.BigIntegerField(blank=True, null=True, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.id)

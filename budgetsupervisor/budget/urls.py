@@ -76,7 +76,7 @@ reports_patterns = (
 
 urlpatterns = [
     path("", views.IndexView.as_view(), name="budget_index"),
-    path("budget/", include(accounts_patterns)),
+    path("accounts/", include(accounts_patterns)),
     path("transactions/", include(transactions_patterns)),
     path("categories/", include(categories_patterns)),
     path("connections/", include(connections_patterns)),
