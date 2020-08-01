@@ -37,7 +37,9 @@ class ConnectionCreate(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         redirect_url = self.request.build_absolute_uri(str(self.success_url))
-        return form.create_connection(redirect_url)
+        return form.create_connection(
+            redirect_url, self.request.user.profile.external_id
+        )
 
 
 class ConnectionUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -61,7 +63,9 @@ class ImportConnectionsView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy("connections:connection_list")
 
     def form_valid(self, form):
-        form.import_connections(self.request.user)
+        form.import_connections(
+            self.request.user, self.request.user.profile.external_id
+        )
         return super().form_valid(form)
 
 

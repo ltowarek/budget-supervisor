@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
+from django.db.models.signals import post_save
 
 
 class Connection(models.Model):
@@ -41,6 +42,34 @@ class Category(models.Model):
 
     def __str__(self):
         return str(self.name)
+
+
+def populate_user_categories(sender, instance, created, **kwargs):
+    if created:
+        categories = [
+            "Auto and Transport",
+            "Bills and Utilities",
+            "Education",
+            "Entertainment",
+            "Fees and Charges",
+            "Food and Dining",
+            "Gifts and Donations",
+            "Health and Fitness",
+            "Home",
+            "Income",
+            "Insurance",
+            "Kids",
+            "Pets",
+            "Shopping",
+            "Transfer",
+            "Travel",
+            "Uncategorized",
+        ]
+        for category in categories:
+            Category.objects.create(name=category, user=instance)
+
+
+post_save.connect(populate_user_categories, sender=settings.AUTH_USER_MODEL)
 
 
 class Transaction(models.Model):

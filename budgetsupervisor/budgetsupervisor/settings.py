@@ -31,7 +31,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    "budget.apps.AccountsConfig",
+    "budget.apps.BudgetConfig",
+    "users.apps.UsersConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -55,7 +56,6 @@ ROOT_URLCONF = "budgetsupervisor.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -116,4 +116,4 @@ STATIC_URL = "/static/"
 
 LOGIN_URL = "/users/login"
 LOGIN_REDIRECT_URL = "/"
-AUTH_USER_MODEL = "auth.User"
+AUTH_USER_MODEL = "users.User"

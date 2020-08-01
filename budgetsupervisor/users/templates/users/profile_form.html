@@ -1,0 +1,15 @@
+{% extends "budget/base.html" %}
+
+{% block content %}
+<form action="" method="post">
+  {% csrf_token %}
+  <table>
+    {{ form.as_table }}
+  </table>
+  <input type="submit" value="Submit">
+</form>
+
+{% if not form.instance.external_id %}
+<a href="{% url 'profile_connect' %}">Enable external synchronization</a>
+{% endif %}
+{% endblock %}

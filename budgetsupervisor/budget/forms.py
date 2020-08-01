@@ -77,13 +77,13 @@ class ImportTransactionsForm(forms.Form):
         response = app.get(url)
         data = response.json()
 
-        uncategorized = Category.objects.get(name="Uncategorized")
+        uncategorized = Category.objects.get(name="Uncategorized", user=user)
 
         for imported_transaction in data["data"]:
             imported_id = int(imported_transaction["id"])
 
             escaped_category = imported_transaction["category"].replace("_", " ")
-            category = Category.objects.filter(name__iexact=escaped_category)
+            category = Category.objects.filter(name__iexact=escaped_category, user=user)
             category = category[0] if category else uncategorized
 
             t, created = Transaction.objects.update_or_create(
@@ -103,7 +103,7 @@ class ImportTransactionsForm(forms.Form):
 
 
 class CreateConnectionForm(forms.Form):
-    def create_connection(self, redirect_url):
+    def create_connection(self, redirect_url, customer_id):
         app = SaltEdge(
             os.environ["APP_ID"], os.environ["SECRET"], "saltedge/private.pem"
         )
@@ -111,7 +111,7 @@ class CreateConnectionForm(forms.Form):
         payload = json.dumps(
             {
                 "data": {
-                    "customer_id": str(os.environ["CUSTOMER_ID"]),
+                    "customer_id": str(customer_id),
                     "consent": {"scopes": ["account_details", "transactions_details"]},
                     "attempt": {"return_to": redirect_url},
                 }
@@ -124,12 +124,12 @@ class CreateConnectionForm(forms.Form):
 
 
 class ImportConnectionsForm(forms.Form):
-    def import_connections(self, user):
+    def import_connections(self, user, customer_id):
         app = SaltEdge(
             os.environ["APP_ID"], os.environ["SECRET"], "saltedge/private.pem"
         )
         url = "https://www.saltedge.com/api/v5/connections?customer_id={}".format(
-            os.environ["CUSTOMER_ID"]
+            customer_id
         )
         response = app.get(url)
         data = response.json()

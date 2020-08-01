@@ -14,6 +14,7 @@
                     <li><a href="{% url 'categories:category_list' %}">Categories</a></li>
                     <li><a href="{% url 'reports:report_balance' %}">Balance</a></li>
                     <li>User: {{ user.get_username }}</li>
+                    <li><a href="{% url 'profile'%}">Profile</a></li>   
                     <li><a href="{% url 'logout'%}?next={{request.path}}">Logout</a></li>   
                 {% else %}
                     <li><a href="{% url 'login'%}?next={{request.path}}">Login</a></li>   
