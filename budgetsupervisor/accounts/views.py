@@ -23,6 +23,8 @@ class IndexView(TemplateView):
 
 
 class ConnectionsListView(ListView):
+    paginate_by = 25
+
     def get_queryset(self):
         return Connection.objects.all()
 
@@ -59,6 +61,8 @@ class ImportConnectionsView(FormView):
 
 
 class AccountListView(ListView):
+    paginate_by = 25
+
     def get_queryset(self):
         return Account.objects.all()
 
@@ -92,6 +96,8 @@ class ImportAccountsView(FormView):
 
 
 class TransactionListView(ListView):
+    paginate_by = 25
+
     def get_queryset(self):
         accounts = self.request.GET.getlist("account_id")
         if accounts:
@@ -128,6 +134,8 @@ class ImportTransactionsView(FormView):
 
 
 class CategoryListView(ListView):
+    paginate_by = 25
+
     def get_queryset(self):
         return Category.objects.all()
 
