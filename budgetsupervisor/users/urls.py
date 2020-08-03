@@ -15,4 +15,5 @@ urlpatterns = [
     ),
     path("profile/", views.ProfileUpdateView.as_view(), name="profile"),
     path("profile/connect", views.ProfileConnectView.as_view(), name="profile_connect"),
+    path("singup/", views.SignUpView.as_view(), name="signup"),
 ]

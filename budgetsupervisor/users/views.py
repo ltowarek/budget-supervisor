@@ -1,8 +1,14 @@
-from django.views.generic.edit import UpdateView, FormView
+from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from .models import Profile
-from .forms import ProfileConnectForm
+from .forms import ProfileConnectForm, SignUpForm
+
+
+class SignUpView(CreateView):
+    template_name = "users/signup.html"
+    form_class = SignUpForm
+    success_url = reverse_lazy("login")
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
