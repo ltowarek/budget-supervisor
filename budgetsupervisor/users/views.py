@@ -29,5 +29,5 @@ class ProfileConnectView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         profile = self.request.user.profile
         if not profile.external_id:
-            form.create_customer(profile)
+            Profile.objects.create_in_saltedge(profile)
         return super().form_valid(form)

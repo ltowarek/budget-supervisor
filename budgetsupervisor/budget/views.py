@@ -37,9 +37,10 @@ class ConnectionCreate(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         redirect_url = self.request.build_absolute_uri(str(self.success_url))
-        return form.create_connection(
+        connect_url = Connection.objects.create_in_saltedge(
             redirect_url, self.request.user.profile.external_id
         )
+        return redirect(connect_url)
 
 
 class ConnectionUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -63,7 +64,7 @@ class ImportConnectionsView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy("connections:connection_list")
 
     def form_valid(self, form):
-        form.import_connections(
+        Connection.objects.import_from_saltedge(
             self.request.user, self.request.user.profile.external_id
         )
         return super().form_valid(form)
@@ -115,7 +116,7 @@ class ImportAccountsView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         connection = form.cleaned_data["connection"]
-        form.import_accounts(connection.external_id, self.request.user)
+        Account.objects.import_from_saltedge(connection.external_id, self.request.user)
         return super().form_valid(form)
 
     def get_form_kwargs(self):
@@ -183,7 +184,7 @@ class ImportTransactionsView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         account = form.cleaned_data["account"]
-        form.import_transactions(
+        Transaction.objects.import_from_saltedge(
             account.external_id, account.connection.external_id, self.request.user
         )
         return super().form_valid(form)
@@ -249,7 +250,7 @@ class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
         return kwargs
 
     def form_valid(self, form):
-        balance = form.get_balance(
+        balance = Transaction.objects.get_balance(
             form.cleaned_data["accounts"],
             self.request.user,
             form.cleaned_data["from_date"],
