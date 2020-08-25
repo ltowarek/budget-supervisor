@@ -158,3 +158,149 @@ def transaction_foo(transaction_factory):
 
 def test_transaction_str(transaction_foo):
     assert str(transaction_foo) == "1"
+
+
+def test_transaction_get_balance_filter_by_user(
+    user_factory, account_factory, category_factory, transaction_factory
+):
+    user_abc = user_factory("abc")
+    user_xyz = user_factory("xyz")
+
+    account_abc = account_factory("abc", user=user_abc)
+    account_xyz = account_factory("xyz", user=user_xyz)
+
+    category_abc = category_factory("abc", user_abc)
+    category_xyz = category_factory("xyz", user_xyz)
+
+    transaction_abc = transaction_factory(
+        amount=123.00, account=account_abc, user=user_abc, category=category_abc
+    )
+    transaction_xyz = transaction_factory(
+        amount=256.00, account=account_xyz, user=user_xyz, category=category_xyz
+    )
+
+    output = Transaction.objects.get_balance(
+        accounts=[account_abc, account_xyz], user=user_abc,
+    )
+
+    assert output == {"abc": 123.00, "Total": 123.00}
+
+
+def test_transaction_get_balance_filter_by_account(
+    user_factory, account_factory, category_factory, transaction_factory
+):
+    user_abc = user_factory("abc")
+
+    account_abc_1 = account_factory("abc_1", user=user_abc)
+    account_abc_2 = account_factory("abc_2", user=user_abc)
+    account_abc_3 = account_factory("abc_3", user=user_abc)
+
+    category_abc = category_factory("abc", user_abc)
+
+    transaction_abc_1 = transaction_factory(
+        amount=4.00, account=account_abc_1, user=user_abc, category=category_abc
+    )
+    transaction_abc_2 = transaction_factory(
+        amount=5.00, account=account_abc_2, user=user_abc, category=category_abc
+    )
+    transaction_abc_3 = transaction_factory(
+        amount=6.00, account=account_abc_3, user=user_abc, category=category_abc
+    )
+
+    output = Transaction.objects.get_balance(
+        accounts=[account_abc_1, account_abc_2], user=user_abc,
+    )
+
+    assert output == {"abc": 4.00 + 5.00, "Total": 4.00 + 5.00}
+
+
+def test_transaction_get_balance_per_category(
+    user_factory, account_factory, category_factory, transaction_factory
+):
+    user_abc = user_factory("abc")
+    account_abc = account_factory("abc", user=user_abc)
+    category_abc_1 = category_factory("abc_1", user_abc)
+    category_abc_2 = category_factory("abc_2", user_abc)
+
+    transaction_abc_1 = transaction_factory(
+        amount=4.00, account=account_abc, user=user_abc, category=category_abc_1
+    )
+    transaction_abc_2 = transaction_factory(
+        amount=5.00, account=account_abc, user=user_abc, category=category_abc_2
+    )
+
+    output = Transaction.objects.get_balance(accounts=[account_abc], user=user_abc,)
+
+    assert output == {"abc_1": 4.00, "abc_2": 5.00, "Total": 4.00 + 5.00}
+
+
+def test_transaction_get_balance_filter_by_from_date(
+    user_factory, account_factory, category_factory, transaction_factory
+):
+    user_abc = user_factory("abc")
+    account_abc = account_factory("abc", user=user_abc)
+    category_abc = category_factory("abc", user_abc)
+
+    transaction_abc_1 = transaction_factory(
+        amount=4.00,
+        account=account_abc,
+        date=datetime.date(2020, 2, 1),
+        user=user_abc,
+        category=category_abc,
+    )
+    transaction_abc_2 = transaction_factory(
+        amount=5.00,
+        account=account_abc,
+        date=datetime.date(2020, 3, 1),
+        user=user_abc,
+        category=category_abc,
+    )
+    transaction_abc_3 = transaction_factory(
+        amount=6.00,
+        account=account_abc,
+        date=datetime.date(2020, 4, 1),
+        user=user_abc,
+        category=category_abc,
+    )
+
+    output = Transaction.objects.get_balance(
+        accounts=[account_abc], user=user_abc, from_date=datetime.date(2020, 3, 1)
+    )
+
+    assert output == {"abc": 5.00 + 6.00, "Total": 5.00 + 6.00}
+
+
+def test_transaction_get_balance_filter_by_to_date(
+    user_factory, account_factory, category_factory, transaction_factory
+):
+    user_abc = user_factory("abc")
+    account_abc = account_factory("abc", user=user_abc)
+    category_abc = category_factory("abc", user_abc)
+
+    transaction_abc_1 = transaction_factory(
+        amount=4.00,
+        account=account_abc,
+        date=datetime.date(2020, 2, 1),
+        user=user_abc,
+        category=category_abc,
+    )
+    transaction_abc_2 = transaction_factory(
+        amount=5.00,
+        account=account_abc,
+        date=datetime.date(2020, 3, 1),
+        user=user_abc,
+        category=category_abc,
+    )
+    transaction_abc_3 = transaction_factory(
+        amount=6.00,
+        account=account_abc,
+        date=datetime.date(2020, 4, 1),
+        user=user_abc,
+        category=category_abc,
+    )
+
+    output = Transaction.objects.get_balance(
+        accounts=[account_abc], user=user_abc, to_date=datetime.date(2020, 3, 1)
+    )
+
+    assert output == {"abc": 4.00 + 5.00, "Total": 4.00 + 5.00}
