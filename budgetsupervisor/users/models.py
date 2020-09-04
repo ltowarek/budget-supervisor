@@ -20,6 +20,9 @@ class ProfileManager(models.Manager):
         profile.external_id = data["data"]["id"]
         profile.save()
 
+    def remove_from_saltedge(self, profile):
+        pass
+
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
