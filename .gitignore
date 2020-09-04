@@ -139,5 +139,5 @@ cython_debug/
 
 # Custom
 .vscode
-secrets.sh
+*.env
 *.pem
