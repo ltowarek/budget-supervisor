@@ -28,3 +28,12 @@ class MockSaltEdgeWrapper(SaltEdgeWrapper):
     def list_customers(self):
         # TODO: Handle paging
         return {"data": self.customers, "meta": {"next_id": None, "next_page": None}}
+
+    def create_connect_session(
+        self,
+        customer_id,
+        redirect_url,
+        mock_expiration="2020-09-04T14:54:35Z",
+        mock_url="https://www.saltedge.com/connect?token=GENERATED_TOKEN",
+    ):
+        return {"data": {"expires_at": mock_expiration, "connect_url": mock_url,}}

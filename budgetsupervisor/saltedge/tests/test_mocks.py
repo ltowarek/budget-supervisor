@@ -121,3 +121,21 @@ def test_list_customers_successfully(
     assert mocked_customer_b in mocked["data"]
     assert "next_id" in mocked["meta"]
     assert "next_page" in mocked["meta"]
+
+
+def test_create_connect_session_successfully(
+    mock_wrapper, actual_wrapper, mocked_customer_1234, actual_customer_1234
+):
+    redirect_url = "https://www.google.com"
+
+    actual = actual_wrapper.create_connect_session(
+        actual_customer_1234["id"], redirect_url
+    )
+    mocked = mock_wrapper.create_connect_session(
+        mocked_customer_1234["id"],
+        redirect_url,
+        mock_expiration=actual["data"]["expires_at"],
+        mock_url=actual["data"]["connect_url"],
+    )
+
+    assert mocked == actual

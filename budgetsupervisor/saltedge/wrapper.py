@@ -25,3 +25,18 @@ class SaltEdgeWrapper:
         response = self.salt_edge.get(url)
         response.raise_for_status()
         return response.json()
+
+    def create_connect_session(self, customer_id, redirect_url):
+        url = "https://www.saltedge.com/api/v5/connect_sessions/create"
+        payload = json.dumps(
+            {
+                "data": {
+                    "customer_id": str(customer_id),
+                    "consent": {"scopes": ["account_details", "transactions_details"]},
+                    "attempt": {"return_to": redirect_url},
+                }
+            }
+        )
+        response = self.salt_edge.post(url, payload)
+        response.raise_for_status()
+        return response.json()
