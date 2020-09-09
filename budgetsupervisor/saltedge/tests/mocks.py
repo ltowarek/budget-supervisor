@@ -8,6 +8,7 @@ class MockSaltEdgeWrapper(SaltEdgeWrapper):
         self.customers = []
         self.connections = []
         self.accounts = []
+        self.transactions = []
 
     def create_customer(
         self,
@@ -141,5 +142,35 @@ class MockSaltEdgeWrapper(SaltEdgeWrapper):
     def list_accounts(self, connection_id):
         return {
             "data": self.accounts,
+            "meta": {"next_id": None, "next_page": None,},
+        }
+
+    def create_transaction(self, account_id):
+        transaction = {
+            "id": "444444444444444444",
+            "account_id": str(account_id),
+            "duplicated": False,
+            "mode": "normal",
+            "status": "posted",
+            "made_on": "2020-05-03",
+            "amount": -200.0,
+            "currency_code": "USD",
+            "description": "test transaction",
+            "category": "advertising",
+            "extra": {
+                "original_amount": -3974.6,
+                "original_currency_code": "CZK",
+                "posting_date": "2020-05-07",
+                "time": "23:56:12",
+            },
+            "created_at": "2020-09-05T11:35:46Z",
+            "updated_at": "2020-09-06T11:35:46Z",
+        }
+        self.transactions.append(transaction)
+        return transaction
+
+    def list_transactions(self, connection_id, account_id):
+        return {
+            "data": self.transactions,
             "meta": {"next_id": None, "next_page": None,},
         }

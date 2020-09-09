@@ -79,6 +79,16 @@ def mocked_connection_1234(mock_wrapper, mocked_customer_1234):
     return mock_wrapper.create_connection(mocked_customer_1234["id"])["data"]
 
 
+@pytest.fixture
+def predefined_account(actual_wrapper, predefined_connection):
+    return actual_wrapper.list_accounts(predefined_connection["id"])["data"][0]
+
+
+@pytest.fixture
+def mocked_account_1234(mock_wrapper, mocked_connection_1234):
+    return mock_wrapper.create_account(mocked_connection_1234["id"])
+
+
 def check_customer_schema(customer):
     assert ["id", "identifier", "secret"] == list(customer.keys())
 
@@ -118,6 +128,24 @@ def check_account_schema(account):
         "created_at",
         "updated_at",
     ] == list(account.keys())
+
+
+def check_transaction_schema(transaction):
+    assert [
+        "id",
+        "account_id",
+        "duplicated",
+        "mode",
+        "status",
+        "made_on",
+        "amount",
+        "currency_code",
+        "description",
+        "category",
+        "extra",
+        "created_at",
+        "updated_at",
+    ] == list(transaction.keys())
 
 
 def test_create_customer_successfully(mock_wrapper, actual_customer_factory):
@@ -248,6 +276,34 @@ def test_list_accounts_successfully(
         assert ["data", "meta"] == list(response.keys())
         for account in response["data"]:
             check_account_schema(account)
+        assert ["next_id", "next_page"] == list(response["meta"].keys())
+
+    check_response(actual)
+    check_response(mocked)
+
+
+def test_list_transactions_successfully(
+    mock_wrapper,
+    actual_wrapper,
+    mocked_connection_1234,
+    predefined_connection,
+    mocked_account_1234,
+    predefined_account,
+):
+    mock_wrapper.create_transaction(mocked_account_1234["id"])
+    mock_wrapper.create_transaction(mocked_account_1234["id"])
+
+    actual = actual_wrapper.list_transactions(
+        predefined_connection["id"], predefined_account["id"]
+    )
+    mocked = mock_wrapper.list_transactions(
+        mocked_connection_1234["id"], mocked_account_1234["id"]
+    )
+
+    def check_response(response):
+        assert ["data", "meta"] == list(response.keys())
+        for transaction in response["data"]:
+            check_transaction_schema(transaction)
         assert ["next_id", "next_page"] == list(response["meta"].keys())
 
     check_response(actual)
