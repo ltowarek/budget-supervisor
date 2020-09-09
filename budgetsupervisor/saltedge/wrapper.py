@@ -83,3 +83,11 @@ class SaltEdgeWrapper:
         response = self.salt_edge.get(url)
         response.raise_for_status()
         return response.json()
+
+    def list_accounts(self, connection_id):
+        url = "https://www.saltedge.com/api/v5/accounts?connection_id={}".format(
+            connection_id
+        )
+        response = self.salt_edge.get(url)
+        response.raise_for_status()
+        return response.json()

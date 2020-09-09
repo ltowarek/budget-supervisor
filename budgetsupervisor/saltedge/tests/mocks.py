@@ -7,6 +7,7 @@ class MockSaltEdgeWrapper(SaltEdgeWrapper):
         super().__init__(app_id, secret, private_path)
         self.customers = []
         self.connections = []
+        self.accounts = []
 
     def create_customer(
         self,
@@ -119,5 +120,26 @@ class MockSaltEdgeWrapper(SaltEdgeWrapper):
     def list_connections(self, customer_id):
         return {
             "data": self.connections,
+            "meta": {"next_id": None, "next_page": None,},
+        }
+
+    def create_account(self, connection_id):
+        account = {
+            "id": "333333333333333333",
+            "connection_id": str(connection_id),
+            "name": "Fake account 1",
+            "nature": "card",
+            "balance": 2007.2,
+            "currency_code": "EUR",
+            "extra": {"client_name": "Fake name"},
+            "created_at": "2020-09-07T08:35:46Z",
+            "updated_at": "2020-09-07T08:35:46Z",
+        }
+        self.accounts.append(account)
+        return account
+
+    def list_accounts(self, connection_id):
+        return {
+            "data": self.accounts,
             "meta": {"next_id": None, "next_page": None,},
         }

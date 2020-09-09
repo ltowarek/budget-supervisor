@@ -60,18 +60,8 @@ def actual_customer_1234(actual_customer_factory):
 
 
 @pytest.fixture
-def mocked_customer_factory(mock_wrapper):
-    def create_customer(
-        *args, **kwargs,
-    ):
-        return mock_wrapper.create_customer(*args, **kwargs)
-
-    return create_customer
-
-
-@pytest.fixture
-def mocked_customer_1234(mocked_customer_factory):
-    return mocked_customer_factory("test_1234")["data"]
+def mocked_customer_1234(mock_wrapper):
+    return mock_wrapper.create_customer("test_1234")["data"]
 
 
 @pytest.fixture
@@ -85,18 +75,8 @@ def predefined_connection(actual_wrapper):
 
 
 @pytest.fixture
-def mocked_connection_factory(mock_wrapper):
-    def create_connection(
-        *args, **kwargs,
-    ):
-        return mock_wrapper.create_connection(*args, **kwargs)
-
-    return create_connection
-
-
-@pytest.fixture
-def mocked_connection_1234(mocked_connection_factory, mocked_customer_1234):
-    return mocked_connection_factory(mocked_customer_1234["id"])["data"]
+def mocked_connection_1234(mock_wrapper, mocked_customer_1234):
+    return mock_wrapper.create_connection(mocked_customer_1234["id"])["data"]
 
 
 def check_customer_schema(customer):
@@ -124,6 +104,20 @@ def check_connection_schema(connection):
         "last_consent_id",
         "last_attempt",
     ] == list(connection.keys())
+
+
+def check_account_schema(account):
+    assert [
+        "id",
+        "connection_id",
+        "name",
+        "nature",
+        "balance",
+        "currency_code",
+        "extra",
+        "created_at",
+        "updated_at",
+    ] == list(account.keys())
 
 
 def test_create_customer_successfully(mock_wrapper, actual_customer_factory):
@@ -168,12 +162,12 @@ def test_show_customer_successfully(
 
 
 def test_list_customers_successfully(
-    mock_wrapper, actual_wrapper, mocked_customer_factory, actual_customer_factory
+    mock_wrapper, actual_wrapper, actual_customer_factory
 ):
     actual_customer_factory("test_a")
     actual_customer_factory("test_b")
-    mocked_customer_factory("test_a")
-    mocked_customer_factory("test_b")
+    mock_wrapper.create_customer("test_a")
+    mock_wrapper.create_customer("test_b")
 
     actual = actual_wrapper.list_customers()
     mocked = mock_wrapper.list_customers()
@@ -223,14 +217,10 @@ def test_show_connection_successfully(
 
 
 def test_list_connections_successfully(
-    mock_wrapper,
-    actual_wrapper,
-    mocked_customer_1234,
-    predefined_customer,
-    mocked_connection_factory,
+    mock_wrapper, actual_wrapper, mocked_customer_1234, predefined_customer,
 ):
-    mocked_connection_factory(mocked_customer_1234["id"])
-    mocked_connection_factory(mocked_customer_1234["id"])
+    mock_wrapper.create_connection(mocked_customer_1234["id"])
+    mock_wrapper.create_connection(mocked_customer_1234["id"])
 
     actual = actual_wrapper.list_connections(predefined_customer["id"])
     mocked = mock_wrapper.list_connections(mocked_customer_1234["id"])
@@ -239,6 +229,25 @@ def test_list_connections_successfully(
         assert ["data", "meta"] == list(response.keys())
         for connection in response["data"]:
             check_connection_schema(connection)
+        assert ["next_id", "next_page"] == list(response["meta"].keys())
+
+    check_response(actual)
+    check_response(mocked)
+
+
+def test_list_accounts_successfully(
+    mock_wrapper, actual_wrapper, mocked_connection_1234, predefined_connection
+):
+    mock_wrapper.create_account(mocked_connection_1234["id"])
+    mock_wrapper.create_account(mocked_connection_1234["id"])
+
+    actual = actual_wrapper.list_accounts(predefined_connection["id"])
+    mocked = mock_wrapper.list_accounts(mocked_connection_1234["id"])
+
+    def check_response(response):
+        assert ["data", "meta"] == list(response.keys())
+        for account in response["data"]:
+            check_account_schema(account)
         assert ["next_id", "next_page"] == list(response["meta"].keys())
 
     check_response(actual)
