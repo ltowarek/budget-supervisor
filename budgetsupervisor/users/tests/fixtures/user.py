@@ -33,5 +33,24 @@ def user_foo(user_factory):
 
 
 @pytest.fixture
-def profile_foo(user_foo):
-    return user_foo.profile
+def profile_factory(db, user_foo):
+    def create_profile(
+        user=user_foo, external_id=None,
+    ):
+        profile = user.profile
+        profile.external_id = external_id
+        profile.save()
+        return profile
+
+    return create_profile
+
+
+@pytest.fixture
+def profile_foo(profile_factory):
+    return profile_factory()
+
+
+@pytest.fixture
+def profile_foo_external(profile_factory, mock_saltedge):
+    data = mock_saltedge.create_customer("foo")
+    return profile_factory(external_id=data["data"]["id"])

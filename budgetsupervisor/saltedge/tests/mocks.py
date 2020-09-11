@@ -1,5 +1,6 @@
 from ..wrapper import SaltEdgeWrapper
 import json
+from types import SimpleNamespace
 
 
 class MockSaltEdgeWrapper(SaltEdgeWrapper):
@@ -9,15 +10,20 @@ class MockSaltEdgeWrapper(SaltEdgeWrapper):
         self.accounts = []
         self.transactions = []
 
+        self.mock_create_connect_session = SimpleNamespace(
+            expires_at="2020-09-04T14:54:35Z",
+            connect_url="https://www.saltedge.com/connect?token=GENERATED_TOKEN",
+        )
+
     def create_customer(
         self,
-        idetifier,
+        identifier,
         mock_id="222222222222222222",
         mock_secret="AtQX6Q8vRyMrPjUVtW7J_O1n06qYQ25bvUJ8CIC80-8",
     ):
         customer = {
             "id": mock_id,
-            "identifier": idetifier,
+            "identifier": identifier,
             "secret": mock_secret,
         }
         self.customers.append(customer)
@@ -40,14 +46,14 @@ class MockSaltEdgeWrapper(SaltEdgeWrapper):
     ):
         return {
             "data": {
-                "expires_at": "2020-09-04T14:54:35Z",
-                "connect_url": "https://www.saltedge.com/connect?token=GENERATED_TOKEN",
+                "expires_at": self.mock_create_connect_session.expires_at,
+                "connect_url": self.mock_create_connect_session.connect_url,
             }
         }
 
     def create_connection(self, customer_id):
         connection = {
-            "id": "111111111111111111",
+            "id": len(self.connections),
             "secret": "AtQX6Q8vRyMrPjUVtW7J_O1n06qYQ25bvUJ8CIC80-8",
             "provider_id": "1234",
             "provider_code": "fakebank_simple_xf",

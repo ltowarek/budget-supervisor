@@ -20,8 +20,79 @@ def connection_foo(connection_factory):
     return connection_factory("foo")
 
 
+@pytest.fixture
+def connection_foo_external(connection_factory, profile_foo_external, mock_saltedge):
+    data = mock_saltedge.create_connection(profile_foo_external.external_id)
+    return connection_factory(
+        provider="foo", user=profile_foo_external.user, external_id=data["data"]["id"]
+    )
+
+
 def test_connection_str(connection_foo):
     assert str(connection_foo) == "foo"
+
+
+def test_connection_create_in_saltedge(profile_foo_external, mock_saltedge):
+    mock_saltedge.mock_create_connect_session.connect_url = "foo.com"
+    connect_url = Connection.objects.create_in_saltedge(
+        "redirect_url", profile_foo_external.external_id, mock_saltedge
+    )
+    assert connect_url == "foo.com"
+
+
+def test_connection_import_from_saltedge_no_objects(
+    profile_foo_external, mock_saltedge
+):
+    assert Connection.objects.all().count() == 0
+    Connection.objects.import_from_saltedge(
+        profile_foo_external.user, profile_foo_external.external_id, mock_saltedge
+    )
+    assert Connection.objects.all().count() == 0
+
+
+def test_connection_import_from_saltedge_one_new_object(
+    profile_foo_external, mock_saltedge
+):
+    mock_saltedge.create_connection(profile_foo_external.external_id)
+    assert Connection.objects.all().count() == 0
+    Connection.objects.import_from_saltedge(
+        profile_foo_external.user, profile_foo_external.external_id, mock_saltedge
+    )
+    assert Connection.objects.all().count() == 1
+    # TODO: Verify model fields like id, user and provider
+
+
+def test_connection_import_from_saltedge_two_new_objects(
+    profile_foo_external, mock_saltedge
+):
+    mock_saltedge.create_connection(profile_foo_external.external_id)
+    mock_saltedge.create_connection(profile_foo_external.external_id)
+    assert Connection.objects.all().count() == 0
+    Connection.objects.import_from_saltedge(
+        profile_foo_external.user, profile_foo_external.external_id, mock_saltedge
+    )
+    assert Connection.objects.all().count() == 2
+
+
+def test_connection_import_from_saltedge_no_new_objects(
+    profile_foo_external, mock_saltedge
+):
+    mock_saltedge.create_connection(profile_foo_external.external_id)
+    Connection.objects.import_from_saltedge(
+        profile_foo_external.user, profile_foo_external.external_id, mock_saltedge
+    )
+    assert Connection.objects.all().count() == 1
+    Connection.objects.import_from_saltedge(
+        profile_foo_external.user, profile_foo_external.external_id, mock_saltedge
+    )
+    assert Connection.objects.all().count() == 1
+
+
+def test_connection_remove_saltedge(connection_foo_external, mock_saltedge):
+    assert len(mock_saltedge.connections) == 1
+    Connection.objects.remove_from_saltedge(connection_foo_external, mock_saltedge)
+    assert len(mock_saltedge.connections) == 0
+    assert connection_foo_external.external_id is None
 
 
 @pytest.fixture

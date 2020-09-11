@@ -4,34 +4,16 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.db.models import Sum
-from saltedge.factory import get_saltedge_app
+from saltedge.wrapper import SaltEdgeWrapper
 
 
 class ConnectionManager(models.Manager):
-    def create_in_saltedge(self, redirect_url, customer_id):
-        app = get_saltedge_app()
-        url = "https://www.saltedge.com/api/v5/connect_sessions/create"
-        payload = json.dumps(
-            {
-                "data": {
-                    "customer_id": str(customer_id),
-                    "consent": {"scopes": ["account_details", "transactions_details"]},
-                    "attempt": {"return_to": redirect_url},
-                }
-            }
-        )
-        response = app.post(url, payload)
-        data = response.json()
+    def create_in_saltedge(self, redirect_url, customer_id, saltedge: SaltEdgeWrapper):
+        data = saltedge.create_connect_session(customer_id, redirect_url)
         return data["data"]["connect_url"]
 
-    def import_from_saltedge(self, user, customer_id):
-        app = get_saltedge_app()
-        url = "https://www.saltedge.com/api/v5/connections?customer_id={}".format(
-            customer_id
-        )
-        response = app.get(url)
-        data = response.json()
-
+    def import_from_saltedge(self, user, customer_id, saltedge: SaltEdgeWrapper):
+        data = saltedge.list_connections(customer_id)
         for imported_connection in data["data"]:
             imported_id = int(imported_connection["id"])
 
@@ -42,6 +24,11 @@ class ConnectionManager(models.Manager):
                     "user": user,
                 },
             )
+
+    def remove_from_saltedge(self, connection, saltedge: SaltEdgeWrapper):
+        data = saltedge.remove_connection(connection.external_id)
+        connection.external_id = None
+        connection.save()
 
 
 class Connection(models.Model):
