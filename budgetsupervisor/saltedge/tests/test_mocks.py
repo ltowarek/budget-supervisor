@@ -8,7 +8,7 @@ pytestmark = pytest.mark.webtest
 
 
 @pytest.fixture
-def actual_wrapper_factory():
+def actual_saltedge_factory():
     def create_wrapper(app_id, secret, private_path):
         return SaltEdgeWrapper(app_id, secret, private_path)
 
@@ -16,45 +16,29 @@ def actual_wrapper_factory():
 
 
 @pytest.fixture
-def actual_wrapper(actual_wrapper_factory):
+def actual_saltedge(actual_saltedge_factory):
     app_id = os.environ["APP_ID"]
     secret = os.environ["SECRET"]
     private_path = "saltedge/private.pem"
-    return actual_wrapper_factory(app_id, secret, private_path)
+    return actual_saltedge_factory(app_id, secret, private_path)
 
 
 @pytest.fixture
-def mock_wrapper_factory():
-    def create_wrapper(app_id, secret, private_path):
-        return MockSaltEdgeWrapper(app_id, secret, private_path)
-
-    return create_wrapper
-
-
-@pytest.fixture
-def mock_wrapper(mock_wrapper_factory):
-    app_id = os.environ["APP_ID"]
-    secret = os.environ["SECRET"]
-    private_path = "saltedge/private.pem"
-    return mock_wrapper_factory(app_id, secret, private_path)
-
-
-@pytest.fixture
-def actual_customer_factory(actual_wrapper):
+def actual_customer_factory(actual_saltedge):
     created_ids = []
 
     def create_customer(identifier):
-        response = actual_wrapper.create_customer(identifier)
+        response = actual_saltedge.create_customer(identifier)
         customer = response["data"]
         created_ids.append(customer["id"])
         return response
 
     yield create_customer
 
-    existing_ids = [c["id"] for c in actual_wrapper.list_customers()["data"]]
+    existing_ids = [c["id"] for c in actual_saltedge.list_customers()["data"]]
     for id in created_ids:
         if id in existing_ids:
-            actual_wrapper.remove_customer(id)
+            actual_saltedge.remove_customer(id)
 
 
 @pytest.fixture
@@ -63,33 +47,33 @@ def actual_customer_1234(actual_customer_factory):
 
 
 @pytest.fixture
-def mocked_customer_1234(mock_wrapper):
-    return mock_wrapper.create_customer("test_1234")["data"]
+def mocked_customer_1234(mock_saltedge):
+    return mock_saltedge.create_customer("test_1234")["data"]
 
 
 @pytest.fixture
-def predefined_customer(actual_wrapper):
-    return actual_wrapper.show_customer(os.environ["CUSTOMER_ID"])["data"]
+def predefined_customer(actual_saltedge):
+    return actual_saltedge.show_customer(os.environ["CUSTOMER_ID"])["data"]
 
 
 @pytest.fixture
-def predefined_connection(actual_wrapper):
-    return actual_wrapper.show_connection(os.environ["CONNECTION_ID"])["data"]
+def predefined_connection(actual_saltedge):
+    return actual_saltedge.show_connection(os.environ["CONNECTION_ID"])["data"]
 
 
 @pytest.fixture
-def mocked_connection_1234(mock_wrapper, mocked_customer_1234):
-    return mock_wrapper.create_connection(mocked_customer_1234["id"])["data"]
+def mocked_connection_1234(mock_saltedge, mocked_customer_1234):
+    return mock_saltedge.create_connection(mocked_customer_1234["id"])["data"]
 
 
 @pytest.fixture
-def predefined_account(actual_wrapper, predefined_connection):
-    return actual_wrapper.list_accounts(predefined_connection["id"])["data"][0]
+def predefined_account(actual_saltedge, predefined_connection):
+    return actual_saltedge.list_accounts(predefined_connection["id"])["data"][0]
 
 
 @pytest.fixture
-def mocked_account_1234(mock_wrapper, mocked_connection_1234):
-    return mock_wrapper.create_account(mocked_connection_1234["id"])
+def mocked_account_1234(mock_saltedge, mocked_connection_1234):
+    return mock_saltedge.create_account(mocked_connection_1234["id"])
 
 
 def check_customer_schema(customer):
@@ -151,10 +135,10 @@ def check_transaction_schema(transaction):
     ] == list(transaction.keys())
 
 
-def test_create_customer_successfully(mock_wrapper, actual_customer_factory):
+def test_create_customer_successfully(mock_saltedge, actual_customer_factory):
     identifier = "test"
     actual = actual_customer_factory(identifier)
-    mocked = mock_wrapper.create_customer(identifier)
+    mocked = mock_saltedge.create_customer(identifier)
 
     def check_response(response):
         assert ["data"] == list(response.keys())
@@ -165,10 +149,10 @@ def test_create_customer_successfully(mock_wrapper, actual_customer_factory):
 
 
 def test_remove_customer_successfully(
-    mock_wrapper, actual_wrapper, mocked_customer_1234, actual_customer_1234
+    mock_saltedge, actual_saltedge, mocked_customer_1234, actual_customer_1234
 ):
-    actual = actual_wrapper.remove_customer(actual_customer_1234["id"])
-    mocked = mock_wrapper.remove_customer(mocked_customer_1234["id"])
+    actual = actual_saltedge.remove_customer(actual_customer_1234["id"])
+    mocked = mock_saltedge.remove_customer(mocked_customer_1234["id"])
 
     def check_response(response):
         assert ["data"] == list(response.keys())
@@ -179,10 +163,10 @@ def test_remove_customer_successfully(
 
 
 def test_show_customer_successfully(
-    mock_wrapper, actual_wrapper, mocked_customer_1234, actual_customer_1234
+    mock_saltedge, actual_saltedge, mocked_customer_1234, actual_customer_1234
 ):
-    actual = actual_wrapper.show_customer(actual_customer_1234["id"])
-    mocked = mock_wrapper.show_customer(mocked_customer_1234["id"])
+    actual = actual_saltedge.show_customer(actual_customer_1234["id"])
+    mocked = mock_saltedge.show_customer(mocked_customer_1234["id"])
 
     def check_response(response):
         assert ["data"] == list(response.keys())
@@ -193,15 +177,15 @@ def test_show_customer_successfully(
 
 
 def test_list_customers_successfully(
-    mock_wrapper, actual_wrapper, actual_customer_factory
+    mock_saltedge, actual_saltedge, actual_customer_factory
 ):
     actual_customer_factory("test_a")
     actual_customer_factory("test_b")
-    mock_wrapper.create_customer("test_a")
-    mock_wrapper.create_customer("test_b")
+    mock_saltedge.create_customer("test_a")
+    mock_saltedge.create_customer("test_b")
 
-    actual = actual_wrapper.list_customers()
-    mocked = mock_wrapper.list_customers()
+    actual = actual_saltedge.list_customers()
+    mocked = mock_saltedge.list_customers()
 
     def check_response(response):
         assert ["data", "meta"] == list(response.keys())
@@ -214,14 +198,14 @@ def test_list_customers_successfully(
 
 
 def test_create_connect_session_successfully(
-    mock_wrapper, actual_wrapper, mocked_customer_1234, actual_customer_1234
+    mock_saltedge, actual_saltedge, mocked_customer_1234, actual_customer_1234
 ):
     redirect_url = "http://www.example.com"
 
-    actual = actual_wrapper.create_connect_session(
+    actual = actual_saltedge.create_connect_session(
         actual_customer_1234["id"], redirect_url
     )
-    mocked = mock_wrapper.create_connect_session(
+    mocked = mock_saltedge.create_connect_session(
         mocked_customer_1234["id"], redirect_url,
     )
 
@@ -234,10 +218,10 @@ def test_create_connect_session_successfully(
 
 
 def test_show_connection_successfully(
-    mock_wrapper, actual_wrapper, mocked_connection_1234, predefined_connection
+    mock_saltedge, actual_saltedge, mocked_connection_1234, predefined_connection
 ):
-    actual = actual_wrapper.show_connection(predefined_connection["id"])
-    mocked = mock_wrapper.show_connection(mocked_connection_1234["id"])
+    actual = actual_saltedge.show_connection(predefined_connection["id"])
+    mocked = mock_saltedge.show_connection(mocked_connection_1234["id"])
 
     def check_response(response):
         assert ["data"] == list(response.keys())
@@ -248,13 +232,13 @@ def test_show_connection_successfully(
 
 
 def test_list_connections_successfully(
-    mock_wrapper, actual_wrapper, mocked_customer_1234, predefined_customer,
+    mock_saltedge, actual_saltedge, mocked_customer_1234, predefined_customer,
 ):
-    mock_wrapper.create_connection(mocked_customer_1234["id"])
-    mock_wrapper.create_connection(mocked_customer_1234["id"])
+    mock_saltedge.create_connection(mocked_customer_1234["id"])
+    mock_saltedge.create_connection(mocked_customer_1234["id"])
 
-    actual = actual_wrapper.list_connections(predefined_customer["id"])
-    mocked = mock_wrapper.list_connections(mocked_customer_1234["id"])
+    actual = actual_saltedge.list_connections(predefined_customer["id"])
+    mocked = mock_saltedge.list_connections(mocked_customer_1234["id"])
 
     def check_response(response):
         assert ["data", "meta"] == list(response.keys())
@@ -267,13 +251,13 @@ def test_list_connections_successfully(
 
 
 def test_list_accounts_successfully(
-    mock_wrapper, actual_wrapper, mocked_connection_1234, predefined_connection
+    mock_saltedge, actual_saltedge, mocked_connection_1234, predefined_connection
 ):
-    mock_wrapper.create_account(mocked_connection_1234["id"])
-    mock_wrapper.create_account(mocked_connection_1234["id"])
+    mock_saltedge.create_account(mocked_connection_1234["id"])
+    mock_saltedge.create_account(mocked_connection_1234["id"])
 
-    actual = actual_wrapper.list_accounts(predefined_connection["id"])
-    mocked = mock_wrapper.list_accounts(mocked_connection_1234["id"])
+    actual = actual_saltedge.list_accounts(predefined_connection["id"])
+    mocked = mock_saltedge.list_accounts(mocked_connection_1234["id"])
 
     def check_response(response):
         assert ["data", "meta"] == list(response.keys())
@@ -286,20 +270,20 @@ def test_list_accounts_successfully(
 
 
 def test_list_transactions_successfully(
-    mock_wrapper,
-    actual_wrapper,
+    mock_saltedge,
+    actual_saltedge,
     mocked_connection_1234,
     predefined_connection,
     mocked_account_1234,
     predefined_account,
 ):
-    mock_wrapper.create_transaction(mocked_account_1234["id"])
-    mock_wrapper.create_transaction(mocked_account_1234["id"])
+    mock_saltedge.create_transaction(mocked_account_1234["id"])
+    mock_saltedge.create_transaction(mocked_account_1234["id"])
 
-    actual = actual_wrapper.list_transactions(
+    actual = actual_saltedge.list_transactions(
         predefined_connection["id"], predefined_account["id"]
     )
-    mocked = mock_wrapper.list_transactions(
+    mocked = mock_saltedge.list_transactions(
         mocked_connection_1234["id"], mocked_account_1234["id"]
     )
 

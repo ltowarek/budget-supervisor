@@ -4,7 +4,6 @@ import json
 
 class MockSaltEdgeWrapper(SaltEdgeWrapper):
     def __init__(self, app_id, secret, private_path):
-        super().__init__(app_id, secret, private_path)
         self.customers = []
         self.connections = []
         self.accounts = []

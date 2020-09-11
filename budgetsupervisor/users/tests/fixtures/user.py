@@ -30,3 +30,8 @@ def user_factory(db, django_user_model):
 @pytest.fixture
 def user_foo(user_factory):
     return user_factory(username="foo")
+
+
+@pytest.fixture
+def profile_foo(user_foo):
+    return user_foo.profile
