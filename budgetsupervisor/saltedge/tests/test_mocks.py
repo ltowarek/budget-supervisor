@@ -4,6 +4,9 @@ import os
 import pytest
 
 
+pytestmark = pytest.mark.webtest
+
+
 @pytest.fixture
 def actual_wrapper_factory():
     def create_wrapper(app_id, secret, private_path):
