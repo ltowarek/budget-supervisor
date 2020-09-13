@@ -1,6 +1,7 @@
 import swagger_client as saltedge_client
 import pytest
 from pytest_mock import MockerFixture
+from django.utils.dateparse import parse_datetime, parse_date
 
 
 @pytest.fixture
@@ -56,12 +57,12 @@ def saltedge_stage_factory():
         updated_at=None,
     ):
         return saltedge_client.Stage(
-            created_at="2020-09-07T10:35:46Z",
+            created_at=parse_datetime("2020-09-07T10:35:46Z"),
             id="888888888888888888",
             interactive_fields_names=None,
             interactive_html=None,
             name="finish",
-            updated_at="2020-09-07T10:35:46Z",
+            updated_at=parse_datetime("2020-09-07T10:35:46Z"),
         )
 
     return create_stage
@@ -80,13 +81,13 @@ def saltedge_simplified_attempt_factory(saltedge_stage):
         automatic_fetch=True,
         daily_refresh=False,
         categorization="personal",
-        created_at="2020-09-07T11:35:46Z",
+        created_at=parse_datetime("2020-09-07T11:35:46Z"),
         custom_fields=None,
         device_type="desktop",
         remote_ip="93.184.216.34",
         exclude_accounts=None,
         user_present=False,
-        customer_last_logged_at="2020-09-07T08:35:46Z",
+        customer_last_logged_at=parse_datetime("2020-09-07T08:35:46Z"),
         fail_at=None,
         fail_error_class=None,
         fail_message=None,
@@ -99,9 +100,9 @@ def saltedge_simplified_attempt_factory(saltedge_stage):
         locale="en",
         partial=False,
         store_credentials=True,
-        success_at="2020-09-07T11:35:46Z",
+        success_at=parse_datetime("2020-09-07T11:35:46Z"),
         to_date=None,
-        updated_at="2020-09-07T11:35:46Z",
+        updated_at=parse_datetime("2020-09-07T11:35:46Z"),
         show_consent_confirmation=False,
         include_natures=None,
         last_stage=None,
@@ -167,12 +168,12 @@ def saltedge_connection_factory(saltedge_simplified_attempt):
         provider_name="Fakebank Simple",
         daily_refresh=False,
         customer_id="222222222222222222",
-        created_at="2020-09-06T11:35:46Z",
-        updated_at="2020-09-07T10:55:46Z",
-        last_success_at="2020-09-07T10:55:46Z",
+        created_at=parse_datetime("2020-09-06T11:35:46Z"),
+        updated_at=parse_datetime("2020-09-07T10:55:46Z"),
+        last_success_at=parse_datetime("2020-09-07T10:55:46Z"),
         status="active",
         country_code="XF",
-        next_refresh_possible_at="2020-09-07T12:35:46Z",
+        next_refresh_possible_at=parse_datetime("2020-09-07T12:35:46Z"),
         store_credentials=True,
         last_attempt=None,
         show_consent_confirmation=False,
@@ -218,8 +219,8 @@ def saltedge_account_factory():
         currency_code="EUR",
         extra=None,
         connection_id="111111111111111111",
-        created_at="2020-09-07T08:35:46Z",
-        updated_at="2020-09-07T08:35:46Z",
+        created_at=parse_datetime("2020-09-07T08:35:46Z"),
+        updated_at=parse_datetime("2020-09-07T08:35:46Z"),
     ):
         if not extra:
             extra = {"client_name": "Fake name"}
@@ -249,7 +250,7 @@ def saltedge_transaction_factory():
         id="444444444444444444",
         mode="normal",
         status="posted",
-        made_on="2020-05-03",
+        made_on=parse_date("2020-05-03"),
         amount=-200.0,
         currency_code="USD",
         description="test transaction",
@@ -257,14 +258,14 @@ def saltedge_transaction_factory():
         duplicated=False,
         extra=None,
         account_id="333333333333333333",
-        created_at="2020-09-05T11:35:46Z",
-        updated_at="2020-09-06T11:35:46Z",
+        created_at=parse_datetime("2020-09-05T11:35:46Z"),
+        updated_at=parse_datetime("2020-09-06T11:35:46Z"),
     ):
         if not extra:
             extra = {
                 "original_amount": -3974.6,
                 "original_currency_code": "CZK",
-                "posting_date": "2020-05-07",
+                "posting_date": parse_date("2020-05-07"),
                 "time": "23:56:12",
             }
         return saltedge_client.Transaction(

@@ -2,6 +2,7 @@ from budget.models import Connection, Account, Category, Transaction
 import pytest
 import datetime
 import swagger_client as saltedge_client
+from django.utils.dateparse import parse_date
 
 
 @pytest.fixture
@@ -362,7 +363,7 @@ def test_transaction_import_from_saltedge_one_new_object(
             id="1",
             description="foo",
             amount=20.2,
-            made_on="2020-05-03",
+            made_on=parse_date("2020-05-03"),
             account_id=account_foo_external.external_id,
         ),
     ]
@@ -403,14 +404,14 @@ def test_transaction_import_from_saltedge_two_new_objects(
             id="1",
             description="foo",
             amount=20.2,
-            made_on="2020-05-03",
+            made_on=parse_date("2020-05-03"),
             account_id=account_foo_external.external_id,
         ),
         saltedge_transaction_factory(
             id="2",
             description="bar",
             amount=-30.5,
-            made_on="2020-05-04",
+            made_on=parse_date("2020-05-04"),
             account_id=account_foo_external.external_id,
         ),
     ]
