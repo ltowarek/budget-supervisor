@@ -1,0 +1,46 @@
+# TransactionExtra
+
+## Properties
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**account_balance_snapshot** | **float** | balance of the account at the moment of the attempt when the transaction was imported | [optional] 
+**account_number** | **str** | number of the account the transaction belongs to | [optional] 
+**additional** | **str** | additional information (recommended to use in concatenation with original description, if present) | [optional] 
+**asset_amount** | **float** | original transaction amount in asset units | [optional] 
+**asset_code** | **str** | asset common used abbreviation (Ex.: &#x60;BTC&#x60; - Bitcoin, &#x60;XAU&#x60; - Gold etc.) | [optional] 
+**categorization_confidence** | **float** | value from &#x60;0&#x60; to &#x60;1&#x60;, the probability that the current category is the correct one | [optional] 
+**check_number** | **str** | payee&#x27;s transaction check number | [optional] 
+**closing_balance** | **float** | account balance after the transaction was imported | [optional] 
+**constant_code** | **str** | payment reference for cashless domestic payments (transfers) | [optional] 
+**convert** | **bool** | whether the transaction amount was converted using exchange rates or not | [optional] 
+**customer_category_code** | **str** | the category (present in [categories](#categories) list) that was categorized by the rules [created](#categories-learn) by the customer | [optional] 
+**customer_category_name** | **str** | the category (not present in [categories](#categories) list) that was categorized by the rules [created](#categories-learn) by the customer | [optional] 
+**id** | **str** | transaction&#x27;s identifier on the bank&#x27;s end (do not confuse it with Salt Edge transaction &#x60;id&#x60;) | [optional] 
+**information** | **str** | information about the transaction | [optional] 
+**mcc** | **str** | the transaction&#x27;s [Merchant Category Code](http://www.irs.gov/irb/2004-31_IRB/ar17.html) | [optional] 
+**merchant_id** | **str** | merchant&#x27;s identifier | [optional] 
+**opening_balance** | **float** | account balance before the transaction was imported | [optional] 
+**installment_debt_amount** | **float** | amount of installment transactions group | [optional] 
+**original_amount** | **float** | native amount of the transaction in transaction&#x27;s currency (comes with &#x60;original_currency_code&#x60;) | [optional] 
+**original_category** | **str** | the original category of the transaction | [optional] 
+**original_currency_code** | **str** | native currency of the transaction (comes with &#x60;original_amount&#x60;) | [optional] 
+**original_subcategory** | **str** | the original subcategory of the transaction | [optional] 
+**payee** | **str** | to whom the money was paid | [optional] 
+**payee_information** | **str** | additional payee information | [optional] 
+**payer** | **str** | who paid the money | [optional] 
+**payer_information** | **str** | additional payer information | [optional] 
+**possible_duplicate** | **bool** | is set to &#x60;true&#x60; if current transaction duplicates &#x60;amount&#x60;, &#x60;made_on&#x60; and &#x60;currency_code&#x60; of any transaction parsed in previous attempt | [optional] 
+**posting_date** | **date** | date when the transaction appears in statement | [optional] 
+**posting_time** | **str** | time in &#x60;HH:MM:SS&#x60; format, representing time when the transaction appears in statement | [optional] 
+**record_number** | **str** | bank record number | [optional] 
+**specific_code** | **str** | additional identification information for cashless domestic payments (transfers) | [optional] 
+**tags** | **list[str]** | the original tags of the transaction | [optional] 
+**time** | **str** | time when the transaction was made | [optional] 
+**transfer_account_name** | **str** | name of the linked account | [optional] 
+**type** | **str** | transaction type | [optional] 
+**unit_price** | **float** | price per unit (used with units, available for investment accounts nature only) | [optional] 
+**units** | **float** | amount of units owned (used with unit_price, available for investment accounts nature only) | [optional] 
+**variable_code** | **str** | identifies the tax subject to the tax office, used for domestic payments (transfers) | [optional] 
+
+[[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
