@@ -19,4 +19,6 @@ from saltedge_wrapper.tests.fixtures.api import (
     saltedge_simplified_attempt,
     saltedge_connection_factory,
     saltedge_connection,
+    saltedge_account_factory,
+    saltedge_account,
 )

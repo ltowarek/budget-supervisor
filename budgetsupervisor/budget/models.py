@@ -56,26 +56,24 @@ class Connection(models.Model):
 
 
 class AccountManager(models.Manager):
-    def import_from_saltedge(self, connection_id, user):
-        app = get_saltedge_app()
-        url = "https://www.saltedge.com/api/v5/accounts?connection_id={}".format(
-            connection_id
-        )
-        response = app.get(url)
-        data = response.json()
-
-        for imported_account in data["data"]:
-            imported_id = int(imported_account["id"])
+    def import_from_saltedge(self, user, connection_id, accounts_api):
+        response = accounts_api.accounts_get(str(connection_id))
+        new_accounts = []
+        for imported_account in response.data:
+            imported_id = int(imported_account.id)
 
             a, created = Account.objects.update_or_create(
                 external_id=imported_id,
                 defaults={
-                    "name": imported_account["name"],
+                    "name": imported_account.name,
                     "account_type": Account.AccountType.ACCOUNT,
                     "connection": Connection.objects.get(external_id=connection_id),
                     "user": user,
                 },
             )
+            if created:
+                new_accounts.append(a)
+        return new_accounts
 
 
 class Account(models.Model):

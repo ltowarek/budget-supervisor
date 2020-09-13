@@ -206,3 +206,38 @@ def saltedge_connection_factory(saltedge_simplified_attempt):
 @pytest.fixture
 def saltedge_connection(saltedge_connection_factory):
     return saltedge_connection_factory()
+
+
+@pytest.fixture
+def saltedge_account_factory():
+    def create_account(
+        id="333333333333333333",
+        name="Fake account 1",
+        nature="card",
+        balance=2007.2,
+        currency_code="EUR",
+        extra=None,
+        connection_id="111111111111111111",
+        created_at="2020-09-07T08:35:46Z",
+        updated_at="2020-09-07T08:35:46Z",
+    ):
+        if not extra:
+            extra = {"client_name": "Fake name"}
+        return saltedge_client.Account(
+            id=id,
+            name=name,
+            nature=nature,
+            balance=balance,
+            currency_code=currency_code,
+            extra=extra,
+            connection_id=connection_id,
+            created_at=created_at,
+            updated_at=updated_at,
+        )
+
+    return create_account
+
+
+@pytest.fixture
+def saltedge_account(saltedge_account_factory):
+    return saltedge_account_factory()

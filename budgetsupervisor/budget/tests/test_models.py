@@ -164,8 +164,95 @@ def account_foo(account_factory):
     return account_factory("foo")
 
 
+@pytest.fixture
+def account_foo_external(account_factory):
+    return account_factory("foo", external_id=123)
+
+
 def test_account_str(account_foo):
     assert str(account_foo) == "foo"
+
+
+def test_account_import_from_saltedge_no_objects(connection_foo_external, accounts_api):
+    accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(data=[])
+
+    assert Account.objects.all().count() == 0
+    imported_accounts = Account.objects.import_from_saltedge(
+        connection_foo_external.user, connection_foo_external.external_id, accounts_api
+    )
+    assert Account.objects.all().count() == 0
+    assert len(imported_accounts) == 0
+
+
+def test_account_import_from_saltedge_one_new_object(
+    connection_foo_external, accounts_api, saltedge_account_factory
+):
+    mock_accounts = [saltedge_account_factory(id="1", name="foo")]
+    accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(
+        data=mock_accounts
+    )
+
+    assert Account.objects.all().count() == 0
+    imported_accounts = Account.objects.import_from_saltedge(
+        connection_foo_external.user, connection_foo_external.external_id, accounts_api
+    )
+    assert Account.objects.all().count() == len(mock_accounts)
+    assert len(imported_accounts) == len(mock_accounts)
+
+    for imported, mock in zip(imported_accounts, mock_accounts):
+        assert imported.external_id == int(mock.id)
+        assert imported.name == mock.name
+        assert imported.account_type == Account.AccountType.ACCOUNT
+        assert imported.connection == connection_foo_external
+        assert imported.user == connection_foo_external.user
+
+
+def test_account_import_from_saltedge_two_new_objects(
+    connection_foo_external, accounts_api, saltedge_account_factory
+):
+    mock_accounts = [
+        saltedge_account_factory(id="1", name="foo"),
+        saltedge_account_factory(id="2", name="bar"),
+    ]
+    accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(
+        data=mock_accounts
+    )
+
+    assert Account.objects.all().count() == 0
+    imported_accounts = Account.objects.import_from_saltedge(
+        connection_foo_external.user, connection_foo_external.external_id, accounts_api
+    )
+    assert Account.objects.all().count() == len(mock_accounts)
+    assert len(imported_accounts) == len(mock_accounts)
+
+    for imported, mock in zip(imported_accounts, mock_accounts):
+        assert imported.external_id == int(mock.id)
+        assert imported.name == mock.name
+        assert imported.account_type == Account.AccountType.ACCOUNT
+        assert imported.connection == connection_foo_external
+        assert imported.user == connection_foo_external.user
+
+
+def test_account_import_from_saltedge_no_new_objects(
+    connection_foo_external, accounts_api, saltedge_account_factory
+):
+    mock_accounts = [
+        saltedge_account_factory(id="1", name="foo"),
+        saltedge_account_factory(id="2", name="bar"),
+    ]
+    accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(
+        data=mock_accounts
+    )
+    imported_accounts = Account.objects.import_from_saltedge(
+        connection_foo_external.user, connection_foo_external.external_id, accounts_api
+    )
+
+    assert Account.objects.all().count() == len(mock_accounts)
+    imported_accounts = Account.objects.import_from_saltedge(
+        connection_foo_external.user, connection_foo_external.external_id, accounts_api
+    )
+    assert Account.objects.all().count() == len(mock_accounts)
+    assert len(imported_accounts) == 0
 
 
 @pytest.fixture
