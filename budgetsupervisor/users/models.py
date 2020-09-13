@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.db.models.signals import post_save
-from saltedge.wrapper import SaltEdgeWrapper
+import swagger_client as saltedge_client
 
 
 class User(AbstractUser):
@@ -10,13 +10,15 @@ class User(AbstractUser):
 
 
 class ProfileManager(models.Manager):
-    def create_in_saltedge(self, profile, saltedge: SaltEdgeWrapper):
-        data = saltedge.create_customer(profile.user.id)
-        profile.external_id = data["data"]["id"]
+    def create_in_saltedge(self, profile, customers_api):
+        data = saltedge_client.CustomerRequestBodyData(identifier=str(profile.user.id))
+        body = saltedge_client.CustomerRequestBody(data)
+        response = customers_api.customers_post(body=body)
+        profile.external_id = int(response.data.id)
         profile.save()
 
-    def remove_from_saltedge(self, profile, saltedge: SaltEdgeWrapper):
-        data = saltedge.remove_customer(profile.external_id)
+    def remove_from_saltedge(self, profile, customers_api):
+        response = customers_api.customers_customer_id_delete(str(profile.external_id))
         profile.external_id = None
         profile.save()
 

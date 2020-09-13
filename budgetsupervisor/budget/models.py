@@ -4,29 +4,42 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.db.models import Sum
-from saltedge.wrapper import SaltEdgeWrapper
+import swagger_client as saltedge_client
 
 
 class ConnectionManager(models.Manager):
-    def create_in_saltedge(self, redirect_url, customer_id, saltedge: SaltEdgeWrapper):
-        data = saltedge.create_connect_session(customer_id, redirect_url)
-        return data["data"]["connect_url"]
+    def create_in_saltedge(self, redirect_url, customer_id, connect_sessions_api):
+        attempt = saltedge_client.AttemptRequestBody(
+            return_to=redirect_url, store_credentials=False
+        )
+        consent = saltedge_client.ConsentRequestBody(
+            scopes=["account_details", "transactions_details"]
+        )
+        data = saltedge_client.ConnectSessionRequestBodyData(
+            str(customer_id), consent, attempt=attempt
+        )
+        body = saltedge_client.ConnectSessionRequestBody(data)
+        response = connect_sessions_api.connect_sessions_create_post(body=body)
+        return response.data.connect_url
 
-    def import_from_saltedge(self, user, customer_id, saltedge: SaltEdgeWrapper):
-        data = saltedge.list_connections(customer_id)
-        for imported_connection in data["data"]:
-            imported_id = int(imported_connection["id"])
+    def import_from_saltedge(self, user, customer_id, connections_api):
+        response = connections_api.connections_get(str(customer_id))
+        new_connections = []
+        for imported_connection in response.data:
+            imported_id = int(imported_connection.id)
 
             c, created = Connection.objects.update_or_create(
                 external_id=imported_id,
-                defaults={
-                    "provider": imported_connection["provider_name"],
-                    "user": user,
-                },
+                defaults={"provider": imported_connection.provider_name, "user": user,},
             )
+            if created:
+                new_connections.append(c)
+        return new_connections
 
-    def remove_from_saltedge(self, connection, saltedge: SaltEdgeWrapper):
-        data = saltedge.remove_connection(connection.external_id)
+    def remove_from_saltedge(self, connection, connections_api):
+        response = connections_api.connections_connection_id_delete(
+            str(connection.external_id)
+        )
         connection.external_id = None
         connection.save()
 

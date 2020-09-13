@@ -1,6 +1,7 @@
 from budget.models import Connection, Account, Category, Transaction
 import pytest
 import datetime
+import swagger_client as saltedge_client
 
 
 @pytest.fixture
@@ -21,10 +22,9 @@ def connection_foo(connection_factory):
 
 
 @pytest.fixture
-def connection_foo_external(connection_factory, profile_foo_external, mock_saltedge):
-    data = mock_saltedge.create_connection(profile_foo_external.external_id)
+def connection_foo_external(connection_factory, profile_foo_external):
     return connection_factory(
-        provider="foo", user=profile_foo_external.user, external_id=data["data"]["id"]
+        provider="foo", user=profile_foo_external.user, external_id=123
     )
 
 
@@ -32,66 +32,110 @@ def test_connection_str(connection_foo):
     assert str(connection_foo) == "foo"
 
 
-def test_connection_create_in_saltedge(profile_foo_external, mock_saltedge):
-    mock_saltedge.mock_create_connect_session.connect_url = "foo.com"
-    connect_url = Connection.objects.create_in_saltedge(
-        "redirect_url", profile_foo_external.external_id, mock_saltedge
+def test_connection_create_in_saltedge(profile_foo_external, connect_sessions_api):
+    data = saltedge_client.ConnectSessionResponseData(connect_url="foo.com")
+    connect_sessions_api.connect_sessions_create_post.return_value = saltedge_client.ConnectSessionResponse(
+        data=data
     )
-    assert connect_url == "foo.com"
+
+    connect_url = Connection.objects.create_in_saltedge(
+        "redirect_url", profile_foo_external.external_id, connect_sessions_api
+    )
+    assert connect_url == data.connect_url
 
 
 def test_connection_import_from_saltedge_no_objects(
-    profile_foo_external, mock_saltedge
+    profile_foo_external, connections_api
 ):
+    connections_api.connections_get.return_value = saltedge_client.ConnectionsResponse(
+        data=[]
+    )
+
     assert Connection.objects.all().count() == 0
-    Connection.objects.import_from_saltedge(
-        profile_foo_external.user, profile_foo_external.external_id, mock_saltedge
+    imported_connections = Connection.objects.import_from_saltedge(
+        profile_foo_external.user, profile_foo_external.external_id, connections_api
     )
     assert Connection.objects.all().count() == 0
+    assert len(imported_connections) == 0
 
 
 def test_connection_import_from_saltedge_one_new_object(
-    profile_foo_external, mock_saltedge
+    profile_foo_external, connections_api, saltedge_connection_factory
 ):
-    mock_saltedge.create_connection(profile_foo_external.external_id)
-    assert Connection.objects.all().count() == 0
-    Connection.objects.import_from_saltedge(
-        profile_foo_external.user, profile_foo_external.external_id, mock_saltedge
+    mock_connections = [saltedge_connection_factory(id="1", provider_name="foo")]
+    connections_api.connections_get.return_value = saltedge_client.ConnectionsResponse(
+        data=mock_connections
     )
-    assert Connection.objects.all().count() == 1
-    # TODO: Verify model fields like id, user and provider
+
+    assert Connection.objects.all().count() == 0
+    imported_connections = Connection.objects.import_from_saltedge(
+        profile_foo_external.user, profile_foo_external.external_id, connections_api
+    )
+    assert Connection.objects.all().count() == len(mock_connections)
+    assert len(imported_connections) == len(mock_connections)
+
+    for imported, mock in zip(imported_connections, mock_connections):
+        assert imported.external_id == int(mock.id)
+        assert imported.provider == mock.provider_name
+        assert imported.user == profile_foo_external.user
 
 
 def test_connection_import_from_saltedge_two_new_objects(
-    profile_foo_external, mock_saltedge
+    profile_foo_external, connections_api, saltedge_connection_factory
 ):
-    mock_saltedge.create_connection(profile_foo_external.external_id)
-    mock_saltedge.create_connection(profile_foo_external.external_id)
-    assert Connection.objects.all().count() == 0
-    Connection.objects.import_from_saltedge(
-        profile_foo_external.user, profile_foo_external.external_id, mock_saltedge
+    mock_connections = [
+        saltedge_connection_factory(id="1", provider_name="foo"),
+        saltedge_connection_factory(id="2", provider_name="bar"),
+    ]
+    connections_api.connections_get.return_value = saltedge_client.ConnectionsResponse(
+        data=mock_connections
     )
-    assert Connection.objects.all().count() == 2
+
+    assert Connection.objects.all().count() == 0
+    imported_connections = Connection.objects.import_from_saltedge(
+        profile_foo_external.user, profile_foo_external.external_id, connections_api
+    )
+    assert Connection.objects.all().count() == len(mock_connections)
+    assert len(imported_connections) == len(mock_connections)
+
+    for imported, mock in zip(imported_connections, mock_connections):
+        assert imported.external_id == int(mock.id)
+        assert imported.provider == mock.provider_name
+        assert imported.user == profile_foo_external.user
 
 
 def test_connection_import_from_saltedge_no_new_objects(
-    profile_foo_external, mock_saltedge
+    profile_foo_external, connections_api, saltedge_connection_factory
 ):
-    mock_saltedge.create_connection(profile_foo_external.external_id)
-    Connection.objects.import_from_saltedge(
-        profile_foo_external.user, profile_foo_external.external_id, mock_saltedge
+    mock_connections = [
+        saltedge_connection_factory(id="1", provider_name="foo"),
+        saltedge_connection_factory(id="2", provider_name="bar"),
+    ]
+    connections_api.connections_get.return_value = saltedge_client.ConnectionsResponse(
+        data=mock_connections
     )
-    assert Connection.objects.all().count() == 1
-    Connection.objects.import_from_saltedge(
-        profile_foo_external.user, profile_foo_external.external_id, mock_saltedge
+    imported_connections = Connection.objects.import_from_saltedge(
+        profile_foo_external.user, profile_foo_external.external_id, connections_api
     )
-    assert Connection.objects.all().count() == 1
+
+    assert Connection.objects.all().count() == len(mock_connections)
+    imported_connections = Connection.objects.import_from_saltedge(
+        profile_foo_external.user, profile_foo_external.external_id, connections_api
+    )
+    assert Connection.objects.all().count() == len(mock_connections)
+    assert len(imported_connections) == 0
 
 
-def test_connection_remove_saltedge(connection_foo_external, mock_saltedge):
-    assert len(mock_saltedge.connections) == 1
-    Connection.objects.remove_from_saltedge(connection_foo_external, mock_saltedge)
-    assert len(mock_saltedge.connections) == 0
+def test_connection_remove_saltedge(connection_foo_external, connections_api):
+    data = saltedge_client.RemovedConnectionResponseData(
+        removed=True, id=str(connection_foo_external.external_id)
+    )
+    connections_api.connections_connection_id_delete.return_value = saltedge_client.RemovedConnectionResponse(
+        data=data
+    )
+
+    assert connection_foo_external.external_id is not None
+    Connection.objects.remove_from_saltedge(connection_foo_external, connections_api)
     assert connection_foo_external.external_id is None
 
 

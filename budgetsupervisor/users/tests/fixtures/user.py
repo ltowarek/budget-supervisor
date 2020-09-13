@@ -51,6 +51,5 @@ def profile_foo(profile_factory):
 
 
 @pytest.fixture
-def profile_foo_external(profile_factory, mock_saltedge):
-    data = mock_saltedge.create_customer("foo")
-    return profile_factory(external_id=data["data"]["id"])
+def profile_foo_external(profile_factory):
+    return profile_factory(external_id=123)
