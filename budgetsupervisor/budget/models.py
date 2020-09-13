@@ -137,37 +137,36 @@ post_save.connect(populate_user_categories, sender=settings.AUTH_USER_MODEL)
 
 
 class TransactionManager(models.Manager):
-    def import_from_saltedge(self, account_id, connection_id, user):
-        app = get_saltedge_app()
-        url = "https://www.saltedge.com/api/v5/transactions?connection_id={}&account_id={}".format(
-            connection_id, account_id
+    def import_from_saltedge(self, user, connection_id, account_id, transactions_api):
+        response = transactions_api.transactions_get(
+            str(connection_id), account_id=str(account_id)
         )
-        response = app.get(url)
-        data = response.json()
-
         uncategorized = Category.objects.get(name="Uncategorized", user=user)
+        new_transactions = []
+        for imported_transaction in response.data:
+            imported_id = int(imported_transaction.id)
 
-        for imported_transaction in data["data"]:
-            imported_id = int(imported_transaction["id"])
-
-            escaped_category = imported_transaction["category"].replace("_", " ")
+            escaped_category = imported_transaction.category.replace("_", " ")
             category = Category.objects.filter(name__iexact=escaped_category, user=user)
             category = category[0] if category else uncategorized
 
             t, created = Transaction.objects.update_or_create(
                 external_id=imported_id,
                 defaults={
-                    "date": imported_transaction["made_on"],
-                    "amount": imported_transaction["amount"],
+                    "date": imported_transaction.made_on,
+                    "amount": imported_transaction.amount,
                     "payee": "",
                     "category": category,
-                    "description": imported_transaction["description"],
+                    "description": imported_transaction.description,
                     "account_id": Account.objects.get(
-                        external_id=imported_transaction["account_id"]
+                        external_id=imported_transaction.account_id
                     ).id,
                     "user": user,
                 },
             )
+            if created:
+                new_transactions.append(t)
+        return new_transactions
 
     def get_balance(self, accounts, user, from_date=None, to_date=None):
         q = {"account__in": accounts, "user": user}

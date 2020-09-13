@@ -108,8 +108,8 @@ def test_connection_import_from_saltedge_no_new_objects(
     profile_foo_external, connections_api, saltedge_connection_factory
 ):
     mock_connections = [
-        saltedge_connection_factory(id="1", provider_name="foo"),
-        saltedge_connection_factory(id="2", provider_name="bar"),
+        saltedge_connection_factory(id="1"),
+        saltedge_connection_factory(id="2"),
     ]
     connections_api.connections_get.return_value = saltedge_client.ConnectionsResponse(
         data=mock_connections
@@ -165,8 +165,8 @@ def account_foo(account_factory):
 
 
 @pytest.fixture
-def account_foo_external(account_factory):
-    return account_factory("foo", external_id=123)
+def account_foo_external(account_factory, connection_foo_external):
+    return account_factory("foo", external_id=123, connection=connection_foo_external)
 
 
 def test_account_str(account_foo):
@@ -237,8 +237,8 @@ def test_account_import_from_saltedge_no_new_objects(
     connection_foo_external, accounts_api, saltedge_account_factory
 ):
     mock_accounts = [
-        saltedge_account_factory(id="1", name="foo"),
-        saltedge_account_factory(id="2", name="bar"),
+        saltedge_account_factory(id="1"),
+        saltedge_account_factory(id="2"),
     ]
     accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(
         data=mock_accounts
@@ -327,8 +327,209 @@ def transaction_foo(transaction_factory):
     return transaction_factory()
 
 
+@pytest.fixture
+def transaction_foo_external(transaction_factory):
+    return transaction_factory(external_id=123)
+
+
 def test_transaction_str(transaction_foo):
     assert str(transaction_foo) == "1"
+
+
+def test_transaction_import_from_saltedge_no_objects(
+    account_foo_external, transactions_api
+):
+    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
+        data=[]
+    )
+
+    assert Transaction.objects.all().count() == 0
+    imported_transactions = Transaction.objects.import_from_saltedge(
+        account_foo_external.user,
+        account_foo_external.connection.external_id,
+        account_foo_external.external_id,
+        transactions_api,
+    )
+    assert Transaction.objects.all().count() == 0
+    assert len(imported_transactions) == 0
+
+
+def test_transaction_import_from_saltedge_one_new_object(
+    account_foo_external, transactions_api, saltedge_transaction_factory
+):
+    mock_transactions = [
+        saltedge_transaction_factory(
+            id="1",
+            description="foo",
+            amount=20.2,
+            made_on="2020-05-03",
+            account_id=account_foo_external.external_id,
+        ),
+    ]
+    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
+        data=mock_transactions
+    )
+
+    assert Transaction.objects.all().count() == 0
+    imported_transactions = Transaction.objects.import_from_saltedge(
+        account_foo_external.user,
+        account_foo_external.connection.external_id,
+        account_foo_external.external_id,
+        transactions_api,
+    )
+    assert Transaction.objects.all().count() == len(mock_transactions)
+    assert len(imported_transactions) == len(mock_transactions)
+
+    for imported, mock in zip(imported_transactions, mock_transactions):
+        assert imported.external_id == int(mock.id)
+        assert imported.date == mock.made_on
+        assert imported.payee == ""
+        assert (
+            imported.category
+            == Category.objects.filter(
+                name__iexact=mock.category, user=account_foo_external.user
+            )[0]
+        )
+        assert imported.description == mock.description
+        assert imported.account == account_foo_external
+        assert imported.user == account_foo_external.user
+
+
+def test_transaction_import_from_saltedge_two_new_objects(
+    account_foo_external, transactions_api, saltedge_transaction_factory
+):
+    mock_transactions = [
+        saltedge_transaction_factory(
+            id="1",
+            description="foo",
+            amount=20.2,
+            made_on="2020-05-03",
+            account_id=account_foo_external.external_id,
+        ),
+        saltedge_transaction_factory(
+            id="2",
+            description="bar",
+            amount=-30.5,
+            made_on="2020-05-04",
+            account_id=account_foo_external.external_id,
+        ),
+    ]
+    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
+        data=mock_transactions
+    )
+
+    assert Transaction.objects.all().count() == 0
+    imported_transactions = Transaction.objects.import_from_saltedge(
+        account_foo_external.user,
+        account_foo_external.connection.external_id,
+        account_foo_external.external_id,
+        transactions_api,
+    )
+    assert Transaction.objects.all().count() == len(mock_transactions)
+    assert len(imported_transactions) == len(mock_transactions)
+
+    for imported, mock in zip(imported_transactions, mock_transactions):
+        assert imported.external_id == int(mock.id)
+        assert imported.date == mock.made_on
+        assert imported.payee == ""
+        assert (
+            imported.category
+            == Category.objects.filter(
+                name__iexact=mock.category, user=account_foo_external.user
+            )[0]
+        )
+        assert imported.description == mock.description
+        assert imported.account == account_foo_external
+        assert imported.user == account_foo_external.user
+
+
+def test_transaction_import_from_saltedge_no_new_objects(
+    account_foo_external, transactions_api, saltedge_transaction_factory
+):
+    mock_transactions = [
+        saltedge_transaction_factory(
+            id="1", account_id=account_foo_external.external_id
+        ),
+        saltedge_transaction_factory(
+            id="2", account_id=account_foo_external.external_id
+        ),
+    ]
+    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
+        data=mock_transactions
+    )
+    imported_transactions = Transaction.objects.import_from_saltedge(
+        account_foo_external.user,
+        account_foo_external.connection.external_id,
+        account_foo_external.external_id,
+        transactions_api,
+    )
+
+    assert Transaction.objects.all().count() == len(mock_transactions)
+    imported_transactions = Transaction.objects.import_from_saltedge(
+        account_foo_external.user,
+        account_foo_external.connection.external_id,
+        account_foo_external.external_id,
+        transactions_api,
+    )
+    assert Transaction.objects.all().count() == len(mock_transactions)
+    assert len(imported_transactions) == 0
+
+
+def test_transaction_import_from_saltedge_category_with_spaces(
+    account_foo_external, transactions_api, saltedge_transaction_factory
+):
+    mock_transactions = [
+        saltedge_transaction_factory(
+            id="1",
+            category="fees_and_charges",
+            account_id=account_foo_external.external_id,
+        ),
+    ]
+    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
+        data=mock_transactions
+    )
+
+    imported_transactions = Transaction.objects.import_from_saltedge(
+        account_foo_external.user,
+        account_foo_external.connection.external_id,
+        account_foo_external.external_id,
+        transactions_api,
+    )
+
+    for imported, mock in zip(imported_transactions, mock_transactions):
+        escaped_category = mock.category.replace("_", " ")
+        assert (
+            imported.category
+            == Category.objects.filter(
+                name__iexact=escaped_category, user=account_foo_external.user
+            )[0]
+        )
+
+
+def test_transaction_import_from_saltedge_uncategorized_category(
+    account_foo_external, transactions_api, saltedge_transaction_factory
+):
+    mock_transactions = [
+        saltedge_transaction_factory(
+            id="1", category="xyz", account_id=account_foo_external.external_id,
+        ),
+    ]
+    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
+        data=mock_transactions
+    )
+
+    imported_transactions = Transaction.objects.import_from_saltedge(
+        account_foo_external.user,
+        account_foo_external.connection.external_id,
+        account_foo_external.external_id,
+        transactions_api,
+    )
+
+    uncategorized = Category.objects.get(
+        name="Uncategorized", user=account_foo_external.user
+    )
+    for imported, mock in zip(imported_transactions, mock_transactions):
+        assert imported.category == uncategorized
 
 
 def test_transaction_get_balance_filter_by_user(

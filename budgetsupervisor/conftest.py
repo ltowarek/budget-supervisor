@@ -21,4 +21,6 @@ from saltedge_wrapper.tests.fixtures.api import (
     saltedge_connection,
     saltedge_account_factory,
     saltedge_account,
+    saltedge_transaction_factory,
+    saltedge_transaction,
 )

@@ -122,3 +122,19 @@ def test_list_transactions_successfully(predefined_connection, predefined_accoun
         predefined_connection.id, account_id=predefined_account.id
     )
     assert len(response.data) > 0
+
+
+def test_transaction_categories_lowercase(predefined_connection, predefined_account):
+    response = transactions_api().transactions_get(
+        predefined_connection.id, account_id=predefined_account.id
+    )
+    for transaction in response.data:
+        assert transaction.category == transaction.category.lower()
+
+
+def test_transaction_categories_no_spaces(predefined_connection, predefined_account):
+    response = transactions_api().transactions_get(
+        predefined_connection.id, account_id=predefined_account.id
+    )
+    for transaction in response.data:
+        assert transaction.category.count(" ") == 0

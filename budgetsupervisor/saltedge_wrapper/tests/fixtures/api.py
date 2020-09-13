@@ -241,3 +241,51 @@ def saltedge_account_factory():
 @pytest.fixture
 def saltedge_account(saltedge_account_factory):
     return saltedge_account_factory()
+
+
+@pytest.fixture
+def saltedge_transaction_factory():
+    def create_transaction(
+        id="444444444444444444",
+        mode="normal",
+        status="posted",
+        made_on="2020-05-03",
+        amount=-200.0,
+        currency_code="USD",
+        description="test transaction",
+        category="income",
+        duplicated=False,
+        extra=None,
+        account_id="333333333333333333",
+        created_at="2020-09-05T11:35:46Z",
+        updated_at="2020-09-06T11:35:46Z",
+    ):
+        if not extra:
+            extra = {
+                "original_amount": -3974.6,
+                "original_currency_code": "CZK",
+                "posting_date": "2020-05-07",
+                "time": "23:56:12",
+            }
+        return saltedge_client.Transaction(
+            id=id,
+            mode=mode,
+            status=status,
+            made_on=made_on,
+            amount=amount,
+            currency_code=currency_code,
+            description=description,
+            category=category,
+            duplicated=duplicated,
+            extra=extra,
+            account_id=account_id,
+            created_at=created_at,
+            updated_at=updated_at,
+        )
+
+    return create_transaction
+
+
+@pytest.fixture
+def saltedge_transaction(saltedge_transaction_factory):
+    return saltedge_transaction_factory()
