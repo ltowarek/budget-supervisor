@@ -34,8 +34,8 @@ class FullReport(BasicReport):
         'to_date': 'date',
         'report_types': 'list[str]',
         'data': 'Report',
-        'created_at': 'date',
-        'updated_at': 'date'
+        'created_at': 'datetime',
+        'updated_at': 'datetime'
     }
     if hasattr(BasicReport, "swagger_types"):
         swagger_types.update(BasicReport.swagger_types)
@@ -207,7 +207,7 @@ class FullReport(BasicReport):
 
 
         :return: The created_at of this FullReport.  # noqa: E501
-        :rtype: date
+        :rtype: datetime
         """
         return self._created_at
 
@@ -217,7 +217,7 @@ class FullReport(BasicReport):
 
 
         :param created_at: The created_at of this FullReport.  # noqa: E501
-        :type: date
+        :type: datetime
         """
         if created_at is None:
             raise ValueError("Invalid value for `created_at`, must not be `None`")  # noqa: E501
@@ -231,7 +231,7 @@ class FullReport(BasicReport):
         the date when the report was last updated  # noqa: E501
 
         :return: The updated_at of this FullReport.  # noqa: E501
-        :rtype: date
+        :rtype: datetime
         """
         return self._updated_at
 
@@ -242,7 +242,7 @@ class FullReport(BasicReport):
         the date when the report was last updated  # noqa: E501
 
         :param updated_at: The updated_at of this FullReport.  # noqa: E501
-        :type: date
+        :type: datetime
         """
         if updated_at is None:
             raise ValueError("Invalid value for `updated_at`, must not be `None`")  # noqa: E501

@@ -8,8 +8,8 @@ Name | Type | Description | Notes
 **to_date** | **date** | the date to which the data in the report are included | 
 **report_types** | **list[str]** | types of reports | 
 **data** | [**Report**](Report.md) |  | 
-**created_at** | **date** |  | 
-**updated_at** | **date** | the date when the report was last updated | 
+**created_at** | **datetime** |  | 
+**updated_at** | **datetime** | the date when the report was last updated | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
