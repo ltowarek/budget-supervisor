@@ -9,7 +9,7 @@
   <input type="submit" value="Submit">
 </form>
 
-{% if not form.instance.external_id %}
+{% if not object.external_id %}
 <a href="{% url 'profile_connect' %}">Enable external synchronization</a>
 {% endif %}
 {% endblock %}

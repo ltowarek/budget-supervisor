@@ -13,7 +13,7 @@ def user_factory(db, django_user_model):
         is_superuser=False,
         is_active=True,
     ):
-        return django_user_model.objects.create(
+        return django_user_model.objects.create_user(
             username=username,
             password=password,
             first_name=first_name,
@@ -53,3 +53,11 @@ def profile_foo(profile_factory):
 @pytest.fixture
 def profile_foo_external(profile_factory):
     return profile_factory(external_id=123)
+
+
+@pytest.fixture
+def login_user(db, client):
+    def f(user, password="password"):
+        client.login(username=user.username, password=password)
+
+    return f

@@ -4,6 +4,7 @@ from users.tests.fixtures.user import (
     profile_factory,
     profile_foo,
     profile_foo_external,
+    login_user,
 )
 from saltedge_wrapper.tests.fixtures.api import (
     customers_api,

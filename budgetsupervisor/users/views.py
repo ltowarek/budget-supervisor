@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from .models import Profile
 from .forms import ProfileConnectForm, SignUpForm
+from saltedge_wrapper.factory import customers_api
 
 
 class SignUpView(CreateView):
@@ -28,6 +29,5 @@ class ProfileConnectView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         profile = self.request.user.profile
-        if not profile.external_id:
-            Profile.objects.create_in_saltedge(profile)
+        Profile.objects.create_in_saltedge(profile, customers_api())
         return super().form_valid(form)
