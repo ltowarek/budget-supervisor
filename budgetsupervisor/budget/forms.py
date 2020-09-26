@@ -40,7 +40,9 @@ class ImportTransactionsForm(forms.Form):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
-        self.fields["account"].queryset = Account.objects.filter(user=user)
+        self.fields["account"].queryset = Account.objects.filter(
+            user=user, external_id__isnull=False
+        )
 
 
 class CreateConnectionForm(forms.Form):
@@ -60,3 +62,11 @@ class ReportBalanceForm(forms.Form):
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
         self.fields["accounts"].queryset = Account.objects.filter(user=user)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        from_date = cleaned_data.get("from_date")
+        to_date = cleaned_data.get("to_date")
+
+        if from_date and to_date and to_date < from_date:
+            self.add_error("to_date", "To date can't point before from date.")

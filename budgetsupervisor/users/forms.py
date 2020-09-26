@@ -1,9 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from saltedge.saltedge import SaltEdge
 from .models import Profile, User
-import os
-import json
 
 
 class SignUpForm(UserCreationForm):

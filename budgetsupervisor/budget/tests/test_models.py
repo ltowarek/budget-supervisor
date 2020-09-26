@@ -5,30 +5,6 @@ import swagger_client as saltedge_client
 from django.utils.dateparse import parse_date
 
 
-@pytest.fixture
-def connection_factory(db, user_foo):
-    def create_connection(
-        provider, user=user_foo, external_id=None,
-    ):
-        return Connection.objects.create(
-            provider=provider, user=user, external_id=external_id
-        )
-
-    return create_connection
-
-
-@pytest.fixture
-def connection_foo(connection_factory):
-    return connection_factory("foo")
-
-
-@pytest.fixture
-def connection_foo_external(connection_factory, profile_foo_external):
-    return connection_factory(
-        provider="foo", user=profile_foo_external.user, external_id=123
-    )
-
-
 def test_connection_str(connection_foo):
     assert str(connection_foo) == "foo"
 
@@ -140,36 +116,6 @@ def test_connection_remove_saltedge(connection_foo_external, connections_api):
     assert connection_foo_external.external_id is None
 
 
-@pytest.fixture
-def account_factory(db, connection_foo, user_foo):
-    def create_account(
-        name,
-        account_type=Account.AccountType.ACCOUNT,
-        external_id=None,
-        connection=connection_foo,
-        user=user_foo,
-    ):
-        return Account.objects.create(
-            name=name,
-            account_type=account_type,
-            external_id=external_id,
-            connection=connection,
-            user=user,
-        )
-
-    return create_account
-
-
-@pytest.fixture
-def account_foo(account_factory):
-    return account_factory("foo")
-
-
-@pytest.fixture
-def account_foo_external(account_factory, connection_foo_external):
-    return account_factory("foo", external_id=123, connection=connection_foo_external)
-
-
 def test_account_str(account_foo):
     assert str(account_foo) == "foo"
 
@@ -256,19 +202,6 @@ def test_account_import_from_saltedge_no_new_objects(
     assert len(imported_accounts) == 0
 
 
-@pytest.fixture
-def category_factory(db, user_foo):
-    def create_category(name, user=user_foo):
-        return Category.objects.create(name=name, user=user)
-
-    return create_category
-
-
-@pytest.fixture
-def category_foo(category_factory):
-    return category_factory("foo")
-
-
 def test_category_str(category_foo):
     assert str(category_foo) == "foo"
 
@@ -295,42 +228,6 @@ def test_categories_are_populated_after_user_is_created(db, user_foo):
     ]
     for category in expected_categories:
         assert Category.objects.filter(user=user_foo, name=category).exists()
-
-
-@pytest.fixture
-def transaction_factory(db, account_foo, category_foo, user_foo):
-    def create_transaction(
-        date=datetime.date.today(),
-        amount=100.00,
-        payee="",
-        category=category_foo,
-        description="",
-        account=account_foo,
-        external_id=None,
-        user=user_foo,
-    ):
-        return Transaction.objects.create(
-            date=date,
-            amount=amount,
-            payee=payee,
-            category=category,
-            description=description,
-            account=account,
-            external_id=None,
-            user=user,
-        )
-
-    return create_transaction
-
-
-@pytest.fixture
-def transaction_foo(transaction_factory):
-    return transaction_factory()
-
-
-@pytest.fixture
-def transaction_foo_external(transaction_factory):
-    return transaction_factory(external_id=123)
 
 
 def test_transaction_str(transaction_foo):

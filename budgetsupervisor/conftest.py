@@ -24,3 +24,22 @@ from saltedge_wrapper.tests.fixtures.api import (
     saltedge_transaction_factory,
     saltedge_transaction,
 )
+from budget.tests.fixtures.connection import (
+    connection_factory,
+    connection_foo,
+    connection_foo_external,
+)
+from budget.tests.fixtures.account import (
+    account_factory,
+    account_foo,
+    account_foo_external,
+)
+from budget.tests.fixtures.category import (
+    category_factory,
+    category_foo,
+)
+from budget.tests.fixtures.transaction import (
+    transaction_factory,
+    transaction_foo,
+    transaction_foo_external,
+)
