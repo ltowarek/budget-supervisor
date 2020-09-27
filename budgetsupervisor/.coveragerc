@@ -1,7 +1,9 @@
 [run]
 source = .
 branch = True
-omit = manage.py
+omit = 
+    manage.py
+    */migrations/*
 
 [report]
 skip_covered = True
