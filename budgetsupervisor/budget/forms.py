@@ -10,23 +10,8 @@ from .models import Account, Connection
 from django.contrib.auth.models import User
 
 
-class ConnectionModelChoiceField(forms.ModelChoiceField):
-    def label_from_instance(self, obj):
-        return obj.provider
-
-
-class AccountModelChoiceField(forms.ModelChoiceField):
-    def label_from_instance(self, obj):
-        return obj.name
-
-
-class AccountModelMultipleChoiceField(forms.ModelMultipleChoiceField):
-    def label_from_instance(self, obj):
-        return obj.name
-
-
 class ImportAccountsForm(forms.Form):
-    connection = ConnectionModelChoiceField(Connection.objects.none())
+    connection = forms.ModelChoiceField(queryset=None)
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user")
@@ -35,7 +20,7 @@ class ImportAccountsForm(forms.Form):
 
 
 class ImportTransactionsForm(forms.Form):
-    account = AccountModelChoiceField(Account.objects.all())
+    account = forms.ModelChoiceField(queryset=None)
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user")
@@ -54,7 +39,7 @@ class ImportConnectionsForm(forms.Form):
 
 
 class ReportBalanceForm(forms.Form):
-    accounts = AccountModelMultipleChoiceField(Account.objects.none())
+    accounts = forms.ModelMultipleChoiceField(queryset=None)
     from_date = forms.DateField(required=False)
     to_date = forms.DateField(required=False)
 
