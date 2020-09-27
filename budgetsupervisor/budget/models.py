@@ -46,6 +46,7 @@ class ConnectionManager(models.Manager):
 
 class Connection(models.Model):
     provider = models.CharField(max_length=200, editable=False)
+    # TODO: Can external_id be set to null?
     external_id = models.BigIntegerField(blank=True, null=True, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 

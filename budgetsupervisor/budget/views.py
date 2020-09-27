@@ -7,6 +7,7 @@ from django.views.generic.edit import (
     FormMixin,
 )
 from django.urls import reverse_lazy
+from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from .models import Account, Category, Connection, Transaction
@@ -16,6 +17,12 @@ from .forms import (
     ImportConnectionsForm,
     ImportTransactionsForm,
     ReportBalanceForm,
+)
+from saltedge_wrapper.factory import (
+    connect_sessions_api,
+    connections_api,
+    accounts_api,
+    transactions_api,
 )
 
 
@@ -38,7 +45,7 @@ class ConnectionCreate(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         redirect_url = self.request.build_absolute_uri(str(self.success_url))
         connect_url = Connection.objects.create_in_saltedge(
-            redirect_url, self.request.user.profile.external_id
+            redirect_url, self.request.user.profile.external_id, connect_sessions_api()
         )
         return redirect(connect_url)
 
@@ -53,9 +60,13 @@ class ConnectionUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return obj.user == self.request.user
 
 
-class ConnectionDelete(LoginRequiredMixin, DeleteView):
+class ConnectionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Connection
     success_url = reverse_lazy("connections:connection_list")
+
+    def test_func(self):
+        obj = self.get_object()
+        return obj.user == self.request.user
 
 
 class ImportConnectionsView(LoginRequiredMixin, FormView):
@@ -65,7 +76,7 @@ class ImportConnectionsView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         Connection.objects.import_from_saltedge(
-            self.request.user, self.request.user.profile.external_id
+            self.request.user, self.request.user.profile.external_id, connections_api()
         )
         return super().form_valid(form)
 
@@ -116,7 +127,9 @@ class ImportAccountsView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         connection = form.cleaned_data["connection"]
-        Account.objects.import_from_saltedge(connection.external_id, self.request.user)
+        Account.objects.import_from_saltedge(
+            connection.external_id, self.request.user, accounts_api()
+        )
         return super().form_valid(form)
 
     def get_form_kwargs(self):
@@ -185,7 +198,10 @@ class ImportTransactionsView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         account = form.cleaned_data["account"]
         Transaction.objects.import_from_saltedge(
-            account.external_id, account.connection.external_id, self.request.user
+            self.request.user,
+            account.connection.external_id,
+            account.external_id,
+            transactions_api(),
         )
         return super().form_valid(form)
 

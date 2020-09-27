@@ -1,4 +1,5 @@
-from django.urls import reverse
+from django.urls import reverse, resolve
+from utils import get_url_path
 
 
 def test_login_view_get(client):
@@ -31,6 +32,7 @@ def test_profile_view_get_not_logged_in(client):
     url = reverse("profile")
     response = client.get(url)
     assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "login"
 
 
 def test_profile_connect_view_get(client, user_foo, login_user):
@@ -44,11 +46,13 @@ def test_profile_connect_view_get_not_logged_in(client):
     url = reverse("profile_connect")
     response = client.get(url)
     assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "login"
 
 
 def test_profile_connect_view_post(client, user_foo, login_user, mocker, customers_api):
     login_user(user_foo)
     url = reverse("profile_connect")
     mocker.patch("users.views.customers_api", autospec=True, return_value=customers_api)
-    response = client.post(url, follow=True)
-    assert response.status_code == 200
+    response = client.post(url)
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "profile"
