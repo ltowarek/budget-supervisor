@@ -3,7 +3,6 @@ from utils import get_url_path
 from budget.models import Account, Category
 from swagger_client import ConnectSessionResponse, ConnectSessionResponseData
 import datetime
-from django.utils.http import urlencode
 
 
 def test_index_view_get(client, user_foo, login_user):
@@ -743,12 +742,11 @@ def test_report_balance_view_get_with_parameters(
     client, user_foo, login_user, account_foo
 ):
     login_user(user_foo)
-    base_url = reverse("reports:report_balance")
+    url = reverse("reports:report_balance")
     data = {
         "accounts": [account_foo.pk],
         "from_date": datetime.date.today(),
         "to_date": datetime.date.today(),
     }
-    url = "{}?{}".format(base_url, urlencode(data, doseq=True))
-    response = client.get(url)
+    response = client.get(url, data)
     assert response.status_code == 200
