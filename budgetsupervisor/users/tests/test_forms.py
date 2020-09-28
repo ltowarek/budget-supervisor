@@ -2,9 +2,11 @@ from users.forms import (
     SignUpForm,
     ProfileConnectForm,
 )
+import pytest
 
 
-def test_sign_up_form_valid(db):
+@pytest.mark.django_db
+def test_sign_up_form_valid():
     data = {"username": "xyz", "password1": "Django 3", "password2": "Django 3"}
     form = SignUpForm(data=data)
     assert form.is_valid() is True

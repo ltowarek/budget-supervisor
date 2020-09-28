@@ -7,7 +7,8 @@ from django.utils.dateparse import parse_datetime, parse_date
 
 
 @pytest.fixture
-def user_factory(db, django_user_model):
+@pytest.mark.django_db
+def user_factory(django_user_model):
     def create_user(
         username,
         password="password",
@@ -38,7 +39,8 @@ def user_foo(user_factory):
 
 
 @pytest.fixture
-def profile_factory(db, user_foo):
+@pytest.mark.django_db
+def profile_factory(user_foo):
     def create_profile(
         user=user_foo, external_id=None,
     ):
@@ -61,7 +63,8 @@ def profile_foo_external(profile_factory):
 
 
 @pytest.fixture
-def login_user(db, client):
+@pytest.mark.django_db
+def login_user(client):
     def f(user, password="password"):
         client.login(username=user.username, password=password)
 
@@ -69,7 +72,8 @@ def login_user(db, client):
 
 
 @pytest.fixture
-def account_factory(db, connection_foo, user_foo):
+@pytest.mark.django_db
+def account_factory(connection_foo, user_foo):
     def create_account(
         name,
         account_type=Account.AccountType.ACCOUNT,
@@ -99,7 +103,8 @@ def account_foo_external(account_factory, connection_foo_external):
 
 
 @pytest.fixture
-def category_factory(db, user_foo):
+@pytest.mark.django_db
+def category_factory(user_foo):
     def create_category(name, user=user_foo):
         return Category.objects.create(name=name, user=user)
 
@@ -112,7 +117,8 @@ def category_foo(category_factory):
 
 
 @pytest.fixture
-def connection_factory(db, user_foo):
+@pytest.mark.django_db
+def connection_factory(user_foo):
     def create_connection(
         provider, user=user_foo, external_id=None,
     ):
@@ -136,7 +142,8 @@ def connection_foo_external(connection_factory, profile_foo_external):
 
 
 @pytest.fixture
-def transaction_factory(db, account_foo, category_foo, user_foo):
+@pytest.mark.django_db
+def transaction_factory(account_foo, category_foo, user_foo):
     def create_transaction(
         date=datetime.date.today(),
         amount=100.00,

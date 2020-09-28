@@ -2,6 +2,7 @@ from budget.models import Connection, Account, Category, Transaction
 import datetime
 import swagger_client as saltedge_client
 from django.utils.dateparse import parse_date
+import pytest
 
 
 def test_connection_str(connection_foo):
@@ -205,7 +206,8 @@ def test_category_str(category_foo):
     assert str(category_foo) == "foo"
 
 
-def test_categories_are_populated_after_user_is_created(db, user_foo):
+@pytest.mark.django_db
+def test_categories_are_populated_after_user_is_created(user_foo):
     expected_categories = [
         "Auto and Transport",
         "Bills and Utilities",
