@@ -13,7 +13,7 @@ def user_factory(db, django_user_model):
         password="password",
         first_name="foo",
         last_name="bar",
-        email="foo@bar.com",
+        email="foo@example.com",
         is_staff=False,
         is_superuser=False,
         is_active=True,

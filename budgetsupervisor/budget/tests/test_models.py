@@ -9,7 +9,7 @@ def test_connection_str(connection_foo):
 
 
 def test_connection_create_in_saltedge(profile_foo_external, connect_sessions_api):
-    data = saltedge_client.ConnectSessionResponseData(connect_url="foo.com")
+    data = saltedge_client.ConnectSessionResponseData(connect_url="example.com")
     connect_sessions_api.connect_sessions_create_post.return_value = saltedge_client.ConnectSessionResponse(
         data=data
     )

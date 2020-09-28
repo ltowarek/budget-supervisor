@@ -94,7 +94,7 @@ def test_connection_create_view_post(
     login_user(user_foo)
     url = reverse("connections:connection_create")
     connect_sessions_api.connect_sessions_create_post.return_value = ConnectSessionResponse(
-        data=ConnectSessionResponseData(connect_url="foo.com")
+        data=ConnectSessionResponseData(connect_url="example.com")
     )
     mocker.patch(
         "budget.views.connect_sessions_api",
@@ -103,7 +103,7 @@ def test_connection_create_view_post(
     )
     response = client.post(url)
     assert response.status_code == 302
-    assert response.url == "foo.com"
+    assert response.url == "example.com"
 
 
 def test_connection_update_view_get(client, user_foo, login_user, connection_foo):
