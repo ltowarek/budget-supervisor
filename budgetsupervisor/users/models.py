@@ -18,7 +18,7 @@ class ProfileManager(models.Manager):
         profile.save()
 
     def remove_from_saltedge(self, profile, customers_api):
-        response = customers_api.customers_customer_id_delete(str(profile.external_id))
+        customers_api.customers_customer_id_delete(str(profile.external_id))
         profile.external_id = None
         profile.save()
 

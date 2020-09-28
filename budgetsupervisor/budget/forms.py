@@ -1,13 +1,5 @@
 from django import forms
-from django.conf import settings
-from django.utils.dateparse import parse_datetime
-import os
-import json
-from .models import Account, Category, Connection, Transaction
-from decimal import Decimal
-from django.shortcuts import redirect
 from .models import Account, Connection
-from django.contrib.auth.models import User
 
 
 class ImportAccountsForm(forms.Form):

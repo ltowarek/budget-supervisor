@@ -1,5 +1,4 @@
 from budget.models import Connection, Account, Category, Transaction
-import pytest
 import datetime
 import swagger_client as saltedge_client
 from django.utils.dateparse import parse_date
@@ -442,10 +441,10 @@ def test_transaction_get_balance_filter_by_user(
     category_abc = category_factory("abc", user_abc)
     category_xyz = category_factory("xyz", user_xyz)
 
-    transaction_abc = transaction_factory(
+    transaction_factory(
         amount=123.00, account=account_abc, user=user_abc, category=category_abc
     )
-    transaction_xyz = transaction_factory(
+    transaction_factory(
         amount=256.00, account=account_xyz, user=user_xyz, category=category_xyz
     )
 
@@ -467,13 +466,13 @@ def test_transaction_get_balance_filter_by_account(
 
     category_abc = category_factory("abc", user_abc)
 
-    transaction_abc_1 = transaction_factory(
+    transaction_factory(
         amount=4.00, account=account_abc_1, user=user_abc, category=category_abc
     )
-    transaction_abc_2 = transaction_factory(
+    transaction_factory(
         amount=5.00, account=account_abc_2, user=user_abc, category=category_abc
     )
-    transaction_abc_3 = transaction_factory(
+    transaction_factory(
         amount=6.00, account=account_abc_3, user=user_abc, category=category_abc
     )
 
@@ -492,10 +491,10 @@ def test_transaction_get_balance_per_category(
     category_abc_1 = category_factory("abc_1", user_abc)
     category_abc_2 = category_factory("abc_2", user_abc)
 
-    transaction_abc_1 = transaction_factory(
+    transaction_factory(
         amount=4.00, account=account_abc, user=user_abc, category=category_abc_1
     )
-    transaction_abc_2 = transaction_factory(
+    transaction_factory(
         amount=5.00, account=account_abc, user=user_abc, category=category_abc_2
     )
 
@@ -511,21 +510,21 @@ def test_transaction_get_balance_filter_by_from_date(
     account_abc = account_factory("abc", user=user_abc)
     category_abc = category_factory("abc", user_abc)
 
-    transaction_abc_1 = transaction_factory(
+    transaction_factory(
         amount=4.00,
         account=account_abc,
         date=datetime.date(2020, 2, 1),
         user=user_abc,
         category=category_abc,
     )
-    transaction_abc_2 = transaction_factory(
+    transaction_factory(
         amount=5.00,
         account=account_abc,
         date=datetime.date(2020, 3, 1),
         user=user_abc,
         category=category_abc,
     )
-    transaction_abc_3 = transaction_factory(
+    transaction_factory(
         amount=6.00,
         account=account_abc,
         date=datetime.date(2020, 4, 1),
@@ -547,21 +546,21 @@ def test_transaction_get_balance_filter_by_to_date(
     account_abc = account_factory("abc", user=user_abc)
     category_abc = category_factory("abc", user_abc)
 
-    transaction_abc_1 = transaction_factory(
+    transaction_factory(
         amount=4.00,
         account=account_abc,
         date=datetime.date(2020, 2, 1),
         user=user_abc,
         category=category_abc,
     )
-    transaction_abc_2 = transaction_factory(
+    transaction_factory(
         amount=5.00,
         account=account_abc,
         date=datetime.date(2020, 3, 1),
         user=user_abc,
         category=category_abc,
     )
-    transaction_abc_3 = transaction_factory(
+    transaction_factory(
         amount=6.00,
         account=account_abc,
         date=datetime.date(2020, 4, 1),

@@ -70,7 +70,7 @@ connections_patterns = (
 )
 
 reports_patterns = (
-    [path("balance/", views.ReportBalanceView.as_view(), name="report_balance"),],
+    [path("balance/", views.ReportBalanceView.as_view(), name="report_balance")],
     "reports",
 )
 

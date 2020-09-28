@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.db.models.signals import post_save
@@ -30,16 +29,14 @@ class ConnectionManager(models.Manager):
 
             c, created = Connection.objects.update_or_create(
                 external_id=imported_id,
-                defaults={"provider": imported_connection.provider_name, "user": user,},
+                defaults={"provider": imported_connection.provider_name, "user": user},
             )
             if created:
                 new_connections.append(c)
         return new_connections
 
     def remove_from_saltedge(self, connection, connections_api):
-        response = connections_api.connections_connection_id_delete(
-            str(connection.external_id)
-        )
+        connections_api.connections_connection_id_delete(str(connection.external_id))
         connection.external_id = None
         connection.save()
 

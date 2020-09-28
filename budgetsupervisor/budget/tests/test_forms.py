@@ -5,7 +5,6 @@ from budget.forms import (
     ImportConnectionsForm,
     ReportBalanceForm,
 )
-import pytest
 
 
 def test_import_accounts_form_valid(user_foo, connection_foo_external):
@@ -68,7 +67,7 @@ def test_report_balance_form_valid_single_account(user_foo, account_foo):
 def test_report_balance_form_valid_multiple_accounts(user_foo, account_factory):
     account_a = account_factory("a")
     account_b = account_factory("b")
-    data = {"accounts": [account_a, account_b,]}
+    data = {"accounts": [account_a, account_b]}
     form = ReportBalanceForm(data=data, user=user_foo)
     assert form.is_valid() is True
 

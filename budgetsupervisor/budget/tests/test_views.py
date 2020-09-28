@@ -68,7 +68,7 @@ def test_connection_list_view_get_current_user(
     user_b = user_factory("b")
     login_user(user_a)
     connection_a = connection_factory("a", user=user_a)
-    connection_b = connection_factory("b", user=user_b)
+    connection_factory("b", user=user_b)
     url = reverse("connections:connection_list")
     response = client.get(url)
     assert response.status_code == 200
@@ -138,7 +138,7 @@ def test_connection_update_view_post_different_user(
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
-    connection_a = connection_factory("a", user=user_a)
+    connection_factory("a", user=user_a)
     connection_b = connection_factory("b", user=user_b)
     url = reverse("connections:connection_update", kwargs={"pk": connection_b.pk})
     data = {"name": "bx", "connection_type": Account.AccountType.ACCOUNT}
@@ -174,7 +174,7 @@ def test_connection_delete_view_post_different_user(
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
-    connection_a = connection_factory("a", user=user_a)
+    connection_factory("a", user=user_a)
     connection_b = connection_factory("b", user=user_b)
     url = reverse("connections:connection_delete", kwargs={"pk": connection_b.pk})
     response = client.post(url)
@@ -257,7 +257,7 @@ def test_account_list_view_get_current_user(
     user_b = user_factory("b")
     login_user(user_a)
     account_a = account_factory("a", user=user_a)
-    account_b = account_factory("b", user=user_b)
+    account_factory("b", user=user_b)
     url = reverse("accounts:account_list")
     response = client.get(url)
     assert response.status_code == 200
@@ -316,7 +316,7 @@ def test_account_update_view_post_different_user(
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
-    account_a = account_factory("a", user=user_a)
+    account_factory("a", user=user_a)
     account_b = account_factory("b", user=user_b)
     url = reverse("accounts:account_update", kwargs={"pk": account_b.pk})
     data = {"name": "bx", "account_type": Account.AccountType.ACCOUNT}
@@ -352,7 +352,7 @@ def test_account_delete_view_post_different_user(
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
-    account_a = account_factory("a", user=user_a)
+    account_factory("a", user=user_a)
     account_b = account_factory("b", user=user_b)
     url = reverse("accounts:account_delete", kwargs={"pk": account_b.pk})
     response = client.post(url)
@@ -435,7 +435,7 @@ def test_transaction_list_view_get_current_user(
     user_b = user_factory("b")
     login_user(user_a)
     transaction_a = transaction_factory(user=user_a)
-    transaction_b = transaction_factory(user=user_b)
+    transaction_factory(user=user_b)
     url = reverse("transactions:transaction_list")
     response = client.get(url)
     assert response.status_code == 200
@@ -508,7 +508,7 @@ def test_transaction_update_view_post_different_user(
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
-    transaction_a = transaction_factory(user=user_a)
+    transaction_factory(user=user_a)
     transaction_b = transaction_factory(user=user_b)
     url = reverse("transactions:transaction_update", kwargs={"pk": transaction_b.pk})
     data = {
@@ -546,7 +546,7 @@ def test_transaction_delete_view_post_different_user(
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
-    transaction_a = transaction_factory(user=user_a)
+    transaction_factory(user=user_a)
     transaction_b = transaction_factory(user=user_b)
     url = reverse("transactions:transaction_delete", kwargs={"pk": transaction_b.pk})
     response = client.post(url)
@@ -600,8 +600,8 @@ def test_category_list_view_get_ordered_by_name(
     client, user_foo, login_user, category_factory
 ):
     login_user(user_foo)
-    category_b = category_factory("b")
-    category_a = category_factory("a")
+    category_factory("b")
+    category_factory("a")
     url = reverse("categories:category_list")
     response = client.get(url)
     assert response.status_code == 200
@@ -616,8 +616,8 @@ def test_category_list_view_get_current_user(
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
-    category_a = category_factory("a", user=user_a)
-    category_b = category_factory("b", user=user_b)
+    category_factory("a", user=user_a)
+    category_factory("b", user=user_b)
     url = reverse("categories:category_list")
     response = client.get(url)
     assert response.status_code == 200
@@ -682,7 +682,7 @@ def test_category_update_view_post_different_user(
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
-    category_a = category_factory("a", user=user_a)
+    category_factory("a", user=user_a)
     category_b = category_factory("b", user=user_b)
     url = reverse("categories:category_update", kwargs={"pk": category_b.pk})
     data = {"name": "bx", "category_type": Account.AccountType.ACCOUNT}
@@ -718,7 +718,7 @@ def test_category_delete_view_post_different_user(
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
-    category_a = category_factory("a", user=user_a)
+    category_factory("a", user=user_a)
     category_b = category_factory("b", user=user_b)
     url = reverse("categories:category_delete", kwargs={"pk": category_b.pk})
     response = client.post(url)

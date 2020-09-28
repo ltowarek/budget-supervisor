@@ -2,7 +2,6 @@ from users.forms import (
     SignUpForm,
     ProfileConnectForm,
 )
-import pytest
 
 
 def test_sign_up_form_valid(db):
