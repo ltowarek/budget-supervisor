@@ -1,2 +1,2 @@
 #!/bin/bash
-pytest -m "not webtest"
+pytest -m "not saltedge"

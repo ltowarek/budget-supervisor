@@ -10,7 +10,7 @@ from saltedge_wrapper.factory import (
 )
 
 
-pytestmark = pytest.mark.webtest
+pytestmark = pytest.mark.saltedge
 
 
 @pytest.fixture

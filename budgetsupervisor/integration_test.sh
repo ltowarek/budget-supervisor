@@ -1,2 +1,2 @@
 #!/bin/bash
-pytest -m "webtest"
+pytest -m "saltedge"

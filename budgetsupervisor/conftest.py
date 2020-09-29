@@ -4,6 +4,7 @@ import swagger_client as saltedge_client
 from budget.models import Category, Account, Connection, Transaction
 from pytest_mock import MockerFixture
 from django.utils.dateparse import parse_datetime, parse_date
+from selenium.webdriver.firefox.webdriver import WebDriver
 
 
 @pytest.fixture
@@ -464,3 +465,18 @@ def saltedge_transaction_factory():
 @pytest.fixture
 def saltedge_transaction(saltedge_transaction_factory):
     return saltedge_transaction_factory()
+
+
+@pytest.fixture
+def selenium():
+    s = WebDriver()
+    yield s
+    s.quit()
+
+
+@pytest.fixture
+def live_server_path(live_server):
+    def f(path):
+        return live_server.url + path
+
+    return f
