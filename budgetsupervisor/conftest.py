@@ -467,7 +467,7 @@ def saltedge_transaction(saltedge_transaction_factory):
     return saltedge_transaction_factory()
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def selenium():
     s = WebDriver()
     yield s
