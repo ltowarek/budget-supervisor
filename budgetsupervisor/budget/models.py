@@ -125,6 +125,7 @@ def populate_user_categories(sender, instance, created, **kwargs):
             "Shopping",
             "Transfer",
             "Travel",
+            # TODO: Replace Uncategorized with simple None/null category.
             "Uncategorized",
         ]
         for category in categories:
