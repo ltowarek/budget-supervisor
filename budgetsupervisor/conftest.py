@@ -480,3 +480,14 @@ def live_server_path(live_server):
         return live_server.url + path
 
     return f
+
+
+@pytest.fixture
+def authenticated_selenium(selenium, live_server, client, user_foo):
+    client.login(username=user_foo.username, password="password")
+    selenium.get(live_server.url)
+    cookie = client.cookies["sessionid"]
+    selenium.add_cookie(
+        {"name": "sessionid", "value": cookie.value, "secure": False, "path": "/"}
+    )
+    return selenium

@@ -11,3 +11,7 @@ class SignUpForm(UserCreationForm):
 
 class ProfileConnectForm(forms.Form):
     pass
+
+
+class ProfileDisconnectForm(forms.Form):
+    pass

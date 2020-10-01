@@ -56,3 +56,28 @@ def test_profile_connect_view_post(client, user_foo, login_user, mocker, custome
     response = client.post(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "profile"
+
+
+def test_profile_disconnect_view_get(client, user_foo, login_user):
+    login_user(user_foo)
+    url = reverse("profile_disconnect")
+    response = client.get(url)
+    assert response.status_code == 200
+
+
+def test_profile_disconnect_view_get_not_logged_in(client):
+    url = reverse("profile_disconnect")
+    response = client.get(url)
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "login"
+
+
+def test_profile_disconnect_view_post(
+    client, user_foo, login_user, mocker, customers_api
+):
+    login_user(user_foo)
+    url = reverse("profile_disconnect")
+    mocker.patch("users.views.customers_api", autospec=True, return_value=customers_api)
+    response = client.post(url)
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "profile"

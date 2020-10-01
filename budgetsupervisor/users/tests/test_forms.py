@@ -1,6 +1,7 @@
 from users.forms import (
     SignUpForm,
     ProfileConnectForm,
+    ProfileDisconnectForm,
 )
 import pytest
 
@@ -15,4 +16,10 @@ def test_sign_up_form_valid():
 def test_profile_connect_form_valid():
     data = {}
     form = ProfileConnectForm(data=data)
+    assert form.is_valid() is True
+
+
+def test_profile_disconnect_form_valid():
+    data = {}
+    form = ProfileDisconnectForm(data=data)
     assert form.is_valid() is True
