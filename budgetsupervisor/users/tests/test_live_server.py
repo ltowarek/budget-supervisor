@@ -84,9 +84,9 @@ class TestSignUp:
 
 class TestProfile:
     def test_synchronization_can_be_enabled_if_not_already_enabled(
-        self, authenticated_selenium, live_server_path, profile_foo
+        self, authenticate_selenium, live_server_path, profile_foo
     ):
-        selenium = authenticated_selenium
+        selenium = authenticate_selenium(user=profile_foo.user)
         url = live_server_path(reverse("profile"))
         selenium.get(url)
         element = selenium.find_element_by_id("synchronization")
@@ -96,9 +96,9 @@ class TestProfile:
         )
 
     def test_synchronization_can_be_disabled_if_already_enabled(
-        self, authenticated_selenium, live_server_path, profile_foo_external
+        self, authenticate_selenium, live_server_path, profile_foo_external
     ):
-        selenium = authenticated_selenium
+        selenium = authenticate_selenium(user=profile_foo_external.user)
         url = live_server_path(reverse("profile"))
         selenium.get(url)
         element = selenium.find_element_by_id("synchronization")
@@ -108,18 +108,18 @@ class TestProfile:
         )
 
     def test_enable_external_synchronization(
-        self, authenticated_selenium, live_server_path, profile_foo
+        self, authenticate_selenium, live_server_path, profile_foo
     ):
-        selenium = authenticated_selenium
+        selenium = authenticate_selenium(user=profile_foo.user)
         self.enable_external_synchronization(selenium, live_server_path, profile_foo)
         assert profile_foo.external_id is not None
         assert selenium.current_url == live_server_path(reverse("profile"))
         Profile.objects.remove_from_saltedge(profile_foo, customers_api())
 
     def test_disable_external_synchronization(
-        self, authenticated_selenium, live_server_path, profile_foo
+        self, authenticate_selenium, live_server_path, profile_foo
     ):
-        selenium = authenticated_selenium
+        selenium = authenticate_selenium(user=profile_foo.user)
         Profile.objects.create_in_saltedge(profile_foo, customers_api())
         self.disable_external_synchronization(selenium, live_server_path, profile_foo)
         assert profile_foo.external_id is None

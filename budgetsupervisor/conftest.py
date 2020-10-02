@@ -1,6 +1,8 @@
 import pytest
 import datetime
 import swagger_client as saltedge_client
+import saltedge_wrapper.factory
+import os
 from budget.models import Category, Account, Connection, Transaction
 from pytest_mock import MockerFixture
 from django.utils.dateparse import parse_datetime, parse_date
@@ -483,11 +485,57 @@ def live_server_path(live_server):
 
 
 @pytest.fixture
-def authenticated_selenium(selenium, live_server, client, user_foo):
-    client.login(username=user_foo.username, password="password")
-    selenium.get(live_server.url)
-    cookie = client.cookies["sessionid"]
-    selenium.add_cookie(
-        {"name": "sessionid", "value": cookie.value, "secure": False, "path": "/"}
+def authenticate_selenium(selenium, live_server, client, user_foo):
+    def f(
+        user=user_foo,
+        password="password",
+        selenium=selenium,
+        live_server=live_server,
+        client=client,
+    ):
+        client.login(username=user.username, password=password)
+        selenium.get(live_server.url)
+        cookie = client.cookies["sessionid"]
+        selenium.add_cookie(
+            {"name": "sessionid", "value": cookie.value, "secure": False, "path": "/"}
+        )
+        return selenium
+
+    return f
+
+
+@pytest.fixture
+def predefined_customer():
+    return (
+        saltedge_wrapper.factory.customers_api()
+        .customers_customer_id_get(os.environ["CUSTOMER_ID"])
+        .data
     )
-    return selenium
+
+
+@pytest.fixture
+def predefined_connection():
+    return (
+        saltedge_wrapper.factory.connections_api()
+        .connections_connection_id_get(os.environ["CONNECTION_ID"])
+        .data
+    )
+
+
+@pytest.fixture
+def predefined_account(predefined_connection):
+    return (
+        saltedge_wrapper.factory.accounts_api()
+        .accounts_get(predefined_connection.id)
+        .data[0]
+    )
+
+
+@pytest.fixture
+def predefined_user(user_factory, predefined_customer):
+    return user_factory(username=predefined_customer.identifier)
+
+
+@pytest.fixture
+def predefined_profile(profile_factory, predefined_customer, predefined_user):
+    return profile_factory(user=predefined_user, external_id=predefined_customer.id)

@@ -1,6 +1,5 @@
 import swagger_client as saltedge_client
 import pytest
-import os
 from saltedge_wrapper.factory import (
     customers_api,
     connect_sessions_api,
@@ -35,25 +34,6 @@ def customer_factory():
 @pytest.fixture
 def customer_1234(customer_factory):
     return customer_factory(identifier="test_1234")
-
-
-@pytest.fixture
-def predefined_customer():
-    return customers_api().customers_customer_id_get(os.environ["CUSTOMER_ID"]).data
-
-
-@pytest.fixture
-def predefined_connection():
-    return (
-        connections_api()
-        .connections_connection_id_get(os.environ["CONNECTION_ID"])
-        .data
-    )
-
-
-@pytest.fixture
-def predefined_account(predefined_connection):
-    return accounts_api().accounts_get(predefined_connection.id).data[0]
 
 
 def test_create_customer_successfully(customer_factory):
