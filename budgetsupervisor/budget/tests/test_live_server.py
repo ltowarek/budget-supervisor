@@ -119,6 +119,18 @@ class TestConnectionCreate:
             reverse("connections:connection_import")
         )
 
+    def test_cant_create_connection_if_external_synchronization_is_disabled(
+        self, authenticate_selenium, live_server_path, user_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("connections:connection_create"))
+        selenium.get(url)
+        element = selenium.find_element_by_id("synchronization")
+        assert (
+            element.text
+            == "Enable external synchronization before creating a connection"
+        )
+
     def create_saltedge_connection(self, selenium, live_server_path):
         element = selenium.find_element_by_id("providers-search")
         element.send_keys("Fake Demo Bank")

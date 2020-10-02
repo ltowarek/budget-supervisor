@@ -1,6 +1,10 @@
 {% extends "budget/base.html" %}
 
 {% block content %}
+
+{% if not profile.external_id %}
+<p id="synchronization">Enable <a href="{% url 'profile' %}">external synchronization</a> before creating a connection</p>
+{% else %}
 <form action="" method="post">
   {% csrf_token %}
   <table>
@@ -8,4 +12,6 @@
   </table>
   <input type="submit" value="Submit">
 </form>
+{% endif %}
+
 {% endblock %}

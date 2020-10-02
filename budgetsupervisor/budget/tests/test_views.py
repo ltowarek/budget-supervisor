@@ -79,6 +79,7 @@ def test_connection_create_view_get(client, user_foo, login_user):
     url = reverse("connections:connection_create")
     response = client.get(url)
     assert response.status_code == 200
+    assert response.context["profile"] == user_foo.profile
 
 
 def test_connection_create_view_get_not_logged_in(client):

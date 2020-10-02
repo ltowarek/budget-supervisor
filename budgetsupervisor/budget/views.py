@@ -49,6 +49,11 @@ class ConnectionCreate(LoginRequiredMixin, FormView):
         )
         return redirect(connect_url)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["profile"] = self.request.user.profile
+        return context
+
 
 class ConnectionUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Connection
