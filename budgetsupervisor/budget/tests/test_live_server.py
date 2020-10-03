@@ -148,7 +148,7 @@ class TestConnectionCreate:
         element = selenium.find_element_by_xpath('//input[@value="Confirm"]')
         element.click()
         redirect_url = live_server_path(reverse("connections:connection_import"))
-        WebDriverWait(selenium, 20).until(EC.url_to_be(redirect_url))
+        WebDriverWait(selenium, 30).until(EC.url_to_be(redirect_url))
 
 
 class TestConnectionUpdate:
@@ -169,16 +169,61 @@ class TestConnectionDelete:
     def test_connection_is_deleted_internally(
         self, authenticate_selenium, live_server_path, user_foo, connection_foo
     ):
-        assert Connection.objects.filter(user=user_foo).count() == 1
         selenium = authenticate_selenium(user=user_foo)
-        url = live_server_path(
-            reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
-        )
-        selenium.get(url)
-        element = selenium.find_element_by_xpath('//input[@value="Yes, delete."]')
-        element.click()
+        self.delete_connection(selenium, live_server_path, connection_foo)
         assert Connection.objects.filter(user=user_foo).count() == 0
 
     def test_connection_is_deleted_externally(self):
         # TODO: There is a need to create SaltEdge connection programatically without a need for Selenium
         assert True
+
+    def test_redirect(
+        self, authenticate_selenium, live_server_path, user_foo, connection_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_connection(selenium, live_server_path, connection_foo)
+        assert selenium.current_url == live_server_path(
+            reverse("connections:connection_list")
+        )
+
+    def delete_connection(self, selenium, live_server_path, connection):
+        url = live_server_path(
+            reverse("connections:connection_delete", kwargs={"pk": connection.pk})
+        )
+        selenium.get(url)
+        element = selenium.find_element_by_xpath('//input[@value="Yes, delete."]')
+        element.click()
+
+
+class TestConnectionImport:
+    def test_connection_is_imported(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        predefined_profile,
+        predefined_connection,
+    ):
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        self.import_connections(selenium, live_server_path)
+        connections = Connection.objects.filter(user=predefined_profile.user)
+        assert connections.count() == 1
+        assert str(connections[0].external_id) == predefined_connection.id
+
+    def test_redirect(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        predefined_profile,
+        predefined_connection,
+    ):
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        self.import_connections(selenium, live_server_path)
+        assert selenium.current_url == live_server_path(
+            reverse("connections:connection_list")
+        )
+
+    def import_connections(self, selenium, live_server_path):
+        url = live_server_path(reverse("connections:connection_import"))
+        selenium.get(url)
+        element = selenium.find_element_by_xpath('//input[@value="Import"]')
+        element.click()
