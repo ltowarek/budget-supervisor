@@ -168,6 +168,21 @@ def test_connection_delete_view_post(client, user_foo, login_user, connection_fo
     assert resolve(get_url_path(response)).url_name == "connection_list"
 
 
+def test_connection_delete_view_post_external(
+    client, user_foo, login_user, connection_foo_external, mocker, connections_api
+):
+    login_user(user_foo)
+    url = reverse(
+        "connections:connection_delete", kwargs={"pk": connection_foo_external.pk}
+    )
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api
+    )
+    response = client.post(url)
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "connection_list"
+
+
 def test_connection_delete_view_post_different_user(
     client, user_factory, login_user, connection_factory
 ):

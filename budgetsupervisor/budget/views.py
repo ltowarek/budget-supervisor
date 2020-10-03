@@ -73,6 +73,13 @@ class ConnectionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         obj = self.get_object()
         return obj.user == self.request.user
 
+    def delete(self, *args, **kwargs):
+        connection = self.get_object()
+        if connection.external_id:
+            Connection.objects.remove_from_saltedge(connection, connections_api())
+            # TODO: Remove external_id from related accounts/transactions.
+        return super().delete(*args, **kwargs)
+
 
 class ImportConnectionsView(LoginRequiredMixin, FormView):
     template_name = "budget/connection_import.html"

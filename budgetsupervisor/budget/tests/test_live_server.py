@@ -110,10 +110,6 @@ class TestConnectionCreate:
         remove_temporary_connections,
     ):
         selenium = authenticate_selenium(user=predefined_profile.user)
-        url = live_server_path(reverse("connections:connection_create"))
-        selenium.get(url)
-        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
-        element.click()
         self.create_saltedge_connection(selenium, live_server_path)
         assert selenium.current_url == live_server_path(
             reverse("connections:connection_import")
@@ -131,7 +127,12 @@ class TestConnectionCreate:
             == "Enable external synchronization before creating a connection"
         )
 
-    def create_saltedge_connection(self, selenium, live_server_path):
+    @classmethod
+    def create_saltedge_connection(cls, selenium, live_server_path):
+        url = live_server_path(reverse("connections:connection_create"))
+        selenium.get(url)
+        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element.click()
         element = selenium.find_element_by_id("providers-search")
         element.send_keys("Fake Demo Bank")
         element = selenium.find_element_by_class_name("tt-dropdown-menu")
@@ -148,3 +149,36 @@ class TestConnectionCreate:
         element.click()
         redirect_url = live_server_path(reverse("connections:connection_import"))
         WebDriverWait(selenium, 20).until(EC.url_to_be(redirect_url))
+
+
+class TestConnectionUpdate:
+    def test_dummy(
+        self, authenticate_selenium, live_server_path, user_foo, connection_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(
+            reverse("connections:connection_update", kwargs={"pk": connection_foo.pk})
+        )
+        selenium.get(url)
+        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element.click()
+        assert True
+
+
+class TestConnectionDelete:
+    def test_connection_is_deleted_internally(
+        self, authenticate_selenium, live_server_path, user_foo, connection_foo
+    ):
+        assert Connection.objects.filter(user=user_foo).count() == 1
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(
+            reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
+        )
+        selenium.get(url)
+        element = selenium.find_element_by_xpath('//input[@value="Yes, delete."]')
+        element.click()
+        assert Connection.objects.filter(user=user_foo).count() == 0
+
+    def test_connection_is_deleted_externally(self):
+        # TODO: There is a need to create SaltEdge connection programatically without a need for Selenium
+        assert True

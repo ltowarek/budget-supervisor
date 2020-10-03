@@ -41,5 +41,8 @@ class ProfileDisconnectView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         profile = self.request.user.profile
         Profile.objects.remove_from_saltedge(profile, customers_api())
-        # TODO: Remove external_id from remaining connections/accounts/transactions related to this customer.
+        # TODO: Remove external_id from related connections/accounts/transactions.
         return super().form_valid(form)
+
+
+# TODO: ProfileDeleteView
