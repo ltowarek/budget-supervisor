@@ -1,6 +1,6 @@
 import pytest
 from django.shortcuts import reverse
-from budget.models import Connection, Account
+from budget.models import Connection, Account, Transaction
 from saltedge_wrapper.factory import connections_api
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -366,3 +366,44 @@ class TestAccountUpdate:
         element = selenium.find_element_by_xpath('//input[@value="Submit"]')
         element.click()
         account.refresh_from_db()
+
+
+class TestAccountDelete:
+    def test_account_is_deleted(
+        self, authenticate_selenium, live_server_path, user_foo, account_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_account(selenium, live_server_path, account_foo)
+        assert Account.objects.filter(user=user_foo).count() == 0
+
+    def test_related_transactions_are_deleted(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        user_foo,
+        account_foo,
+        transaction_factory,
+    ):
+        number_of_transactions = 20
+        for i in range(number_of_transactions):
+            transaction_factory()
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_account(selenium, live_server_path, account_foo)
+        assert Transaction.objects.filter(user=user_foo).count() == 0
+
+    def test_redirect(
+        self, authenticate_selenium, live_server_path, user_foo, account_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_account(selenium, live_server_path, account_foo)
+        assert selenium.current_url == live_server_path(
+            reverse("accounts:account_list")
+        )
+
+    def delete_account(self, selenium, live_server_path, account):
+        url = live_server_path(
+            reverse("accounts:account_delete", kwargs={"pk": account.pk})
+        )
+        selenium.get(url)
+        element = selenium.find_element_by_xpath('//input[@value="Yes, delete."]')
+        element.click()
