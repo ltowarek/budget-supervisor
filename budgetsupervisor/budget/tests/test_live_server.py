@@ -437,6 +437,20 @@ class TestAccountImport:
         for account in accounts:
             assert account.external_id is not None
 
+    def test_accounts_are_not_duplicated(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        predefined_profile,
+        predefined_connection,
+    ):
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        self.import_accounts(selenium, live_server_path, predefined_connection)
+        count_pre = Account.objects.filter(user=predefined_profile.user).count()
+        self.import_accounts(selenium, live_server_path, predefined_connection)
+        count_post = Account.objects.filter(user=predefined_profile.user).count()
+        assert count_pre == count_post
+
     def test_redirect(
         self,
         authenticate_selenium,
@@ -778,6 +792,20 @@ class TestTransactionImport:
         assert transactions.count() == 17
         for transaction in transactions:
             assert transaction.external_id is not None
+
+    def test_transactions_are_not_duplicated(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        predefined_profile,
+        predefined_account,
+    ):
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        self.import_transactions(selenium, live_server_path, predefined_account)
+        count_pre = Transaction.objects.filter(user=predefined_profile.user).count()
+        self.import_transactions(selenium, live_server_path, predefined_account)
+        count_post = Transaction.objects.filter(user=predefined_profile.user).count()
+        assert count_pre == count_post
 
     def test_redirect(
         self,
