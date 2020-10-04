@@ -92,6 +92,11 @@ class ImportConnectionsView(LoginRequiredMixin, FormView):
         )
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["profile"] = self.request.user.profile
+        return context
+
 
 class AccountListView(LoginRequiredMixin, ListView):
     paginate_by = 25
@@ -148,6 +153,11 @@ class ImportAccountsView(LoginRequiredMixin, FormView):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["profile"] = self.request.user.profile
+        return context
 
 
 class TransactionListView(LoginRequiredMixin, ListView):

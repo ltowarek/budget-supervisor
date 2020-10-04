@@ -217,6 +217,18 @@ class TestConnectionImport:
             reverse("connections:connection_list")
         )
 
+    def test_cant_import_connections_if_external_synchronization_is_disabled(
+        self, authenticate_selenium, live_server_path, user_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("connections:connection_import"))
+        selenium.get(url)
+        element = selenium.find_element_by_id("synchronization")
+        assert (
+            element.text
+            == "Enable external synchronization before importing connections"
+        )
+
     def import_connections(self, selenium, live_server_path):
         url = live_server_path(reverse("connections:connection_import"))
         selenium.get(url)
@@ -414,12 +426,12 @@ class TestAccountImport:
         self,
         authenticate_selenium,
         live_server_path,
-        predefined_user,
+        predefined_profile,
         predefined_connection,
     ):
-        selenium = authenticate_selenium(user=predefined_user)
+        selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_accounts(selenium, live_server_path, predefined_connection)
-        accounts = Account.objects.filter(user=predefined_user)
+        accounts = Account.objects.filter(user=predefined_profile.user)
         assert accounts.count() == 5
         for account in accounts:
             assert account.external_id is not None
@@ -428,13 +440,24 @@ class TestAccountImport:
         self,
         authenticate_selenium,
         live_server_path,
-        predefined_user,
+        predefined_profile,
         predefined_connection,
     ):
-        selenium = authenticate_selenium(user=predefined_user)
+        selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_accounts(selenium, live_server_path, predefined_connection)
         assert selenium.current_url == live_server_path(
             reverse("accounts:account_list")
+        )
+
+    def test_cant_import_accounts_if_external_synchronization_is_disabled(
+        self, authenticate_selenium, live_server_path, user_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("accounts:account_import"))
+        selenium.get(url)
+        element = selenium.find_element_by_id("synchronization")
+        assert (
+            element.text == "Enable external synchronization before importing accounts"
         )
 
     def import_accounts(self, selenium, live_server_path, connection):
