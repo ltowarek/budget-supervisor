@@ -42,21 +42,15 @@ class TestConnectionList:
         assert elements[2].text == "Actions"
 
     def test_table_body(
-        self,
-        authenticate_selenium,
-        live_server_path,
-        connection_factory,
-        predefined_user,
+        self, authenticate_selenium, live_server_path, connection_factory, user_foo,
     ):
         number_of_connections = 20
         for i in range(number_of_connections):
-            connection_factory(f"provider {i}", user=predefined_user)
-        connections = Connection.objects.filter(user=predefined_user).order_by(
-            "provider"
-        )
+            connection_factory(f"provider {i}", user=user_foo)
+        connections = Connection.objects.filter(user=user_foo).order_by("provider")
         assert len(connections) == number_of_connections
 
-        selenium = authenticate_selenium(user=predefined_user)
+        selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("connections:connection_list"))
         selenium.get(url)
 
