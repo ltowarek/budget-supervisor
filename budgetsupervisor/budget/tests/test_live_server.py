@@ -1,6 +1,6 @@
 import pytest
 from django.shortcuts import reverse
-from budget.models import Connection
+from budget.models import Connection, Account
 from saltedge_wrapper.factory import connections_api
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -227,3 +227,80 @@ class TestConnectionImport:
         selenium.get(url)
         element = selenium.find_element_by_xpath('//input[@value="Import"]')
         element.click()
+
+
+class TestAccountList:
+    def test_menu(self, authenticate_selenium, live_server_path, user_foo):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("accounts:account_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath('//ul[@id="menu"]/li/a')
+        assert len(elements) == 2
+        assert elements[0].text == "Create"
+        assert elements[0].get_attribute("href") == live_server_path(
+            reverse("accounts:account_create")
+        )
+        assert elements[1].text == "Import"
+        assert elements[1].get_attribute("href") == live_server_path(
+            reverse("accounts:account_import")
+        )
+
+    def test_table_header(self, authenticate_selenium, live_server_path, user_foo):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("accounts:account_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
+        assert len(elements) == 4
+        assert elements[0].text == "ID"
+        assert elements[1].text == "Name"
+        assert elements[2].text == "Type"
+        assert elements[3].text == "Actions"
+
+    def test_table_body(
+        self, authenticate_selenium, live_server_path, account_factory, user_foo,
+    ):
+        number_of_accounts = 20
+        for i in range(number_of_accounts):
+            account_factory(
+                name=f"account {i}",
+                account_type=Account.AccountType.ACCOUNT,
+                external_id=None,
+                connection=None,
+                user=user_foo,
+            )
+            accounts = Account.objects.filter(user=user_foo).order_by("name")
+        assert len(accounts) == number_of_accounts
+
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("accounts:account_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr")
+        assert len(elements) == len(accounts)
+        for element, account in zip(elements, accounts):
+            cells = element.find_elements_by_xpath(".//td")
+            assert len(cells) == 4
+
+            assert cells[0].text == str(account.id)
+            assert cells[1].text == account.name
+            assert cells[2].text == account.get_account_type_display()
+
+            actions = cells[3].find_elements_by_xpath(".//ul/li/a")
+            assert actions[0].text == "Update"
+            assert actions[0].get_attribute("href") == live_server_path(
+                reverse("accounts:account_update", kwargs={"pk": account.pk})
+            )
+            assert actions[1].text == "Delete"
+            assert actions[1].get_attribute("href") == live_server_path(
+                reverse("accounts:account_delete", kwargs={"pk": account.pk})
+            )
+
+    def test_pagination(self, authenticate_selenium, live_server_path, user_foo):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("accounts:account_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_class_name("pagination")
+        assert elements
