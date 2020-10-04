@@ -198,4 +198,4 @@ class Transaction(models.Model):
     objects = TransactionManager()
 
     def __str__(self):
-        return str(self.id)
+        return str(self.description)

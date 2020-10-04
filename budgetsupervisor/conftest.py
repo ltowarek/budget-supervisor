@@ -173,12 +173,12 @@ def transaction_factory(account_foo, category_foo, user_foo):
 
 @pytest.fixture
 def transaction_foo(transaction_factory):
-    return transaction_factory()
+    return transaction_factory(description="transaction foo")
 
 
 @pytest.fixture
 def transaction_foo_external(transaction_factory):
-    return transaction_factory(external_id=123)
+    return transaction_factory(description="transaction foo", external_id=123)
 
 
 @pytest.fixture
@@ -514,7 +514,7 @@ def predefined_customer():
 
 
 @pytest.fixture
-def predefined_connection():
+def predefined_saltedge_connection():
     return (
         saltedge_wrapper.factory.connections_api()
         .connections_connection_id_get(os.environ["CONNECTION_ID"])
@@ -523,10 +523,10 @@ def predefined_connection():
 
 
 @pytest.fixture
-def predefined_account(predefined_connection):
+def predefined_saltedge_account(predefined_saltedge_connection):
     return (
         saltedge_wrapper.factory.accounts_api()
-        .accounts_get(predefined_connection.id)
+        .accounts_get(predefined_saltedge_connection.id)
         .data[0]
     )
 
@@ -539,3 +539,26 @@ def predefined_user(user_factory, predefined_customer):
 @pytest.fixture
 def predefined_profile(profile_factory, predefined_customer, predefined_user):
     return profile_factory(user=predefined_user, external_id=predefined_customer.id)
+
+
+@pytest.fixture
+def predefined_connection(
+    connection_factory, predefined_saltedge_connection, predefined_user
+):
+    return connection_factory(
+        provider=predefined_saltedge_connection.provider_name,
+        external_id=predefined_saltedge_connection.id,
+        user=predefined_user,
+    )
+
+
+@pytest.fixture
+def predefined_account(
+    account_factory, predefined_saltedge_account, predefined_connection, predefined_user
+):
+    return account_factory(
+        name=predefined_saltedge_account.name,
+        external_id=predefined_saltedge_account.id,
+        connection=predefined_connection,
+        user=predefined_user,
+    )

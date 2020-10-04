@@ -84,7 +84,7 @@ class TestConnectionList:
 
 
 @pytest.fixture
-def remove_temporary_connections(predefined_connection, predefined_user):
+def remove_temporary_connections(predefined_saltedge_connection, predefined_user):
     Connection.objects.import_from_saltedge(
         predefined_user, predefined_user.profile.external_id, connections_api()
     )
@@ -196,20 +196,20 @@ class TestConnectionImport:
         authenticate_selenium,
         live_server_path,
         predefined_profile,
-        predefined_connection,
+        predefined_saltedge_connection,
     ):
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_connections(selenium, live_server_path)
         connections = Connection.objects.filter(user=predefined_profile.user)
         assert connections.count() == 1
-        assert str(connections[0].external_id) == predefined_connection.id
+        assert str(connections[0].external_id) == predefined_saltedge_connection.id
 
     def test_redirect(
         self,
         authenticate_selenium,
         live_server_path,
         predefined_profile,
-        predefined_connection,
+        predefined_saltedge_connection,
     ):
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_connections(selenium, live_server_path)
@@ -406,4 +406,41 @@ class TestAccountDelete:
         )
         selenium.get(url)
         element = selenium.find_element_by_xpath('//input[@value="Yes, delete."]')
+        element.click()
+
+
+class TestAccountImport:
+    def test_accounts_are_imported(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        predefined_user,
+        predefined_connection,
+    ):
+        selenium = authenticate_selenium(user=predefined_user)
+        self.import_accounts(selenium, live_server_path, predefined_connection)
+        accounts = Account.objects.filter(user=predefined_user)
+        assert accounts.count() == 5
+        for account in accounts:
+            assert account.external_id is not None
+
+    def test_redirect(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        predefined_user,
+        predefined_connection,
+    ):
+        selenium = authenticate_selenium(user=predefined_user)
+        self.import_accounts(selenium, live_server_path, predefined_connection)
+        assert selenium.current_url == live_server_path(
+            reverse("accounts:account_list")
+        )
+
+    def import_accounts(self, selenium, live_server_path, connection):
+        url = live_server_path(reverse("accounts:account_import"))
+        selenium.get(url)
+        select = Select(selenium.find_element_by_name("connection"))
+        select.select_by_visible_text(connection.provider)
+        element = selenium.find_element_by_xpath('//input[@value="Import"]')
         element.click()

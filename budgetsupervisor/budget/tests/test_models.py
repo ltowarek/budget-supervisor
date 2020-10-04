@@ -232,7 +232,7 @@ def test_categories_are_populated_after_user_is_created(user_foo):
 
 
 def test_transaction_str(transaction_foo):
-    assert str(transaction_foo) == "1"
+    assert str(transaction_foo) == "transaction foo"
 
 
 def test_transaction_import_from_saltedge_no_objects(

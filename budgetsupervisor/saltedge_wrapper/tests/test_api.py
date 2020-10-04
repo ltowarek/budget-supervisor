@@ -76,45 +76,53 @@ def test_create_connect_session_successfully(predefined_customer):
     assert "https://www.saltedge.com/connect?token=" in response.data.connect_url
 
 
-def test_show_connection_successfully(predefined_connection):
-    response = connections_api().connections_connection_id_get(predefined_connection.id)
-    assert response.data == predefined_connection
+def test_show_connection_successfully(predefined_saltedge_connection):
+    response = connections_api().connections_connection_id_get(
+        predefined_saltedge_connection.id
+    )
+    assert response.data == predefined_saltedge_connection
 
 
 def test_list_connections_successfully(
-    predefined_connection, predefined_customer,
+    predefined_saltedge_connection, predefined_customer,
 ):
     response = connections_api().connections_get(predefined_customer.id)
-    assert predefined_connection in response.data
+    assert predefined_saltedge_connection in response.data
 
 
 def test_list_accounts_successfully(
-    predefined_connection, predefined_customer, predefined_account
+    predefined_saltedge_connection, predefined_customer, predefined_saltedge_account
 ):
     response = accounts_api().accounts_get(
-        predefined_connection.id, customer_id=predefined_customer.id
+        predefined_saltedge_connection.id, customer_id=predefined_customer.id
     )
-    assert predefined_account in response.data
+    assert predefined_saltedge_account in response.data
 
 
-def test_list_transactions_successfully(predefined_connection, predefined_account):
+def test_list_transactions_successfully(
+    predefined_saltedge_connection, predefined_saltedge_account
+):
     response = transactions_api().transactions_get(
-        predefined_connection.id, account_id=predefined_account.id
+        predefined_saltedge_connection.id, account_id=predefined_saltedge_account.id
     )
     assert len(response.data) > 0
 
 
-def test_transaction_categories_lowercase(predefined_connection, predefined_account):
+def test_transaction_categories_lowercase(
+    predefined_saltedge_connection, predefined_saltedge_account
+):
     response = transactions_api().transactions_get(
-        predefined_connection.id, account_id=predefined_account.id
+        predefined_saltedge_connection.id, account_id=predefined_saltedge_account.id
     )
     for transaction in response.data:
         assert transaction.category == transaction.category.lower()
 
 
-def test_transaction_categories_no_spaces(predefined_connection, predefined_account):
+def test_transaction_categories_no_spaces(
+    predefined_saltedge_connection, predefined_saltedge_account
+):
     response = transactions_api().transactions_get(
-        predefined_connection.id, account_id=predefined_account.id
+        predefined_saltedge_connection.id, account_id=predefined_saltedge_account.id
     )
     for transaction in response.data:
         assert transaction.category.count(" ") == 0

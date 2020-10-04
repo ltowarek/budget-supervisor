@@ -140,7 +140,7 @@ class ImportAccountsView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         connection = form.cleaned_data["connection"]
         Account.objects.import_from_saltedge(
-            connection.external_id, self.request.user, accounts_api()
+            self.request.user, connection.external_id, accounts_api()
         )
         return super().form_valid(form)
 
