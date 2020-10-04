@@ -329,3 +329,40 @@ class TestAccountCreate:
         select.select_by_visible_text(account_type)
         element = selenium.find_element_by_xpath('//input[@value="Submit"]')
         element.click()
+
+
+class TestAccountUpdate:
+    def test_account_is_updated(
+        self, authenticate_selenium, live_server_path, user_foo, account_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.update_account(
+            selenium, live_server_path, account_foo, "account name", "Cash"
+        )
+        assert account_foo.name == "account name"
+        assert account_foo.account_type == Account.AccountType.CASH
+
+    def test_redirect(
+        self, authenticate_selenium, live_server_path, user_foo, account_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.update_account(
+            selenium, live_server_path, account_foo, "account name", "Cash"
+        )
+        assert selenium.current_url == live_server_path(
+            reverse("accounts:account_list")
+        )
+
+    def update_account(self, selenium, live_server_path, account, name, account_type):
+        url = live_server_path(
+            reverse("accounts:account_update", kwargs={"pk": account.pk})
+        )
+        selenium.get(url)
+        element = selenium.find_element_by_name("name")
+        element.clear()
+        element.send_keys(name)
+        select = Select(selenium.find_element_by_name("account_type"))
+        select.select_by_visible_text(account_type)
+        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element.click()
+        account.refresh_from_db()
