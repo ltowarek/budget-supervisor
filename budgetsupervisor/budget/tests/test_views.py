@@ -575,6 +575,7 @@ def test_transaction_import_view_get(client, user_foo, login_user):
     url = reverse("transactions:transaction_import")
     response = client.get(url)
     assert response.status_code == 200
+    assert response.context["profile"] == user_foo.profile
 
 
 def test_transaction_import_view_get_not_logged_in(client):

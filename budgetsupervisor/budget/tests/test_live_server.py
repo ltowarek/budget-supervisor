@@ -1,5 +1,8 @@
 import pytest
+import datetime
 from django.shortcuts import reverse
+from django.utils.dateparse import parse_date
+from django.utils.formats import date_format
 from budget.models import Connection, Account, Transaction
 from saltedge_wrapper.factory import connections_api
 from selenium.webdriver.support.ui import WebDriverWait
@@ -465,5 +468,353 @@ class TestAccountImport:
         selenium.get(url)
         select = Select(selenium.find_element_by_name("connection"))
         select.select_by_visible_text(connection.provider)
+        element = selenium.find_element_by_xpath('//input[@value="Import"]')
+        element.click()
+
+
+class TestTransactionList:
+    def test_menu(self, authenticate_selenium, live_server_path, user_foo):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("transactions:transaction_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath('//ul[@id="menu"]/li/a')
+        assert len(elements) == 2
+        assert elements[0].text == "Create"
+        assert elements[0].get_attribute("href") == live_server_path(
+            reverse("transactions:transaction_create")
+        )
+        assert elements[1].text == "Import"
+        assert elements[1].get_attribute("href") == live_server_path(
+            reverse("transactions:transaction_import")
+        )
+
+    def test_table_header(self, authenticate_selenium, live_server_path, user_foo):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("transactions:transaction_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
+        assert len(elements) == 7
+        assert elements[0].text == "ID"
+        assert elements[1].text == "Date"
+        assert elements[2].text == "Amount"
+        assert elements[3].text == "Payee"
+        assert elements[4].text == "Category"
+        assert elements[5].text == "Description"
+        assert elements[6].text == "Actions"
+
+    def test_table_body(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        transaction_factory,
+        user_foo,
+        category_foo,
+        account_foo,
+    ):
+        number_of_transactions = 20
+        for i in range(number_of_transactions):
+            transaction_factory(
+                date=datetime.date.today() - datetime.timedelta(days=i),
+                amount=float(i),
+                payee=f"payee {i}",
+                category=category_foo,
+                description=f"description {i}",
+                account=account_foo,
+                external_id=None,
+                user=user_foo,
+            )
+            transactions = Transaction.objects.filter(user=user_foo).order_by("-date")
+        assert len(transactions) == number_of_transactions
+
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("transactions:transaction_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr")
+        assert len(elements) == len(transactions)
+        for element, transaction in zip(elements, transactions):
+            cells = element.find_elements_by_xpath(".//td")
+            assert len(cells) == 7
+
+            assert cells[0].text == str(transaction.id)
+            # parse_date does not support SHORT_DATE_FORMAT
+            assert parse_date(cells[1].text) is None
+            assert cells[2].text == str(transaction.amount)
+            assert cells[3].text == transaction.payee
+            assert cells[4].text == str(transaction.category)
+            assert cells[5].text == transaction.description
+
+            actions = cells[6].find_elements_by_xpath(".//ul/li/a")
+            assert actions[0].text == "Update"
+            assert actions[0].get_attribute("href") == live_server_path(
+                reverse(
+                    "transactions:transaction_update", kwargs={"pk": transaction.pk}
+                )
+            )
+            assert actions[1].text == "Delete"
+            assert actions[1].get_attribute("href") == live_server_path(
+                reverse(
+                    "transactions:transaction_delete", kwargs={"pk": transaction.pk}
+                )
+            )
+
+    def test_pagination(self, authenticate_selenium, live_server_path, user_foo):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("transactions:transaction_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_class_name("pagination")
+        assert elements
+
+
+class TestTransactionCreate:
+    def test_transaction_is_created(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        user_foo,
+        category_foo,
+        account_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.create_transaction(
+            selenium,
+            live_server_path,
+            datetime.date.today(),
+            100.0,
+            "payee",
+            category_foo,
+            "description",
+            account_foo,
+        )
+        transactions = Transaction.objects.filter(user=user_foo)
+        assert transactions.count() == 1
+        transaction = transactions[0]
+        assert transaction.date == datetime.date.today()
+        assert transaction.amount == 100.0
+        assert transaction.payee == "payee"
+        assert transaction.category == category_foo
+        assert transaction.description == "description"
+        assert transaction.account == account_foo
+
+    def test_redirect(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        user_foo,
+        category_foo,
+        account_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.create_transaction(
+            selenium,
+            live_server_path,
+            datetime.date.today(),
+            100.0,
+            "payee",
+            category_foo,
+            "description",
+            account_foo,
+        )
+        assert selenium.current_url == live_server_path(
+            reverse("transactions:transaction_list")
+        )
+
+    def create_transaction(
+        self,
+        selenium,
+        live_server_path,
+        date,
+        amount,
+        payee,
+        category,
+        description,
+        account,
+    ):
+        url = live_server_path(reverse("transactions:transaction_create"))
+        selenium.get(url)
+        element = selenium.find_element_by_name("date")
+        element.send_keys(date_format(date, "SHORT_DATE_FORMAT"))
+        element = selenium.find_element_by_name("amount")
+        element.send_keys(str(amount))
+        element = selenium.find_element_by_name("payee")
+        element.send_keys(payee)
+        select = Select(selenium.find_element_by_name("category"))
+        select.select_by_visible_text(category.name)
+        element = selenium.find_element_by_name("description")
+        element.send_keys(description)
+        select = Select(selenium.find_element_by_name("account"))
+        select.select_by_visible_text(account.name)
+        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element.click()
+
+
+class TestTransactionUpdate:
+    def test_transaction_is_updated(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        user_foo,
+        transaction_foo,
+        category_foo,
+        account_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.update_transaction(
+            selenium,
+            live_server_path,
+            transaction_foo,
+            datetime.date.today(),
+            100.0,
+            "payee",
+            category_foo,
+            "description",
+            account_foo,
+        )
+        transactions = Transaction.objects.filter(user=user_foo)
+        assert transactions.count() == 1
+        transaction = transactions[0]
+        assert transaction.date == datetime.date.today()
+        assert transaction.amount == 100.0
+        assert transaction.payee == "payee"
+        assert transaction.category == category_foo
+        assert transaction.description == "description"
+        assert transaction.account == account_foo
+
+    def test_redirect(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        user_foo,
+        transaction_foo,
+        category_foo,
+        account_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.update_transaction(
+            selenium,
+            live_server_path,
+            transaction_foo,
+            datetime.date.today(),
+            100.0,
+            "payee",
+            category_foo,
+            "description",
+            account_foo,
+        )
+        assert selenium.current_url == live_server_path(
+            reverse("transactions:transaction_list")
+        )
+
+    def update_transaction(
+        self,
+        selenium,
+        live_server_path,
+        transaction,
+        date,
+        amount,
+        payee,
+        category,
+        description,
+        account,
+    ):
+        url = live_server_path(
+            reverse("transactions:transaction_update", kwargs={"pk": transaction.pk})
+        )
+        selenium.get(url)
+        element = selenium.find_element_by_name("date")
+        element.clear()
+        element.send_keys(date_format(date, "SHORT_DATE_FORMAT"))
+        element = selenium.find_element_by_name("amount")
+        element.clear()
+        element.send_keys(str(amount))
+        element = selenium.find_element_by_name("payee")
+        element.clear()
+        element.send_keys(payee)
+        select = Select(selenium.find_element_by_name("category"))
+        select.select_by_visible_text(category.name)
+        element = selenium.find_element_by_name("description")
+        element.clear()
+        element.send_keys(description)
+        select = Select(selenium.find_element_by_name("account"))
+        select.select_by_visible_text(account.name)
+        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element.click()
+        transaction.refresh_from_db()
+
+
+class TestTransactionDelete:
+    def test_transaction_is_deleted(
+        self, authenticate_selenium, live_server_path, user_foo, transaction_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_transaction(selenium, live_server_path, transaction_foo)
+        assert Transaction.objects.filter(user=user_foo).count() == 0
+
+    def test_redirect(
+        self, authenticate_selenium, live_server_path, user_foo, transaction_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_transaction(selenium, live_server_path, transaction_foo)
+        assert selenium.current_url == live_server_path(
+            reverse("transactions:transaction_list")
+        )
+
+    def delete_transaction(self, selenium, live_server_path, transaction):
+        url = live_server_path(
+            reverse("transactions:transaction_delete", kwargs={"pk": transaction.pk})
+        )
+        selenium.get(url)
+        element = selenium.find_element_by_xpath('//input[@value="Yes, delete."]')
+        element.click()
+
+
+class TestTransactionImport:
+    def test_transactions_are_imported(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        predefined_profile,
+        predefined_account,
+    ):
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        self.import_transactions(selenium, live_server_path, predefined_account)
+        transactions = Transaction.objects.filter(user=predefined_profile.user)
+        assert transactions.count() == 17
+        for transaction in transactions:
+            assert transaction.external_id is not None
+
+    def test_redirect(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        predefined_profile,
+        predefined_account,
+    ):
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        self.import_transactions(selenium, live_server_path, predefined_account)
+        assert selenium.current_url == live_server_path(
+            reverse("transactions:transaction_list")
+        )
+
+    def test_cant_import_transactions_if_external_synchronization_is_disabled(
+        self, authenticate_selenium, live_server_path, user_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("transactions:transaction_import"))
+        selenium.get(url)
+        element = selenium.find_element_by_id("synchronization")
+        assert (
+            element.text
+            == "Enable external synchronization before importing transactions"
+        )
+
+    def import_transactions(self, selenium, live_server_path, account):
+        url = live_server_path(reverse("transactions:transaction_import"))
+        selenium.get(url)
+        select = Select(selenium.find_element_by_name("account"))
+        select.select_by_visible_text(account.name)
         element = selenium.find_element_by_xpath('//input[@value="Import"]')
         element.click()
