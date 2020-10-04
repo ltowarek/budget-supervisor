@@ -4,6 +4,7 @@ from budget.models import Connection, Account
 from saltedge_wrapper.factory import connections_api
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select
 
 
 pytestmark = pytest.mark.selenium
@@ -298,3 +299,33 @@ class TestAccountList:
 
         elements = selenium.find_elements_by_class_name("pagination")
         assert elements
+
+
+class TestAccountCreate:
+    def test_account_is_created(
+        self, authenticate_selenium, live_server_path, user_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.create_account(selenium, live_server_path, "account name", "Cash")
+        accounts = Account.objects.filter(user=user_foo)
+        assert accounts.count() == 1
+        account = accounts[0]
+        assert account.name == "account name"
+        assert account.account_type == Account.AccountType.CASH
+
+    def test_redirect(self, authenticate_selenium, live_server_path, user_foo):
+        selenium = authenticate_selenium(user=user_foo)
+        self.create_account(selenium, live_server_path, "account name", "Cash")
+        assert selenium.current_url == live_server_path(
+            reverse("accounts:account_list")
+        )
+
+    def create_account(self, selenium, live_server_path, name, account_type):
+        url = live_server_path(reverse("accounts:account_create"))
+        selenium.get(url)
+        element = selenium.find_element_by_name("name")
+        element.send_keys(name)
+        select = Select(selenium.find_element_by_name("account_type"))
+        select.select_by_visible_text(account_type)
+        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element.click()
