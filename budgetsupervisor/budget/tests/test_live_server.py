@@ -3,7 +3,7 @@ import datetime
 from django.shortcuts import reverse
 from django.utils.dateparse import parse_date
 from django.utils.formats import date_format
-from budget.models import Connection, Account, Transaction
+from budget.models import Connection, Account, Transaction, Category
 from saltedge_wrapper.factory import connections_api
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -322,9 +322,7 @@ class TestAccountCreate:
     ):
         selenium = authenticate_selenium(user=user_foo)
         self.create_account(selenium, live_server_path, "account name", "Cash")
-        accounts = Account.objects.filter(user=user_foo)
-        assert accounts.count() == 1
-        account = accounts[0]
+        account = Account.objects.filter(user=user_foo).last()
         assert account.name == "account name"
         assert account.account_type == Account.AccountType.CASH
 
@@ -589,9 +587,7 @@ class TestTransactionCreate:
             "description",
             account_foo,
         )
-        transactions = Transaction.objects.filter(user=user_foo)
-        assert transactions.count() == 1
-        transaction = transactions[0]
+        transaction = Transaction.objects.filter(user=user_foo).last()
         assert transaction.date == datetime.date.today()
         assert transaction.amount == 100.0
         assert transaction.payee == "payee"
@@ -673,15 +669,12 @@ class TestTransactionUpdate:
             "description",
             account_foo,
         )
-        transactions = Transaction.objects.filter(user=user_foo)
-        assert transactions.count() == 1
-        transaction = transactions[0]
-        assert transaction.date == datetime.date.today()
-        assert transaction.amount == 100.0
-        assert transaction.payee == "payee"
-        assert transaction.category == category_foo
-        assert transaction.description == "description"
-        assert transaction.account == account_foo
+        assert transaction_foo.date == datetime.date.today()
+        assert transaction_foo.amount == 100.0
+        assert transaction_foo.payee == "payee"
+        assert transaction_foo.category == category_foo
+        assert transaction_foo.description == "description"
+        assert transaction_foo.account == account_foo
 
     def test_redirect(
         self,
@@ -817,4 +810,156 @@ class TestTransactionImport:
         select = Select(selenium.find_element_by_name("account"))
         select.select_by_visible_text(account.name)
         element = selenium.find_element_by_xpath('//input[@value="Import"]')
+        element.click()
+
+
+class TestCategoryList:
+    def test_menu(self, authenticate_selenium, live_server_path, user_foo):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("categories:category_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath('//ul[@id="menu"]/li/a')
+        assert len(elements) == 1
+        assert elements[0].text == "Create"
+        assert elements[0].get_attribute("href") == live_server_path(
+            reverse("categories:category_create")
+        )
+
+    def test_table_header(self, authenticate_selenium, live_server_path, user_foo):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("categories:category_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
+        assert len(elements) == 3
+        assert elements[0].text == "ID"
+        assert elements[1].text == "Name"
+        assert elements[2].text == "Actions"
+
+    def test_table_body(
+        self, authenticate_selenium, live_server_path, category_factory, user_foo,
+    ):
+        existing_categories = Category.objects.filter(user=user_foo).count()
+        number_of_categories = 5
+        for i in range(number_of_categories):
+            category_factory(
+                name=f"category {i}", user=user_foo,
+            )
+        categories = Category.objects.filter(user=user_foo).order_by("name")
+        assert len(categories) == number_of_categories + existing_categories
+
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("categories:category_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr")
+        assert len(elements) == len(categories)
+        for element, category in zip(elements, categories):
+            cells = element.find_elements_by_xpath(".//td")
+            assert len(cells) == 3
+
+            assert cells[0].text == str(category.id)
+            assert cells[1].text == category.name
+
+            actions = cells[2].find_elements_by_xpath(".//ul/li/a")
+            assert actions[0].text == "Update"
+            assert actions[0].get_attribute("href") == live_server_path(
+                reverse("categories:category_update", kwargs={"pk": category.pk})
+            )
+            assert actions[1].text == "Delete"
+            assert actions[1].get_attribute("href") == live_server_path(
+                reverse("categories:category_delete", kwargs={"pk": category.pk})
+            )
+
+    def test_pagination(self, authenticate_selenium, live_server_path, user_foo):
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("categories:category_list"))
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_class_name("pagination")
+        assert elements
+
+
+class TestCategoryCreate:
+    def test_category_is_created(
+        self, authenticate_selenium, live_server_path, user_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.create_category(selenium, live_server_path, "category foo")
+        category = Category.objects.filter(user=user_foo).last()
+        assert category.name == "category foo"
+
+    def test_redirect(
+        self, authenticate_selenium, live_server_path, user_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.create_category(selenium, live_server_path, "category foo")
+        assert selenium.current_url == live_server_path(
+            reverse("categories:category_list")
+        )
+
+    def create_category(self, selenium, live_server_path, name):
+        url = live_server_path(reverse("categories:category_create"))
+        selenium.get(url)
+        element = selenium.find_element_by_name("name")
+        element.send_keys(name)
+        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element.click()
+
+
+class TestCategoryUpdate:
+    def test_category_is_updated(
+        self, authenticate_selenium, live_server_path, user_foo, category_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.update_category(selenium, live_server_path, category_foo, "new name")
+        assert category_foo.name == "new name"
+
+    def test_redirect(
+        self, authenticate_selenium, live_server_path, user_foo, category_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.update_category(selenium, live_server_path, category_foo, "new name")
+        assert selenium.current_url == live_server_path(
+            reverse("categories:category_list")
+        )
+
+    def update_category(self, selenium, live_server_path, category, name):
+        url = live_server_path(
+            reverse("categories:category_update", kwargs={"pk": category.pk})
+        )
+        selenium.get(url)
+        element = selenium.find_element_by_name("name")
+        element.clear()
+        element.send_keys(name)
+        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element.click()
+        category.refresh_from_db()
+
+
+class TestCategoryDelete:
+    def test_category_is_deleted(
+        self, authenticate_selenium, live_server_path, user_foo, category_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        existing_categories = Category.objects.filter(user=user_foo).count()
+        self.delete_category(selenium, live_server_path, category_foo)
+        assert Category.objects.filter(user=user_foo).count() == existing_categories - 1
+
+    def test_redirect(
+        self, authenticate_selenium, live_server_path, user_foo, category_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_category(selenium, live_server_path, category_foo)
+        assert selenium.current_url == live_server_path(
+            reverse("categories:category_list")
+        )
+
+    def delete_category(self, selenium, live_server_path, category):
+        url = live_server_path(
+            reverse("categories:category_delete", kwargs={"pk": category.pk})
+        )
+        selenium.get(url)
+        element = selenium.find_element_by_xpath('//input[@value="Yes, delete."]')
         element.click()
