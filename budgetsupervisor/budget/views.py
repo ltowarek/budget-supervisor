@@ -9,7 +9,6 @@ from django.views.generic.edit import (
     FormView,
     UpdateView,
 )
-
 from saltedge_wrapper.factory import (
     accounts_api,
     connect_sessions_api,

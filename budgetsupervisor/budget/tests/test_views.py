@@ -1,9 +1,8 @@
 import datetime
 
+from budget.models import Account, Category
 from django.urls import resolve, reverse
 from swagger_client import ConnectSessionResponse, ConnectSessionResponseData
-
-from budget.models import Account, Category
 from utils import get_url_path
 
 

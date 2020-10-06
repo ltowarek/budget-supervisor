@@ -1,14 +1,13 @@
 import datetime
 
 import pytest
+from budget.models import Account, Category, Connection, Transaction
 from django.shortcuts import reverse
 from django.utils.dateparse import parse_date
 from django.utils.formats import date_format
+from saltedge_wrapper.factory import connections_api
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
-
-from budget.models import Account, Category, Connection, Transaction
-from saltedge_wrapper.factory import connections_api
 
 pytestmark = pytest.mark.selenium
 
@@ -172,7 +171,8 @@ class TestConnectionDelete:
         assert Connection.objects.filter(user=user_foo).count() == 0
 
     def test_connection_is_deleted_externally(self):
-        # TODO: There is a need to create SaltEdge connection programatically without a need for Selenium
+        # TODO: There is a need to create SaltEdge connection programatically
+        # without a need for Selenium
         assert True
 
     def test_redirect(

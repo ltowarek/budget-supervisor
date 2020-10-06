@@ -1,5 +1,4 @@
 import swagger_client as saltedge_client
-
 from users.models import Profile
 
 

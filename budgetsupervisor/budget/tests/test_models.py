@@ -2,9 +2,8 @@ import datetime
 
 import pytest
 import swagger_client as saltedge_client
-from django.utils.dateparse import parse_date
-
 from budget.models import Account, Category, Connection, Transaction
+from django.utils.dateparse import parse_date
 
 
 def test_connection_str(connection_foo):

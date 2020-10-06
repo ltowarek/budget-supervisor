@@ -1,6 +1,5 @@
 import pytest
 from django.shortcuts import reverse
-
 from saltedge_wrapper.factory import customers_api
 from users.models import Profile
 

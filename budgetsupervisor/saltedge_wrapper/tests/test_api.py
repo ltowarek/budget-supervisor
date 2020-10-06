@@ -1,6 +1,5 @@
 import pytest
 import swagger_client as saltedge_client
-
 from saltedge_wrapper.factory import (
     accounts_api,
     connect_sessions_api,

@@ -1,5 +1,4 @@
 import pytest
-
 from users.forms import ProfileConnectForm, ProfileDisconnectForm, SignUpForm
 
 
