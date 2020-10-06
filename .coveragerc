@@ -1,8 +1,9 @@
 [run]
-source = .
+source = budgetsupervisor/
 branch = True
 omit = 
-    manage.py
+    */.tox/*
+    */manage.py
     */migrations/*
     */asgi.py
     */wsgi.py
