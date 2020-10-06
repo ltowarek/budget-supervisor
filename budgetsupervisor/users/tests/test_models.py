@@ -1,5 +1,6 @@
-from users.models import Profile
 import swagger_client as saltedge_client
+
+from users.models import Profile
 
 
 def test_profile_is_created_when_user_is_created(user_foo):

@@ -1,9 +1,6 @@
-from users.forms import (
-    SignUpForm,
-    ProfileConnectForm,
-    ProfileDisconnectForm,
-)
 import pytest
+
+from users.forms import ProfileConnectForm, ProfileDisconnectForm, SignUpForm
 
 
 @pytest.mark.django_db

@@ -1,8 +1,10 @@
-from django.urls import reverse, resolve
-from utils import get_url_path
-from budget.models import Account, Category
-from swagger_client import ConnectSessionResponse, ConnectSessionResponseData
 import datetime
+
+from django.urls import resolve, reverse
+from swagger_client import ConnectSessionResponse, ConnectSessionResponseData
+
+from budget.models import Account, Category
+from utils import get_url_path
 
 
 def test_index_view_get(client, user_foo, login_user):

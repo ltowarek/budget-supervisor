@@ -1,16 +1,22 @@
-from django.views.generic import TemplateView, ListView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.views.generic import ListView, TemplateView
 from django.views.generic.edit import (
     CreateView,
-    UpdateView,
     DeleteView,
-    FormView,
     FormMixin,
+    FormView,
+    UpdateView,
 )
-from django.urls import reverse_lazy
-from django.shortcuts import redirect
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-from .models import Account, Category, Connection, Transaction
+from saltedge_wrapper.factory import (
+    accounts_api,
+    connect_sessions_api,
+    connections_api,
+    transactions_api,
+)
+
 from .forms import (
     CreateConnectionForm,
     ImportAccountsForm,
@@ -18,12 +24,7 @@ from .forms import (
     ImportTransactionsForm,
     ReportBalanceForm,
 )
-from saltedge_wrapper.factory import (
-    connect_sessions_api,
-    connections_api,
-    accounts_api,
-    transactions_api,
-)
+from .models import Account, Category, Connection, Transaction
 
 
 class IndexView(LoginRequiredMixin, TemplateView):

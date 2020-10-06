@@ -1,14 +1,14 @@
-import pytest
 import datetime
+
+import pytest
 from django.shortcuts import reverse
 from django.utils.dateparse import parse_date
 from django.utils.formats import date_format
-from budget.models import Connection, Account, Transaction, Category
-from saltedge_wrapper.factory import connections_api
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import Select, WebDriverWait
 
+from budget.models import Account, Category, Connection, Transaction
+from saltedge_wrapper.factory import connections_api
 
 pytestmark = pytest.mark.selenium
 

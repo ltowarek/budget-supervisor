@@ -1,13 +1,13 @@
-import swagger_client as saltedge_client
 import pytest
+import swagger_client as saltedge_client
+
 from saltedge_wrapper.factory import (
-    customers_api,
+    accounts_api,
     connect_sessions_api,
     connections_api,
-    accounts_api,
+    customers_api,
     transactions_api,
 )
-
 
 pytestmark = pytest.mark.saltedge
 

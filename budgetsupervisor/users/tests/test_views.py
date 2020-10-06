@@ -1,4 +1,5 @@
-from django.urls import reverse, resolve
+from django.urls import resolve, reverse
+
 from utils import get_url_path
 
 

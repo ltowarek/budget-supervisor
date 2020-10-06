@@ -1,5 +1,6 @@
-import swagger_client as saltedge_client
 import os
+
+import swagger_client as saltedge_client
 
 
 def api_configuration():

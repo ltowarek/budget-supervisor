@@ -1,12 +1,14 @@
-import pytest
 import datetime
-import swagger_client as saltedge_client
-import saltedge_wrapper.factory
 import os
-from budget.models import Category, Account, Connection, Transaction
+
+import pytest
+import swagger_client as saltedge_client
+from django.utils.dateparse import parse_date, parse_datetime
 from pytest_mock import MockerFixture
-from django.utils.dateparse import parse_datetime, parse_date
 from selenium.webdriver.firefox.webdriver import WebDriver
+
+import saltedge_wrapper.factory
+from budget.models import Account, Category, Connection, Transaction
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 from django.contrib.auth.models import Group, Permission
-from django.db import models, migrations
 from django.core.management.sql import emit_post_migrate_signal
+from django.db import migrations, models
 
 groups = {"Budget Supervisor Users": []}
 
