@@ -1,8 +1,7 @@
 import datetime
 
-import pytest
 import swagger_client as saltedge_client
-from budget.models import Account, Category, Connection, Transaction
+from budget.models import Account, Connection, Transaction
 from django.utils.dateparse import parse_date
 
 
@@ -205,31 +204,6 @@ def test_account_import_from_saltedge_no_new_objects(
 
 def test_category_str(category_foo):
     assert str(category_foo) == "foo"
-
-
-@pytest.mark.django_db
-def test_categories_are_populated_after_user_is_created(user_foo):
-    expected_categories = [
-        "Auto and Transport",
-        "Bills and Utilities",
-        "Education",
-        "Entertainment",
-        "Fees and Charges",
-        "Food and Dining",
-        "Gifts and Donations",
-        "Health and Fitness",
-        "Home",
-        "Income",
-        "Insurance",
-        "Kids",
-        "Pets",
-        "Shopping",
-        "Transfer",
-        "Travel",
-        "Uncategorized",
-    ]
-    for category in expected_categories:
-        assert Category.objects.filter(user=user_foo, name=category).exists()
 
 
 def test_transaction_str(transaction_foo):

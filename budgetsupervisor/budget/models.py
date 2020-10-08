@@ -2,7 +2,6 @@ import swagger_client as saltedge_client
 from django.conf import settings
 from django.db import models
 from django.db.models import Sum
-from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 
 
@@ -106,35 +105,6 @@ class Category(models.Model):
 
     def __str__(self):
         return str(self.name)
-
-
-def populate_user_categories(sender, instance, created, **kwargs):
-    if created:
-        categories = [
-            "Auto and Transport",
-            "Bills and Utilities",
-            "Education",
-            "Entertainment",
-            "Fees and Charges",
-            "Food and Dining",
-            "Gifts and Donations",
-            "Health and Fitness",
-            "Home",
-            "Income",
-            "Insurance",
-            "Kids",
-            "Pets",
-            "Shopping",
-            "Transfer",
-            "Travel",
-            # TODO: Replace Uncategorized with simple None/null category.
-            "Uncategorized",
-        ]
-        for category in categories:
-            Category.objects.create(name=category, user=instance)
-
-
-post_save.connect(populate_user_categories, sender=settings.AUTH_USER_MODEL)
 
 
 class TransactionManager(models.Manager):

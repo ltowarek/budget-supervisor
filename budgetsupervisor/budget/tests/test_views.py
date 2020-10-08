@@ -600,12 +600,17 @@ def test_transaction_import_view_post(
     assert resolve(get_url_path(response)).url_name == "transaction_list"
 
 
-def test_category_list_view_get(client, user_foo, login_user):
+def test_category_list_view_get(client, user_foo, login_user, category_factory):
     login_user(user_foo)
+    categories = [
+        category_factory("a"),
+        category_factory("b"),
+        category_factory("c"),
+    ]
     url = reverse("categories:category_list")
     response = client.get(url)
     assert response.status_code == 200
-    assert len(response.context["category_list"]) > 0
+    assert len(response.context["category_list"]) == len(categories)
 
 
 def test_category_list_view_get_not_logged_in(client):
