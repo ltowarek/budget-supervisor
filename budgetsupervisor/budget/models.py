@@ -142,14 +142,9 @@ class TransactionManager(models.Manager):
         response = transactions_api.transactions_get(
             str(connection_id), account_id=str(account_id)
         )
-        uncategorized = Category.objects.get(name="Uncategorized", user=user)
         new_transactions = []
         for imported_transaction in response.data:
             imported_id = int(imported_transaction.id)
-
-            escaped_category = imported_transaction.category.replace("_", " ")
-            category = Category.objects.filter(name__iexact=escaped_category, user=user)
-            category = category[0] if category else uncategorized
 
             t, created = Transaction.objects.update_or_create(
                 external_id=imported_id,
@@ -157,7 +152,7 @@ class TransactionManager(models.Manager):
                     "date": imported_transaction.made_on,
                     "amount": imported_transaction.amount,
                     "payee": "",
-                    "category": category,
+                    "category": None,
                     "description": imported_transaction.description,
                     "account_id": Account.objects.get(
                         external_id=imported_transaction.account_id
