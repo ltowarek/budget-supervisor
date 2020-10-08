@@ -190,7 +190,9 @@ class Transaction(models.Model):
     date = models.DateField("transaction date")
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     payee = models.CharField(max_length=200, blank=True, default="")
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, blank=True, null=True
+    )
     description = models.CharField(max_length=200, blank=True, default="")
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     external_id = models.BigIntegerField(blank=True, null=True, editable=False)

@@ -236,6 +236,15 @@ def test_transaction_str(transaction_foo):
     assert str(transaction_foo) == "transaction foo"
 
 
+def test_transaction_category_is_set_to_null_when_category_is_deleted(
+    transaction_factory, category_foo
+):
+    transaction = transaction_factory(category=category_foo)
+    category_foo.delete()
+    transaction.refresh_from_db()
+    assert transaction.category is None
+
+
 def test_transaction_import_from_saltedge_no_objects(
     account_foo_external, transactions_api
 ):

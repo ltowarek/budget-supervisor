@@ -148,12 +148,12 @@ def connection_foo_external(connection_factory, profile_foo_external):
 
 @pytest.fixture
 @pytest.mark.django_db
-def transaction_factory(account_foo, category_foo, user_foo):
+def transaction_factory(account_foo, user_foo):
     def create_transaction(
         date=datetime.date.today(),
         amount=100.00,
         payee="",
-        category=category_foo,
+        category=None,
         description="",
         account=account_foo,
         external_id=None,

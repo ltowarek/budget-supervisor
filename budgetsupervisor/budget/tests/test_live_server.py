@@ -609,6 +609,23 @@ class TestTransactionCreate:
         assert transaction.description == "description"
         assert transaction.account == account_foo
 
+    def test_transaction_category_can_be_empty(
+        self, authenticate_selenium, live_server_path, user_foo, account_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.create_transaction(
+            selenium,
+            live_server_path,
+            datetime.date.today(),
+            100.0,
+            "payee",
+            None,
+            "description",
+            account_foo,
+        )
+        transaction = Transaction.objects.filter(user=user_foo).last()
+        assert transaction.category is None
+
     def test_redirect(
         self,
         authenticate_selenium,
@@ -651,8 +668,9 @@ class TestTransactionCreate:
         element.send_keys(str(amount))
         element = selenium.find_element_by_name("payee")
         element.send_keys(payee)
-        select = Select(selenium.find_element_by_name("category"))
-        select.select_by_visible_text(category.name)
+        if category:
+            select = Select(selenium.find_element_by_name("category"))
+            select.select_by_visible_text(category.name)
         element = selenium.find_element_by_name("description")
         element.send_keys(description)
         select = Select(selenium.find_element_by_name("account"))
@@ -1049,6 +1067,22 @@ class TestReportBalance:
         elements = selenium.find_elements_by_xpath('//table[@id="report"]/tbody/tr')
         total = 1
         assert len(elements) == number_of_categories + total
+
+    def test_table_body_null_categories_are_included(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        user_foo,
+        account_foo,
+        transaction_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.report_balance(selenium, live_server_path, [account_foo])
+
+        elements = selenium.find_elements_by_xpath('//table[@id="report"]/tbody/tr')
+        assert len(elements) == 2
+        assert elements[0].find_elements_by_xpath(".//td")[0].text == "None"
+        assert elements[1].find_elements_by_xpath(".//td")[0].text == "Total"
 
     def report_balance(
         self, selenium, live_server_path, accounts, from_date=None, to_date=None
