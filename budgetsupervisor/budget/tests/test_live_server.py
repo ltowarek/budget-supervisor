@@ -374,6 +374,15 @@ class TestAccountCreate:
             reverse("accounts:account_list")
         )
 
+    def test_message(self, authenticate_selenium, live_server_path, user_foo):
+        selenium = authenticate_selenium(user=user_foo)
+        self.create_account(selenium, live_server_path, "account name", "Cash")
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Account was created successfully" in messages
+
     def create_account(self, selenium, live_server_path, name, account_type):
         url = live_server_path(reverse("accounts:account_create"))
         selenium.get(url)
@@ -406,6 +415,19 @@ class TestAccountUpdate:
         assert selenium.current_url == live_server_path(
             reverse("accounts:account_list")
         )
+
+    def test_message(
+        self, authenticate_selenium, live_server_path, user_foo, account_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.update_account(
+            selenium, live_server_path, account_foo, "account name", "Cash"
+        )
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Account was updated successfully" in messages
 
     def update_account(self, selenium, live_server_path, account, name, account_type):
         url = live_server_path(
@@ -453,6 +475,17 @@ class TestAccountDelete:
         assert selenium.current_url == live_server_path(
             reverse("accounts:account_list")
         )
+
+    def test_message(
+        self, authenticate_selenium, live_server_path, user_foo, account_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_account(selenium, live_server_path, account_foo)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Account was deleted successfully" in messages
 
     def delete_account(self, selenium, live_server_path, account):
         url = live_server_path(
@@ -504,6 +537,21 @@ class TestAccountImport:
         assert selenium.current_url == live_server_path(
             reverse("accounts:account_list")
         )
+
+    def test_message(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        predefined_profile,
+        predefined_connection,
+    ):
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        self.import_accounts(selenium, live_server_path, predefined_connection)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Accounts were imported successfully: 5" in messages
 
     def test_cant_import_accounts_if_external_synchronization_is_disabled(
         self, authenticate_selenium, live_server_path, user_foo,

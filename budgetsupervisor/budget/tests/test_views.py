@@ -339,13 +339,23 @@ def test_account_create_view_get_not_logged_in(client):
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_account_create_view_post(client, user_foo, login_user):
+def test_account_create_view_post_redirect(client, user_foo, login_user):
     login_user(user_foo)
     url = reverse("accounts:account_create")
     data = {"name": "a", "account_type": Account.AccountType.ACCOUNT}
     response = client.post(url, data=data)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "account_list"
+
+
+def test_account_create_view_post_message(client, user_foo, login_user):
+    login_user(user_foo)
+    url = reverse("accounts:account_create")
+    data = {"name": "a", "account_type": Account.AccountType.ACCOUNT}
+    response = client.post(url, data=data)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Account was created successfully" in messages
 
 
 def test_account_update_view_get(client, user_foo, login_user, account_foo):
@@ -362,13 +372,23 @@ def test_account_update_view_get_not_logged_in(client, account_foo):
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_account_update_view_post(client, user_foo, login_user, account_foo):
+def test_account_update_view_post_redirect(client, user_foo, login_user, account_foo):
     login_user(user_foo)
     url = reverse("accounts:account_update", kwargs={"pk": account_foo.pk})
     data = {"name": "bar", "account_type": Account.AccountType.ACCOUNT}
     response = client.post(url, data=data)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "account_list"
+
+
+def test_account_update_view_post_message(client, user_foo, login_user, account_foo):
+    login_user(user_foo)
+    url = reverse("accounts:account_update", kwargs={"pk": account_foo.pk})
+    data = {"name": "bar", "account_type": Account.AccountType.ACCOUNT}
+    response = client.post(url, data=data)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Account was updated successfully" in messages
 
 
 def test_account_update_view_post_different_user(
@@ -399,7 +419,16 @@ def test_account_delete_view_get_not_logged_in(client, account_foo):
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_account_delete_view_post(client, user_foo, login_user, account_foo):
+def test_account_delete_view_post_redirect(client, user_foo, login_user, account_foo):
+    login_user(user_foo)
+    url = reverse("accounts:account_delete", kwargs={"pk": account_foo.pk})
+    response = client.post(url)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Account was deleted successfully" in messages
+
+
+def test_account_delete_view_post_message(client, user_foo, login_user, account_foo):
     login_user(user_foo)
     url = reverse("accounts:account_delete", kwargs={"pk": account_foo.pk})
     response = client.post(url)
@@ -435,7 +464,7 @@ def test_account_import_view_get_not_logged_in(client):
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_account_import_view_post(
+def test_account_import_view_post_redirect(
     client, user_foo, login_user, connection_foo, mocker, accounts_api
 ):
     login_user(user_foo)
@@ -445,6 +474,19 @@ def test_account_import_view_post(
     response = client.post(url, data=data)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "account_list"
+
+
+def test_account_import_view_post_message(
+    client, user_foo, login_user, connection_foo, mocker, accounts_api
+):
+    login_user(user_foo)
+    url = reverse("accounts:account_import")
+    data = {"connection": connection_foo.id}
+    mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
+    response = client.post(url, data=data)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Accounts were imported successfully: 0" in messages
 
 
 def test_transaction_list_view_get_single_transaction(

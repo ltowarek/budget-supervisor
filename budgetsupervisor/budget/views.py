@@ -115,23 +115,27 @@ class AccountListView(LoginRequiredMixin, ListView):
         return Account.objects.filter(user=self.request.user).order_by("name")
 
 
-class AccountCreate(LoginRequiredMixin, CreateView):
+class AccountCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Account
     fields = [
         "name",
         "account_type",
     ]
     success_url = reverse_lazy("accounts:account_list")
+    success_message = "Account was created successfully"
 
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
 
-class AccountUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class AccountUpdate(
+    LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
+):
     model = Account
     fields = ["name", "account_type"]
     success_url = reverse_lazy("accounts:account_list")
+    success_message = "Account was updated successfully"
 
     def test_func(self):
         obj = self.get_object()
@@ -141,22 +145,30 @@ class AccountUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 class AccountDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Account
     success_url = reverse_lazy("accounts:account_list")
+    success_message = "Account was deleted successfully"
 
     def test_func(self):
         obj = self.get_object()
         return obj.user == self.request.user
+
+    def delete(self, *args, **kwargs):
+        output = super().delete(*args, **kwargs)
+        messages.success(self.request, self.success_message)
+        return output
 
 
 class ImportAccountsView(LoginRequiredMixin, FormView):
     template_name = "budget/account_import.html"
     form_class = ImportAccountsForm
     success_url = reverse_lazy("accounts:account_list")
+    success_message = "Accounts were imported successfully: {}"
 
     def form_valid(self, form):
         connection = form.cleaned_data["connection"]
-        Account.objects.import_from_saltedge(
+        imported = Account.objects.import_from_saltedge(
             self.request.user, connection.external_id, accounts_api()
         )
+        messages.success(self.request, self.success_message.format(len(imported)))
         return super().form_valid(form)
 
     def get_form_kwargs(self):
