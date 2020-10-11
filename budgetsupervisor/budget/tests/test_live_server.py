@@ -1003,7 +1003,7 @@ class TestTransactionImport:
             m.text
             for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
         ]
-        assert "Transactions were imported successfully: 5" in messages
+        assert "Transactions were imported successfully: 17" in messages
 
     def test_cant_import_transactions_if_external_synchronization_is_disabled(
         self, authenticate_selenium, live_server_path, user_foo,
@@ -1112,6 +1112,17 @@ class TestCategoryCreate:
             reverse("categories:category_list")
         )
 
+    def test_message(
+        self, authenticate_selenium, live_server_path, user_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.create_category(selenium, live_server_path, "category foo")
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Category was created successfully" in messages
+
     def create_category(self, selenium, live_server_path, name):
         url = live_server_path(reverse("categories:category_create"))
         selenium.get(url)
@@ -1137,6 +1148,17 @@ class TestCategoryUpdate:
         assert selenium.current_url == live_server_path(
             reverse("categories:category_list")
         )
+
+    def test_message(
+        self, authenticate_selenium, live_server_path, user_foo, category_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.update_category(selenium, live_server_path, category_foo, "new name")
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Category was updated successfully" in messages
 
     def update_category(self, selenium, live_server_path, category, name):
         url = live_server_path(
@@ -1168,6 +1190,17 @@ class TestCategoryDelete:
         assert selenium.current_url == live_server_path(
             reverse("categories:category_list")
         )
+
+    def test_message(
+        self, authenticate_selenium, live_server_path, user_foo, category_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_category(selenium, live_server_path, category_foo)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Category was deleted successfully" in messages
 
     def delete_category(self, selenium, live_server_path, category):
         url = live_server_path(

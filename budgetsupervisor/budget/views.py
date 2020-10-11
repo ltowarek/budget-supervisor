@@ -248,7 +248,7 @@ class ImportTransactionsView(LoginRequiredMixin, FormView):
     template_name = "budget/transaction_import.html"
     form_class = ImportTransactionsForm
     success_url = reverse_lazy("transactions:transaction_list")
-    success_message = "Accounts were imported successfully: {}"
+    success_message = "Transactions were imported successfully: {}"
 
     def form_valid(self, form):
         account = form.cleaned_data["account"]
@@ -279,20 +279,24 @@ class CategoryListView(LoginRequiredMixin, ListView):
         return Category.objects.filter(user=self.request.user).order_by("name")
 
 
-class CategoryCreate(LoginRequiredMixin, CreateView):
+class CategoryCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Category
     fields = ["name"]
     success_url = reverse_lazy("categories:category_list")
+    success_message = "Category was created successfully"
 
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
 
-class CategoryUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class CategoryUpdate(
+    LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
+):
     model = Category
     fields = ["name"]
     success_url = reverse_lazy("categories:category_list")
+    success_message = "Category was updated successfully"
 
     def test_func(self):
         obj = self.get_object()
@@ -302,10 +306,16 @@ class CategoryUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 class CategoryDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Category
     success_url = reverse_lazy("categories:category_list")
+    success_message = "Category was deleted successfully"
 
     def test_func(self):
         obj = self.get_object()
         return obj.user == self.request.user
+
+    def delete(self, *args, **kwargs):
+        output = super().delete(*args, **kwargs)
+        messages.success(self.request, self.success_message)
+        return output
 
 
 class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):

@@ -812,7 +812,7 @@ def test_category_create_view_get_not_logged_in(client):
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_category_create_view_post(client, user_foo, login_user):
+def test_category_create_view_post_redirect(client, user_foo, login_user):
     login_user(user_foo)
     url = reverse("categories:category_create")
     data = {
@@ -821,6 +821,18 @@ def test_category_create_view_post(client, user_foo, login_user):
     response = client.post(url, data=data)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "category_list"
+
+
+def test_category_create_view_post_message(client, user_foo, login_user):
+    login_user(user_foo)
+    url = reverse("categories:category_create")
+    data = {
+        "name": "a",
+    }
+    response = client.post(url, data=data)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Category was created successfully" in messages
 
 
 def test_category_update_view_get(client, user_foo, login_user, category_foo):
@@ -837,7 +849,7 @@ def test_category_update_view_get_not_logged_in(client, category_foo):
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_category_update_view_post(client, user_foo, login_user, category_foo):
+def test_category_update_view_post_redirect(client, user_foo, login_user, category_foo):
     login_user(user_foo)
     url = reverse("categories:category_update", kwargs={"pk": category_foo.pk})
     data = {
@@ -846,6 +858,18 @@ def test_category_update_view_post(client, user_foo, login_user, category_foo):
     response = client.post(url, data=data)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "category_list"
+
+
+def test_category_update_view_post_message(client, user_foo, login_user, category_foo):
+    login_user(user_foo)
+    url = reverse("categories:category_update", kwargs={"pk": category_foo.pk})
+    data = {
+        "name": "bar",
+    }
+    response = client.post(url, data=data)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Category was updated successfully" in messages
 
 
 def test_category_update_view_post_different_user(
@@ -876,12 +900,21 @@ def test_category_delete_view_get_not_logged_in(client, category_foo):
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_category_delete_view_post(client, user_foo, login_user, category_foo):
+def test_category_delete_view_post_redirect(client, user_foo, login_user, category_foo):
     login_user(user_foo)
     url = reverse("categories:category_delete", kwargs={"pk": category_foo.pk})
     response = client.post(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "category_list"
+
+
+def test_category_delete_view_post_message(client, user_foo, login_user, category_foo):
+    login_user(user_foo)
+    url = reverse("categories:category_delete", kwargs={"pk": category_foo.pk})
+    response = client.post(url)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Category was deleted successfully" in messages
 
 
 def test_category_delete_view_post_different_user(
