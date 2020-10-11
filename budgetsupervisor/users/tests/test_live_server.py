@@ -81,7 +81,28 @@ class TestSignUp:
         selenium.find_element_by_xpath('//input[@value="Sign Up"]').click()
 
 
-class TestProfile:
+class TestProfileUpdate:
+    def test_redirect(self, authenticate_selenium, live_server_path, profile_foo):
+        selenium = authenticate_selenium(user=profile_foo.user)
+        self.update_profile(selenium, live_server_path, profile_foo)
+        assert selenium.current_url == live_server_path(reverse("profile"))
+
+    def test_message(self, authenticate_selenium, live_server_path, profile_foo):
+        selenium = authenticate_selenium(user=profile_foo.user)
+        self.update_profile(selenium, live_server_path, profile_foo)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Profile was updated successfully" in messages
+
+    def update_profile(self, selenium, live_server_path, profile):
+        url = live_server_path(reverse("profile"))
+        selenium.get(url)
+        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element.click()
+        profile.refresh_from_db()
+
     def test_synchronization_can_be_enabled_if_not_already_enabled(
         self, authenticate_selenium, live_server_path, profile_foo
     ):
@@ -106,29 +127,104 @@ class TestProfile:
             reverse("profile_disconnect")
         )
 
-    def test_enable_external_synchronization(
-        self, authenticate_selenium, live_server_path, profile_foo
+
+@pytest.fixture
+def remove_temporary_customers():
+    api = customers_api()
+    customers_before = api.customers_get().data
+    yield
+    customers_after = api.customers_get().data
+    new_customers = [c for c in customers_after if c not in customers_before]
+    for customer in new_customers:
+        api.customers_customer_id_delete(customer.id)
+
+
+class TestProfileConnect:
+    def test_profile_is_updated(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        profile_foo,
+        remove_temporary_customers,
     ):
         selenium = authenticate_selenium(user=profile_foo.user)
         self.enable_external_synchronization(selenium, live_server_path, profile_foo)
         assert profile_foo.external_id is not None
         assert selenium.current_url == live_server_path(reverse("profile"))
-        Profile.objects.remove_from_saltedge(profile_foo, customers_api())
 
-    def test_disable_external_synchronization(
-        self, authenticate_selenium, live_server_path, profile_foo
+    def test_redirect(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        profile_foo,
+        remove_temporary_customers,
     ):
         selenium = authenticate_selenium(user=profile_foo.user)
-        Profile.objects.create_in_saltedge(profile_foo, customers_api())
-        self.disable_external_synchronization(selenium, live_server_path, profile_foo)
-        assert profile_foo.external_id is None
+        self.enable_external_synchronization(selenium, live_server_path, profile_foo)
         assert selenium.current_url == live_server_path(reverse("profile"))
+
+    def test_message(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        profile_foo,
+        remove_temporary_customers,
+    ):
+        selenium = authenticate_selenium(user=profile_foo.user)
+        self.enable_external_synchronization(selenium, live_server_path, profile_foo)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Profile was connected successfully" in messages
 
     def enable_external_synchronization(self, selenium, live_server_path, profile):
         url = live_server_path(reverse("profile_connect"))
         selenium.get(url)
         selenium.find_element_by_xpath('//input[@value="Submit"]').click()
         profile.refresh_from_db()
+
+
+class TestProfileDisconnect:
+    def test_profile_is_updated(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        profile_foo,
+        remove_temporary_customers,
+    ):
+        selenium = authenticate_selenium(user=profile_foo.user)
+        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        self.disable_external_synchronization(selenium, live_server_path, profile_foo)
+        assert profile_foo.external_id is None
+
+    def test_redirect(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        profile_foo,
+        remove_temporary_customers,
+    ):
+        selenium = authenticate_selenium(user=profile_foo.user)
+        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        self.disable_external_synchronization(selenium, live_server_path, profile_foo)
+        assert selenium.current_url == live_server_path(reverse("profile"))
+
+    def test_message(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        profile_foo,
+        remove_temporary_customers,
+    ):
+        selenium = authenticate_selenium(user=profile_foo.user)
+        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        self.disable_external_synchronization(selenium, live_server_path, profile_foo)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Profile was disconnected successfully" in messages
 
     def disable_external_synchronization(self, selenium, live_server_path, profile):
         url = live_server_path(reverse("profile_disconnect"))

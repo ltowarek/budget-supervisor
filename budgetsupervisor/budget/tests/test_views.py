@@ -128,9 +128,7 @@ def test_connection_update_view_post_redirect(
 ):
     login_user(user_foo)
     url = reverse("connections:connection_update", kwargs={"pk": connection_foo.pk})
-    data = {
-        "provider": "bar",
-    }
+    data = {}
     response = client.post(url, data=data)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "connection_list"

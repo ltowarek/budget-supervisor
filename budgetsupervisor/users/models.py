@@ -11,7 +11,9 @@ class User(AbstractUser):
 
 class ProfileManager(models.Manager):
     def create_in_saltedge(self, profile, customers_api):
-        data = saltedge_client.CustomerRequestBodyData(identifier=str(profile.user.id))
+        data = saltedge_client.CustomerRequestBodyData(
+            identifier=str(profile.user.username)
+        )
         body = saltedge_client.CustomerRequestBody(data)
         response = customers_api.customers_post(body=body)
         profile.external_id = int(response.data.id)
