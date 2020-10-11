@@ -738,6 +738,31 @@ class TestTransactionCreate:
             reverse("transactions:transaction_list")
         )
 
+    def test_message(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        user_foo,
+        category_foo,
+        account_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.create_transaction(
+            selenium,
+            live_server_path,
+            datetime.date.today(),
+            100.0,
+            "payee",
+            category_foo,
+            "description",
+            account_foo,
+        )
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Transaction was created successfully" in messages
+
     def create_transaction(
         self,
         selenium,
@@ -822,6 +847,33 @@ class TestTransactionUpdate:
             reverse("transactions:transaction_list")
         )
 
+    def test_message(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        user_foo,
+        transaction_foo,
+        category_foo,
+        account_foo,
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.update_transaction(
+            selenium,
+            live_server_path,
+            transaction_foo,
+            datetime.date.today(),
+            100.0,
+            "payee",
+            category_foo,
+            "description",
+            account_foo,
+        )
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Transaction was updated successfully" in messages
+
     def update_transaction(
         self,
         selenium,
@@ -876,6 +928,17 @@ class TestTransactionDelete:
             reverse("transactions:transaction_list")
         )
 
+    def test_message(
+        self, authenticate_selenium, live_server_path, user_foo, transaction_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_transaction(selenium, live_server_path, transaction_foo)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Transaction was deleted successfully" in messages
+
     def delete_transaction(self, selenium, live_server_path, transaction):
         url = live_server_path(
             reverse("transactions:transaction_delete", kwargs={"pk": transaction.pk})
@@ -926,6 +989,21 @@ class TestTransactionImport:
         assert selenium.current_url == live_server_path(
             reverse("transactions:transaction_list")
         )
+
+    def test_message(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        predefined_profile,
+        predefined_account,
+    ):
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        self.import_transactions(selenium, live_server_path, predefined_account)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Transactions were imported successfully: 5" in messages
 
     def test_cant_import_transactions_if_external_synchronization_is_disabled(
         self, authenticate_selenium, live_server_path, user_foo,

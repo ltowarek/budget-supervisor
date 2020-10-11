@@ -192,8 +192,8 @@ def test_connection_delete_view_post_message(
 ):
     login_user(user_foo)
     url = reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
-    response = client.post(url, follow=True)
-    assert response.status_code == 200
+    response = client.post(url)
+    assert response.status_code == 302
     messages = [m.message for m in get_messages(response.wsgi_request)]
     assert "Connection was deleted successfully" in messages
 
@@ -264,8 +264,8 @@ def test_connection_import_view_post_message(
     mocker.patch(
         "budget.views.connections_api", autospec=True, return_value=connections_api
     )
-    response = client.post(url, data=data, follow=200)
-    assert response.status_code == 200
+    response = client.post(url, data=data)
+    assert response.status_code == 302
     messages = [m.message for m in get_messages(response.wsgi_request)]
     assert "Connections were imported successfully: 0" in messages
 
@@ -424,8 +424,7 @@ def test_account_delete_view_post_redirect(client, user_foo, login_user, account
     url = reverse("accounts:account_delete", kwargs={"pk": account_foo.pk})
     response = client.post(url)
     assert response.status_code == 302
-    messages = [m.message for m in get_messages(response.wsgi_request)]
-    assert "Account was deleted successfully" in messages
+    assert resolve(get_url_path(response)).url_name == "account_list"
 
 
 def test_account_delete_view_post_message(client, user_foo, login_user, account_foo):
@@ -433,7 +432,8 @@ def test_account_delete_view_post_message(client, user_foo, login_user, account_
     url = reverse("accounts:account_delete", kwargs={"pk": account_foo.pk})
     response = client.post(url)
     assert response.status_code == 302
-    assert resolve(get_url_path(response)).url_name == "account_list"
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Account was deleted successfully" in messages
 
 
 def test_account_delete_view_post_different_user(
@@ -560,7 +560,7 @@ def test_transaction_create_view_get_not_logged_in(client):
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_transaction_create_view_post(
+def test_transaction_create_view_post_redirect(
     client, user_foo, login_user, account_foo, category_foo
 ):
     login_user(user_foo)
@@ -574,6 +574,23 @@ def test_transaction_create_view_post(
     response = client.post(url, data=data)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "transaction_list"
+
+
+def test_transaction_create_view_post_message(
+    client, user_foo, login_user, account_foo, category_foo
+):
+    login_user(user_foo)
+    url = reverse("transactions:transaction_create")
+    data = {
+        "date": datetime.date.today(),
+        "amount": 100.0,
+        "category": category_foo.id,
+        "account": account_foo.id,
+    }
+    response = client.post(url, data=data)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Transaction was created successfully" in messages
 
 
 def test_transaction_update_view_get(client, user_foo, login_user, transaction_foo):
@@ -590,7 +607,7 @@ def test_transaction_update_view_get_not_logged_in(client, transaction_foo):
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_transaction_update_view_post(
+def test_transaction_update_view_post_redirect(
     client, user_foo, login_user, transaction_foo, account_foo, category_foo
 ):
     login_user(user_foo)
@@ -604,6 +621,23 @@ def test_transaction_update_view_post(
     response = client.post(url, data=data)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "transaction_list"
+
+
+def test_transaction_update_view_post_message(
+    client, user_foo, login_user, transaction_foo, account_foo, category_foo
+):
+    login_user(user_foo)
+    url = reverse("transactions:transaction_update", kwargs={"pk": transaction_foo.pk})
+    data = {
+        "date": datetime.date.today(),
+        "amount": 100.0,
+        "category": category_foo.id,
+        "account": account_foo.id,
+    }
+    response = client.post(url, data=data)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Transaction was updated successfully" in messages
 
 
 def test_transaction_update_view_post_different_user(
@@ -636,12 +670,25 @@ def test_transaction_delete_view_get_not_logged_in(client, transaction_foo):
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_transaction_delete_view_post(client, user_foo, login_user, transaction_foo):
+def test_transaction_delete_view_post_redirect(
+    client, user_foo, login_user, transaction_foo
+):
     login_user(user_foo)
     url = reverse("transactions:transaction_delete", kwargs={"pk": transaction_foo.pk})
     response = client.post(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "transaction_list"
+
+
+def test_transaction_delete_view_post_message(
+    client, user_foo, login_user, transaction_foo
+):
+    login_user(user_foo)
+    url = reverse("transactions:transaction_delete", kwargs={"pk": transaction_foo.pk})
+    response = client.post(url)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Transaction was deleted successfully" in messages
 
 
 def test_transaction_delete_view_post_different_user(
@@ -672,7 +719,7 @@ def test_transaction_import_view_get_not_logged_in(client):
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_transaction_import_view_post(
+def test_transaction_import_view_post_redirect(
     client, user_foo, login_user, account_foo_external, mocker, transactions_api
 ):
     login_user(user_foo)
@@ -684,6 +731,21 @@ def test_transaction_import_view_post(
     response = client.post(url, data=data)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "transaction_list"
+
+
+def test_transaction_import_view_post_message(
+    client, user_foo, login_user, account_foo_external, mocker, transactions_api
+):
+    login_user(user_foo)
+    url = reverse("transactions:transaction_import")
+    data = {"account": account_foo_external.id}
+    mocker.patch(
+        "budget.views.transactions_api", autospec=True, return_value=transactions_api
+    )
+    response = client.post(url, data=data)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Transactions were imported successfully: 0" in messages
 
 
 def test_category_list_view_get(client, user_foo, login_user, category_factory):

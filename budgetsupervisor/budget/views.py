@@ -189,10 +189,11 @@ class TransactionListView(LoginRequiredMixin, ListView):
         return Transaction.objects.filter(user=self.request.user).order_by("-date")
 
 
-class TransactionCreate(LoginRequiredMixin, CreateView):
+class TransactionCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Transaction
     fields = ["date", "amount", "payee", "category", "description", "account"]
     success_url = reverse_lazy("transactions:transaction_list")
+    success_message = "Transaction was created successfully"
 
     def form_valid(self, form):
         form.instance.user = self.request.user
@@ -207,10 +208,13 @@ class TransactionCreate(LoginRequiredMixin, CreateView):
         return form
 
 
-class TransactionUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class TransactionUpdate(
+    LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
+):
     model = Transaction
     fields = ["date", "amount", "payee", "category", "description", "account"]
     success_url = reverse_lazy("transactions:transaction_list")
+    success_message = "Transaction was updated successfully"
 
     def test_func(self):
         obj = self.get_object()
@@ -228,25 +232,33 @@ class TransactionUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 class TransactionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Transaction
     success_url = reverse_lazy("transactions:transaction_list")
+    success_message = "Transaction was deleted successfully"
 
     def test_func(self):
         obj = self.get_object()
         return obj.user == self.request.user
+
+    def delete(self, *args, **kwargs):
+        output = super().delete(*args, **kwargs)
+        messages.success(self.request, self.success_message)
+        return output
 
 
 class ImportTransactionsView(LoginRequiredMixin, FormView):
     template_name = "budget/transaction_import.html"
     form_class = ImportTransactionsForm
     success_url = reverse_lazy("transactions:transaction_list")
+    success_message = "Accounts were imported successfully: {}"
 
     def form_valid(self, form):
         account = form.cleaned_data["account"]
-        Transaction.objects.import_from_saltedge(
+        imported = Transaction.objects.import_from_saltedge(
             self.request.user,
             account.connection.external_id,
             account.external_id,
             transactions_api(),
         )
+        messages.success(self.request, self.success_message.format(len(imported)))
         return super().form_valid(form)
 
     def get_form_kwargs(self):
