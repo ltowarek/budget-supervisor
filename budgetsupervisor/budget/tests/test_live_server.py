@@ -153,13 +153,28 @@ class TestConnectionUpdate:
         self, authenticate_selenium, live_server_path, user_foo, connection_foo
     ):
         selenium = authenticate_selenium(user=user_foo)
+        self.update_category(selenium, live_server_path, connection_foo)
+        # There is no field to check
+        assert True
+
+    def test_message(
+        self, authenticate_selenium, live_server_path, user_foo, connection_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.update_category(selenium, live_server_path, connection_foo)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Connection was updated successfully" in messages
+
+    def update_category(self, selenium, live_server_path, connection):
         url = live_server_path(
-            reverse("connections:connection_update", kwargs={"pk": connection_foo.pk})
+            reverse("connections:connection_update", kwargs={"pk": connection.pk})
         )
         selenium.get(url)
         element = selenium.find_element_by_xpath('//input[@value="Submit"]')
         element.click()
-        assert True
 
 
 class TestConnectionDelete:
@@ -183,6 +198,17 @@ class TestConnectionDelete:
         assert selenium.current_url == live_server_path(
             reverse("connections:connection_list")
         )
+
+    def test_message(
+        self, authenticate_selenium, live_server_path, user_foo, connection_foo
+    ):
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_connection(selenium, live_server_path, connection_foo)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Connection was deleted successfully" in messages
 
     def delete_connection(self, selenium, live_server_path, connection):
         url = live_server_path(
@@ -219,6 +245,21 @@ class TestConnectionImport:
         assert selenium.current_url == live_server_path(
             reverse("connections:connection_list")
         )
+
+    def test_message(
+        self,
+        authenticate_selenium,
+        live_server_path,
+        predefined_profile,
+        predefined_saltedge_connection,
+    ):
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        self.import_connections(selenium, live_server_path)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "Connections were imported successfully: 1" in messages
 
     def test_cant_import_connections_if_external_synchronization_is_disabled(
         self, authenticate_selenium, live_server_path, user_foo,

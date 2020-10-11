@@ -1,4 +1,6 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, TemplateView
@@ -55,10 +57,13 @@ class ConnectionCreate(LoginRequiredMixin, FormView):
         return context
 
 
-class ConnectionUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class ConnectionUpdate(
+    LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
+):
     model = Connection
     fields = []
     success_url = reverse_lazy("connections:connection_list")
+    success_message = "Connection was updated successfully"
 
     def test_func(self):
         obj = self.get_object()
@@ -68,6 +73,7 @@ class ConnectionUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 class ConnectionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Connection
     success_url = reverse_lazy("connections:connection_list")
+    success_message = "Connection was deleted successfully"
 
     def test_func(self):
         obj = self.get_object()
@@ -78,18 +84,22 @@ class ConnectionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         if connection.external_id:
             Connection.objects.remove_from_saltedge(connection, connections_api())
             # TODO: Remove external_id from related accounts/transactions.
-        return super().delete(*args, **kwargs)
+        output = super().delete(*args, **kwargs)
+        messages.success(self.request, self.success_message)
+        return output
 
 
 class ImportConnectionsView(LoginRequiredMixin, FormView):
     template_name = "budget/connection_import.html"
     form_class = ImportConnectionsForm
     success_url = reverse_lazy("connections:connection_list")
+    success_message = "Connections were imported successfully: {}"
 
     def form_valid(self, form):
-        Connection.objects.import_from_saltedge(
+        imported = Connection.objects.import_from_saltedge(
             self.request.user, self.request.user.profile.external_id, connections_api()
         )
+        messages.success(self.request, self.success_message.format(len(imported)))
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
