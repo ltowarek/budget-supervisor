@@ -1,3 +1,5 @@
+from typing import List
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -61,7 +63,7 @@ class ConnectionUpdate(
     LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
 ):
     model = Connection
-    fields = []
+    fields: List[str] = []
     success_url = reverse_lazy("connections:connection_list")
     success_message = "Connection was updated successfully"
 

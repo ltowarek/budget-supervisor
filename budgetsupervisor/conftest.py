@@ -6,7 +6,7 @@ import saltedge_wrapper.factory
 import swagger_client as saltedge_client
 from budget.models import Account, Category, Connection, Transaction
 from django.utils.dateparse import parse_date, parse_datetime
-from pytest_mock import MockerFixture
+from pytest_mock import MockFixture
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.webdriver import WebDriver
 
@@ -186,27 +186,27 @@ def transaction_foo_external(transaction_factory):
 
 
 @pytest.fixture
-def customers_api(mocker: MockerFixture) -> saltedge_client.CustomersApi:
+def customers_api(mocker: MockFixture) -> saltedge_client.CustomersApi:
     return mocker.MagicMock(spec_set=saltedge_client.CustomersApi)
 
 
 @pytest.fixture
-def connect_sessions_api(mocker: MockerFixture) -> saltedge_client.ConnectSessionsApi:
+def connect_sessions_api(mocker: MockFixture) -> saltedge_client.ConnectSessionsApi:
     return mocker.MagicMock(spec_set=saltedge_client.ConnectSessionsApi)
 
 
 @pytest.fixture
-def connections_api(mocker: MockerFixture) -> saltedge_client.ConnectionsApi:
+def connections_api(mocker: MockFixture) -> saltedge_client.ConnectionsApi:
     return mocker.MagicMock(spec_set=saltedge_client.ConnectionsApi)
 
 
 @pytest.fixture
-def accounts_api(mocker: MockerFixture) -> saltedge_client.AccountsApi:
+def accounts_api(mocker: MockFixture) -> saltedge_client.AccountsApi:
     return mocker.MagicMock(spec_set=saltedge_client.AccountsApi)
 
 
 @pytest.fixture
-def transactions_api(mocker: MockerFixture) -> saltedge_client.TransactionsApi:
+def transactions_api(mocker: MockFixture) -> saltedge_client.TransactionsApi:
     return mocker.MagicMock(spec_set=saltedge_client.TransactionsApi)
 
 

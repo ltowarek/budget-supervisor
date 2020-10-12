@@ -1,3 +1,5 @@
+from typing import List
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
@@ -16,7 +18,7 @@ class SignUpView(CreateView):
 
 class ProfileUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Profile
-    fields = []
+    fields: List[str] = []
     success_url = reverse_lazy("profile")
     template_name = "users/profile_form.html"
     success_message = "Profile was updated successfully"
