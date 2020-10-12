@@ -1,0 +1,16 @@
+exclude: ^third_party|migrations
+repos:
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.8.3
+    hooks:
+      - id: flake8
+        # additional_dependencies: [flake8-bugbear]
+  - repo: https://github.com/psf/black
+    rev: 19.10b0
+    hooks:
+      - id: black
+  - repo: https://github.com/pycqa/isort
+    rev: 5.5.4
+    hooks:
+      - id: isort
+      
