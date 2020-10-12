@@ -149,8 +149,10 @@ def connection_foo_external(connection_factory, profile_foo_external):
 @pytest.fixture
 @pytest.mark.django_db
 def transaction_factory(account_foo, user_foo):
+    today = datetime.date.today()
+
     def create_transaction(
-        date=datetime.date.today(),
+        date=today,
         amount=100.00,
         payee="",
         category=None,
@@ -254,19 +256,24 @@ def saltedge_stage(saltedge_stage_factory):
 
 @pytest.fixture
 def saltedge_simplified_attempt_factory(saltedge_stage):
+    created_at = parse_datetime("2020-09-07T11:35:46Z")
+    customer_last_logged_at = parse_datetime("2020-09-07T08:35:46Z")
+    success_at = parse_datetime("2020-09-07T11:35:46Z")
+    updated_at = parse_datetime("2020-09-07T11:35:46Z")
+
     def create_simplified_attempt(
         api_mode="service",
         api_version="5",
         automatic_fetch=True,
         daily_refresh=False,
         categorization="personal",
-        created_at=parse_datetime("2020-09-07T11:35:46Z"),
+        created_at=created_at,
         custom_fields=None,
         device_type="desktop",
         remote_ip="93.184.216.34",
         exclude_accounts=None,
         user_present=False,
-        customer_last_logged_at=parse_datetime("2020-09-07T08:35:46Z"),
+        customer_last_logged_at=customer_last_logged_at,
         fail_at=None,
         fail_error_class=None,
         fail_message=None,
@@ -279,9 +286,9 @@ def saltedge_simplified_attempt_factory(saltedge_stage):
         locale="en",
         partial=False,
         store_credentials=True,
-        success_at=parse_datetime("2020-09-07T11:35:46Z"),
+        success_at=success_at,
         to_date=None,
-        updated_at=parse_datetime("2020-09-07T11:35:46Z"),
+        updated_at=updated_at,
         show_consent_confirmation=False,
         include_natures=None,
         last_stage=None,
@@ -339,6 +346,11 @@ def saltedge_simplified_attempt(saltedge_simplified_attempt_factory):
 
 @pytest.fixture
 def saltedge_connection_factory(saltedge_simplified_attempt):
+    created_at = parse_datetime("2020-09-06T11:35:46Z")
+    updated_at = parse_datetime("2020-09-07T10:55:46Z")
+    last_success_at = parse_datetime("2020-09-07T10:55:46Z")
+    next_refresh_possible_at = parse_datetime("2020-09-07T12:35:46Z")
+
     def create_connection(
         id="111111111111111111",
         secret="AtQX6Q8vRyMrPjUVtW7J_O1n06qYQ25bvUJ8CIC80-8",
@@ -347,12 +359,12 @@ def saltedge_connection_factory(saltedge_simplified_attempt):
         provider_name="Fakebank Simple",
         daily_refresh=False,
         customer_id="222222222222222222",
-        created_at=parse_datetime("2020-09-06T11:35:46Z"),
-        updated_at=parse_datetime("2020-09-07T10:55:46Z"),
-        last_success_at=parse_datetime("2020-09-07T10:55:46Z"),
+        created_at=created_at,
+        updated_at=updated_at,
+        last_success_at=last_success_at,
         status="active",
         country_code="XF",
-        next_refresh_possible_at=parse_datetime("2020-09-07T12:35:46Z"),
+        next_refresh_possible_at=next_refresh_possible_at,
         store_credentials=True,
         last_attempt=None,
         show_consent_confirmation=False,
@@ -390,6 +402,9 @@ def saltedge_connection(saltedge_connection_factory):
 
 @pytest.fixture
 def saltedge_account_factory():
+    created_at = parse_datetime("2020-09-07T08:35:46Z")
+    updated_at = parse_datetime("2020-09-07T08:35:46Z")
+
     def create_account(
         id="333333333333333333",
         name="Fake account 1",
@@ -398,8 +413,8 @@ def saltedge_account_factory():
         currency_code="EUR",
         extra=None,
         connection_id="111111111111111111",
-        created_at=parse_datetime("2020-09-07T08:35:46Z"),
-        updated_at=parse_datetime("2020-09-07T08:35:46Z"),
+        created_at=created_at,
+        updated_at=updated_at,
     ):
         if not extra:
             extra = {"client_name": "Fake name"}
@@ -425,11 +440,15 @@ def saltedge_account(saltedge_account_factory):
 
 @pytest.fixture
 def saltedge_transaction_factory():
+    made_on = parse_date("2020-05-03")
+    created_at = parse_datetime("2020-09-05T11:35:46Z")
+    updated_at = parse_datetime("2020-09-06T11:35:46Z")
+
     def create_transaction(
         id="444444444444444444",
         mode="normal",
         status="posted",
-        made_on=parse_date("2020-05-03"),
+        made_on=made_on,
         amount=-200.0,
         currency_code="USD",
         description="test transaction",
@@ -437,8 +456,8 @@ def saltedge_transaction_factory():
         duplicated=False,
         extra=None,
         account_id="333333333333333333",
-        created_at=parse_datetime("2020-09-05T11:35:46Z"),
-        updated_at=parse_datetime("2020-09-06T11:35:46Z"),
+        created_at=created_at,
+        updated_at=updated_at,
     ):
         if not extra:
             extra = {

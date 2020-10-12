@@ -461,7 +461,7 @@ class TestAccountDelete:
         transaction_factory,
     ):
         number_of_transactions = 20
-        for i in range(number_of_transactions):
+        for _ in range(number_of_transactions):
             transaction_factory()
         selenium = authenticate_selenium(user=user_foo)
         self.delete_account(selenium, live_server_path, account_foo)
