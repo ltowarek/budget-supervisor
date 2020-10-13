@@ -48,19 +48,16 @@ class ConnectionManager(models.Manager):
                 new_connections.append(c)
         return new_connections
 
+    # TODO: Remove from saltedge when deleting Connection itself
     def remove_from_saltedge(
         self, connection: "Connection", connections_api: saltedge_client.ConnectionsApi
     ) -> None:
         connections_api.connections_connection_id_delete(str(connection.external_id))
-        connection.external_id = None
-        connection.save()
 
 
 class Connection(models.Model):
     provider = models.CharField(max_length=200, editable=False)
-    # TODO: Can external_id be set to null?
-    # Connection without external_id makes no sense.
-    external_id = models.BigIntegerField(blank=True, null=True, editable=False)
+    external_id = models.BigIntegerField(editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     objects = ConnectionManager()

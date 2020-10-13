@@ -11,6 +11,7 @@ from saltedge_wrapper.factory import connections_api
 from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
+from swagger_client.rest import ApiException
 from users.models import Profile, User
 
 pytestmark = pytest.mark.selenium
@@ -220,32 +221,71 @@ class TestConnectionUpdate:
         element.click()
 
 
+@pytest.fixture
+def connection_external_factory(
+    remove_temporary_connections: Callable[..., None],
+) -> Callable[..., Connection]:
+    def f(
+        selenium: WebDriver, live_server_path: Callable[[str], str], profile: Profile
+    ) -> Connection:
+        Connection.objects.import_from_saltedge(
+            profile.user, profile.external_id, connections_api()
+        )
+        # There is no other way to create connection than using Selenium
+        TestConnectionCreate.create_saltedge_connection(selenium, live_server_path)
+        new_connections = Connection.objects.import_from_saltedge(
+            profile.user, profile.external_id, connections_api()
+        )
+        return new_connections[0]
+
+    return f
+
+
 class TestConnectionDelete:
     def test_connection_is_deleted_internally(
         self,
         authenticate_selenium: Callable[..., WebDriver],
         live_server_path: Callable[[str], str],
-        user_foo: User,
-        connection_foo: Connection,
+        predefined_profile: Profile,
+        connection_external_factory: Callable[..., Connection],
     ) -> None:
-        selenium = authenticate_selenium(user=user_foo)
-        self.delete_connection(selenium, live_server_path, connection_foo)
-        assert Connection.objects.filter(user=user_foo).count() == 0
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        connection = connection_external_factory(
+            selenium, live_server_path, predefined_profile
+        )
+        self.delete_connection(selenium, live_server_path, connection)
+        assert not Connection.objects.filter(pk=connection.pk).exists()
 
-    def test_connection_is_deleted_externally(self) -> None:
-        # TODO: There is a need to create SaltEdge connection programatically
-        # without a need for Selenium
-        assert True
+    def test_connection_is_deleted_externally(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        connection_external_factory: Callable[..., Connection],
+    ) -> None:
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        connection = connection_external_factory(
+            selenium, live_server_path, predefined_profile
+        )
+        api = connections_api()
+        assert api.connections_connection_id_get(connection.external_id)
+        self.delete_connection(selenium, live_server_path, connection)
+        with pytest.raises(ApiException) as e:
+            api.connections_connection_id_get(connection.external_id)
+        assert "ConnectionNotFound" in str(e.value)
 
     def test_redirect(
         self,
         authenticate_selenium: Callable[..., WebDriver],
         live_server_path: Callable[[str], str],
-        user_foo: User,
-        connection_foo: Connection,
+        predefined_profile: Profile,
+        connection_external_factory: Callable[..., Connection],
     ) -> None:
-        selenium = authenticate_selenium(user=user_foo)
-        self.delete_connection(selenium, live_server_path, connection_foo)
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        connection = connection_external_factory(
+            selenium, live_server_path, predefined_profile
+        )
+        self.delete_connection(selenium, live_server_path, connection)
         assert selenium.current_url == live_server_path(
             reverse("connections:connection_list")
         )
@@ -254,11 +294,14 @@ class TestConnectionDelete:
         self,
         authenticate_selenium: Callable[..., WebDriver],
         live_server_path: Callable[[str], str],
-        user_foo: User,
-        connection_foo: Connection,
+        predefined_profile: Profile,
+        connection_external_factory: Callable[..., Connection],
     ) -> None:
-        selenium = authenticate_selenium(user=user_foo)
-        self.delete_connection(selenium, live_server_path, connection_foo)
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        connection = connection_external_factory(
+            selenium, live_server_path, predefined_profile
+        )
+        self.delete_connection(selenium, live_server_path, connection)
         messages = [
             m.text
             for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')

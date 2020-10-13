@@ -115,18 +115,19 @@ def test_connection_import_from_saltedge_no_new_objects(
 
 
 def test_connection_remove_saltedge(
-    connection_foo_external: Connection, connections_api: saltedge_client.ConnectionsApi
+    connection_foo: Connection, connections_api: saltedge_client.ConnectionsApi
 ) -> None:
     data = saltedge_client.RemovedConnectionResponseData(
-        removed=True, id=str(connection_foo_external.external_id)
+        removed=True, id=str(connection_foo.external_id)
     )
     connections_api.connections_connection_id_delete.return_value = saltedge_client.RemovedConnectionResponse(
         data=data
     )
 
-    assert connection_foo_external.external_id is not None
-    Connection.objects.remove_from_saltedge(connection_foo_external, connections_api)
-    assert connection_foo_external.external_id is None
+    Connection.objects.remove_from_saltedge(connection_foo, connections_api)
+    connections_api.connections_connection_id_delete.assert_called_with(
+        str(connection_foo.external_id)
+    )
 
 
 def test_account_str(account_foo: Account) -> None:
@@ -134,20 +135,20 @@ def test_account_str(account_foo: Account) -> None:
 
 
 def test_account_import_from_saltedge_no_objects(
-    connection_foo_external: Connection, accounts_api: saltedge_client.AccountsApi
+    connection_foo: Connection, accounts_api: saltedge_client.AccountsApi
 ) -> None:
     accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(data=[])
 
     assert Account.objects.all().count() == 0
     imported_accounts = Account.objects.import_from_saltedge(
-        connection_foo_external.user, connection_foo_external.external_id, accounts_api
+        connection_foo.user, connection_foo.external_id, accounts_api
     )
     assert Account.objects.all().count() == 0
     assert len(imported_accounts) == 0
 
 
 def test_account_import_from_saltedge_one_new_object(
-    connection_foo_external: Connection,
+    connection_foo: Connection,
     accounts_api: saltedge_client.AccountsApi,
     saltedge_account_factory: Callable[..., saltedge_client.Account],
 ) -> None:
@@ -158,7 +159,7 @@ def test_account_import_from_saltedge_one_new_object(
 
     assert Account.objects.all().count() == 0
     imported_accounts = Account.objects.import_from_saltedge(
-        connection_foo_external.user, connection_foo_external.external_id, accounts_api
+        connection_foo.user, connection_foo.external_id, accounts_api
     )
     assert Account.objects.all().count() == len(mock_accounts)
     assert len(imported_accounts) == len(mock_accounts)
@@ -167,12 +168,12 @@ def test_account_import_from_saltedge_one_new_object(
         assert imported.external_id == int(mock.id)
         assert imported.name == mock.name
         assert imported.account_type == Account.AccountType.ACCOUNT
-        assert imported.connection == connection_foo_external
-        assert imported.user == connection_foo_external.user
+        assert imported.connection == connection_foo
+        assert imported.user == connection_foo.user
 
 
 def test_account_import_from_saltedge_two_new_objects(
-    connection_foo_external: Connection,
+    connection_foo: Connection,
     accounts_api: saltedge_client.AccountsApi,
     saltedge_account_factory: Callable[..., saltedge_client.Account],
 ) -> None:
@@ -186,7 +187,7 @@ def test_account_import_from_saltedge_two_new_objects(
 
     assert Account.objects.all().count() == 0
     imported_accounts = Account.objects.import_from_saltedge(
-        connection_foo_external.user, connection_foo_external.external_id, accounts_api
+        connection_foo.user, connection_foo.external_id, accounts_api
     )
     assert Account.objects.all().count() == len(mock_accounts)
     assert len(imported_accounts) == len(mock_accounts)
@@ -195,12 +196,12 @@ def test_account_import_from_saltedge_two_new_objects(
         assert imported.external_id == int(mock.id)
         assert imported.name == mock.name
         assert imported.account_type == Account.AccountType.ACCOUNT
-        assert imported.connection == connection_foo_external
-        assert imported.user == connection_foo_external.user
+        assert imported.connection == connection_foo
+        assert imported.user == connection_foo.user
 
 
 def test_account_import_from_saltedge_no_new_objects(
-    connection_foo_external: Connection,
+    connection_foo: Connection,
     accounts_api: saltedge_client.AccountsApi,
     saltedge_account_factory: Callable[..., saltedge_client.Account],
 ) -> None:
@@ -212,12 +213,12 @@ def test_account_import_from_saltedge_no_new_objects(
         data=mock_accounts
     )
     imported_accounts = Account.objects.import_from_saltedge(
-        connection_foo_external.user, connection_foo_external.external_id, accounts_api
+        connection_foo.user, connection_foo.external_id, accounts_api
     )
 
     assert Account.objects.all().count() == len(mock_accounts)
     imported_accounts = Account.objects.import_from_saltedge(
-        connection_foo_external.user, connection_foo_external.external_id, accounts_api
+        connection_foo.user, connection_foo.external_id, accounts_api
     )
     assert Account.objects.all().count() == len(mock_accounts)
     assert len(imported_accounts) == 0

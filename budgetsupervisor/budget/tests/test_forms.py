@@ -11,11 +11,9 @@ from budget.models import Account, Connection
 from users.models import User
 
 
-def test_import_accounts_form_valid(
-    user_foo: User, connection_foo_external: Connection
-) -> None:
+def test_import_accounts_form_valid(user_foo: User, connection_foo: Connection) -> None:
     data = {
-        "connection": connection_foo_external,
+        "connection": connection_foo,
     }
     form = ImportAccountsForm(data=data, user=user_foo)
     assert form.is_valid() is True

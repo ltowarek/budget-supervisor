@@ -227,9 +227,14 @@ def test_connection_delete_view_post_redirect(
     user_foo: User,
     login_user: Callable[[User], None],
     connection_foo: Connection,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
 ) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api
+    )
     response = client.post(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "connection_list"
@@ -240,33 +245,18 @@ def test_connection_delete_view_post_message(
     user_foo: User,
     login_user: Callable[[User], None],
     connection_foo: Connection,
-) -> None:
-    login_user(user_foo)
-    url = reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
-    response = client.post(url)
-    assert response.status_code == 302
-    messages = [m.message for m in get_messages(response.wsgi_request)]
-    assert "Connection was deleted successfully" in messages
-
-
-def test_connection_delete_view_post_external(
-    client: Client,
-    user_foo: User,
-    login_user: Callable[[User], None],
-    connection_foo_external: Connection,
     mocker: MockFixture,
     connections_api: saltedge_client.ConnectionsApi,
 ) -> None:
     login_user(user_foo)
-    url = reverse(
-        "connections:connection_delete", kwargs={"pk": connection_foo_external.pk}
-    )
+    url = reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
     mocker.patch(
         "budget.views.connections_api", autospec=True, return_value=connections_api
     )
     response = client.post(url)
     assert response.status_code == 302
-    assert resolve(get_url_path(response)).url_name == "connection_list"
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Connection was deleted successfully" in messages
 
 
 def test_connection_delete_view_post_different_user(

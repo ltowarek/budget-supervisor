@@ -108,9 +108,9 @@ def account_foo(account_factory: Callable[..., Account]) -> Account:
 
 @pytest.fixture
 def account_foo_external(
-    account_factory: Callable[..., Account], connection_foo_external: Connection
+    account_factory: Callable[..., Account], connection_foo: Connection
 ) -> Account:
-    return account_factory("foo", external_id=123, connection=connection_foo_external)
+    return account_factory("foo", external_id=123, connection=connection_foo)
 
 
 @pytest.fixture
@@ -131,7 +131,7 @@ def category_foo(category_factory: Callable[..., Category]) -> Category:
 @pytest.mark.django_db
 def connection_factory(user_foo: User) -> Callable[..., Connection]:
     def create_connection(
-        provider: str, user: User = user_foo, external_id: int = None,
+        provider: str, user: User = user_foo, external_id: int = 123,
     ) -> Connection:
         return Connection.objects.create(
             provider=provider, user=user, external_id=external_id
@@ -141,12 +141,7 @@ def connection_factory(user_foo: User) -> Callable[..., Connection]:
 
 
 @pytest.fixture
-def connection_foo(connection_factory: Callable[..., Connection]) -> Connection:
-    return connection_factory("foo")
-
-
-@pytest.fixture
-def connection_foo_external(
+def connection_foo(
     connection_factory: Callable[..., Connection], profile_foo_external: Profile
 ) -> Connection:
     return connection_factory(
