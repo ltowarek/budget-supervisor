@@ -1,29 +1,33 @@
 import datetime
 import os
+from typing import Callable, Dict, List, Tuple
 
 import pytest
 import saltedge_wrapper.factory
 import swagger_client as saltedge_client
 from budget.models import Account, Category, Connection, Transaction
+from django.test import Client
 from django.utils.dateparse import parse_date, parse_datetime
+from pytest_django.live_server_helper import LiveServer
 from pytest_mock import MockFixture
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.webdriver import WebDriver
+from users.models import Profile, User
 
 
 @pytest.fixture
 @pytest.mark.django_db
-def user_factory(django_user_model):
+def user_factory(django_user_model: User) -> Callable[..., User]:
     def create_user(
-        username,
-        password="password",
-        first_name="foo",
-        last_name="bar",
-        email="foo@example.com",
-        is_staff=False,
-        is_superuser=False,
-        is_active=True,
-    ):
+        username: str,
+        password: str = "password",
+        first_name: str = "foo",
+        last_name: str = "bar",
+        email: str = "foo@example.com",
+        is_staff: bool = False,
+        is_superuser: bool = False,
+        is_active: bool = True,
+    ) -> User:
         return django_user_model.objects.create_user(
             username=username,
             password=password,
@@ -39,16 +43,14 @@ def user_factory(django_user_model):
 
 
 @pytest.fixture
-def user_foo(user_factory):
+def user_foo(user_factory: Callable[..., User]) -> User:
     return user_factory(username="foo")
 
 
 @pytest.fixture
 @pytest.mark.django_db
-def profile_factory(user_foo):
-    def create_profile(
-        user=user_foo, external_id=None,
-    ):
+def profile_factory(user_foo: User) -> Callable[..., Profile]:
+    def create_profile(user: User = user_foo, external_id: int = None) -> Profile:
         profile = user.profile
         profile.external_id = external_id
         profile.save()
@@ -58,19 +60,19 @@ def profile_factory(user_foo):
 
 
 @pytest.fixture
-def profile_foo(profile_factory):
+def profile_foo(profile_factory: Callable[..., Profile]) -> Profile:
     return profile_factory()
 
 
 @pytest.fixture
-def profile_foo_external(profile_factory):
+def profile_foo_external(profile_factory: Callable[..., Profile]) -> Profile:
     return profile_factory(external_id=123)
 
 
 @pytest.fixture
 @pytest.mark.django_db
-def login_user(client):
-    def f(user, password="password"):
+def login_user(client: Client) -> Callable[..., None]:
+    def f(user: User, password: str = "password") -> None:
         client.login(username=user.username, password=password)
 
     return f
@@ -78,14 +80,16 @@ def login_user(client):
 
 @pytest.fixture
 @pytest.mark.django_db
-def account_factory(connection_foo, user_foo):
+def account_factory(
+    connection_foo: Connection, user_foo: User
+) -> Callable[..., Account]:
     def create_account(
-        name,
-        account_type=Account.AccountType.ACCOUNT,
-        external_id=None,
-        connection=connection_foo,
-        user=user_foo,
-    ):
+        name: str,
+        account_type: Tuple[str, str] = Account.AccountType.ACCOUNT,
+        external_id: int = None,
+        connection: Connection = connection_foo,
+        user: User = user_foo,
+    ) -> Account:
         return Account.objects.create(
             name=name,
             account_type=account_type,
@@ -98,35 +102,37 @@ def account_factory(connection_foo, user_foo):
 
 
 @pytest.fixture
-def account_foo(account_factory):
+def account_foo(account_factory: Callable[..., Account]) -> Account:
     return account_factory("foo")
 
 
 @pytest.fixture
-def account_foo_external(account_factory, connection_foo_external):
+def account_foo_external(
+    account_factory: Callable[..., Account], connection_foo_external: Connection
+) -> Account:
     return account_factory("foo", external_id=123, connection=connection_foo_external)
 
 
 @pytest.fixture
 @pytest.mark.django_db
-def category_factory(user_foo):
-    def create_category(name, user=user_foo):
+def category_factory(user_foo: User) -> Callable[..., Category]:
+    def create_category(name: str, user: User = user_foo) -> Category:
         return Category.objects.create(name=name, user=user)
 
     return create_category
 
 
 @pytest.fixture
-def category_foo(category_factory):
+def category_foo(category_factory: Callable[..., Category]) -> Category:
     return category_factory("foo")
 
 
 @pytest.fixture
 @pytest.mark.django_db
-def connection_factory(user_foo):
+def connection_factory(user_foo: User) -> Callable[..., Connection]:
     def create_connection(
-        provider, user=user_foo, external_id=None,
-    ):
+        provider: str, user: User = user_foo, external_id: int = None,
+    ) -> Connection:
         return Connection.objects.create(
             provider=provider, user=user, external_id=external_id
         )
@@ -135,12 +141,14 @@ def connection_factory(user_foo):
 
 
 @pytest.fixture
-def connection_foo(connection_factory):
+def connection_foo(connection_factory: Callable[..., Connection]) -> Connection:
     return connection_factory("foo")
 
 
 @pytest.fixture
-def connection_foo_external(connection_factory, profile_foo_external):
+def connection_foo_external(
+    connection_factory: Callable[..., Connection], profile_foo_external: Profile
+) -> Connection:
     return connection_factory(
         provider="foo", user=profile_foo_external.user, external_id=123
     )
@@ -148,19 +156,21 @@ def connection_foo_external(connection_factory, profile_foo_external):
 
 @pytest.fixture
 @pytest.mark.django_db
-def transaction_factory(account_foo, user_foo):
+def transaction_factory(
+    account_foo: Account, user_foo: User
+) -> Callable[..., Transaction]:
     today = datetime.date.today()
 
     def create_transaction(
-        date=today,
-        amount=100.00,
-        payee="",
-        category=None,
-        description="",
-        account=account_foo,
-        external_id=None,
-        user=user_foo,
-    ):
+        date: datetime.date = today,
+        amount: float = 100.00,
+        payee: str = "",
+        category: Category = None,
+        description: str = "",
+        account: Account = account_foo,
+        external_id: int = None,
+        user: User = user_foo,
+    ) -> Transaction:
         return Transaction.objects.create(
             date=date,
             amount=amount,
@@ -176,12 +186,14 @@ def transaction_factory(account_foo, user_foo):
 
 
 @pytest.fixture
-def transaction_foo(transaction_factory):
+def transaction_foo(transaction_factory: Callable[..., Transaction]) -> Transaction:
     return transaction_factory(description="transaction foo")
 
 
 @pytest.fixture
-def transaction_foo_external(transaction_factory):
+def transaction_foo_external(
+    transaction_factory: Callable[..., Transaction]
+) -> Transaction:
     return transaction_factory(description="transaction foo", external_id=123)
 
 
@@ -211,32 +223,34 @@ def transactions_api(mocker: MockFixture) -> saltedge_client.TransactionsApi:
 
 
 @pytest.fixture
-def saltedge_customer_factory():
+def saltedge_customer_factory() -> Callable[..., saltedge_client.Customer]:
     def create_customer(
-        id="222222222222222222",
-        identifier="12rv1212f1efxchsdhbgv",
-        secret="AtQX6Q8vRyMrPjUVtW7J_O1n06qYQ25bvUJ8CIC80-8",
-    ):
+        id: str = "222222222222222222",
+        identifier: str = "12rv1212f1efxchsdhbgv",
+        secret: str = "AtQX6Q8vRyMrPjUVtW7J_O1n06qYQ25bvUJ8CIC80-8",
+    ) -> saltedge_client.Customer:
         return saltedge_client.Customer(id=id, identifier=identifier, secret=secret)
 
     return create_customer
 
 
 @pytest.fixture
-def saltedge_customer(saltedge_customer_factory):
+def saltedge_customer(
+    saltedge_customer_factory: Callable[..., saltedge_client.Customer]
+) -> saltedge_client.Customer:
     return saltedge_customer_factory()
 
 
 @pytest.fixture
-def saltedge_stage_factory():
+def saltedge_stage_factory() -> Callable[..., saltedge_client.Stage]:
     def create_stage(
-        created_at=None,
-        id=None,
-        interactive_fields_names=None,
-        interactive_html=None,
-        name=None,
-        updated_at=None,
-    ):
+        created_at: str = None,
+        id: str = None,
+        interactive_fields_names: str = None,
+        interactive_html: str = None,
+        name: str = None,
+        updated_at: str = None,
+    ) -> saltedge_client.Stage:
         return saltedge_client.Stage(
             created_at=parse_datetime("2020-09-07T10:35:46Z"),
             id="888888888888888888",
@@ -250,49 +264,53 @@ def saltedge_stage_factory():
 
 
 @pytest.fixture
-def saltedge_stage(saltedge_stage_factory):
+def saltedge_stage(
+    saltedge_stage_factory: Callable[..., saltedge_client.Stage]
+) -> saltedge_client.Stage:
     return saltedge_stage_factory(saltedge_stage_factory)
 
 
 @pytest.fixture
-def saltedge_simplified_attempt_factory(saltedge_stage):
+def saltedge_simplified_attempt_factory(
+    saltedge_stage: saltedge_client.Stage,
+) -> Callable[..., saltedge_client.SimplifiedAttempt]:
     created_at = parse_datetime("2020-09-07T11:35:46Z")
     customer_last_logged_at = parse_datetime("2020-09-07T08:35:46Z")
     success_at = parse_datetime("2020-09-07T11:35:46Z")
     updated_at = parse_datetime("2020-09-07T11:35:46Z")
 
     def create_simplified_attempt(
-        api_mode="service",
-        api_version="5",
-        automatic_fetch=True,
-        daily_refresh=False,
-        categorization="personal",
-        created_at=created_at,
-        custom_fields=None,
-        device_type="desktop",
-        remote_ip="93.184.216.34",
-        exclude_accounts=None,
-        user_present=False,
-        customer_last_logged_at=customer_last_logged_at,
-        fail_at=None,
-        fail_error_class=None,
-        fail_message=None,
-        fetch_scopes=None,
-        finished=True,
-        finished_recent=True,
-        from_date=None,
-        id="777777777777777777",
-        interactive=False,
-        locale="en",
-        partial=False,
-        store_credentials=True,
-        success_at=success_at,
-        to_date=None,
-        updated_at=updated_at,
-        show_consent_confirmation=False,
-        include_natures=None,
-        last_stage=None,
-    ):
+        api_mode: str = "service",
+        api_version: str = "5",
+        automatic_fetch: bool = True,
+        daily_refresh: bool = False,
+        categorization: str = "personal",
+        created_at: str = created_at,
+        custom_fields: Dict = None,
+        device_type: str = "desktop",
+        remote_ip: str = "93.184.216.34",
+        exclude_accounts: List = None,
+        user_present: bool = False,
+        customer_last_logged_at: str = customer_last_logged_at,
+        fail_at: str = None,
+        fail_error_class: str = None,
+        fail_message: str = None,
+        fetch_scopes: List[str] = None,
+        finished: bool = True,
+        finished_recent: bool = True,
+        from_date: str = None,
+        id: str = "777777777777777777",
+        interactive: bool = False,
+        locale: str = "en",
+        partial: bool = False,
+        store_credentials: bool = True,
+        success_at: str = success_at,
+        to_date: str = None,
+        updated_at: str = updated_at,
+        show_consent_confirmation: bool = False,
+        include_natures: List[str] = None,
+        last_stage: str = None,
+    ) -> saltedge_client.SimplifiedAttempt:
         if not custom_fields:
             custom_fields = {}
         if not exclude_accounts:
@@ -340,36 +358,42 @@ def saltedge_simplified_attempt_factory(saltedge_stage):
 
 
 @pytest.fixture
-def saltedge_simplified_attempt(saltedge_simplified_attempt_factory):
+def saltedge_simplified_attempt(
+    saltedge_simplified_attempt_factory: Callable[
+        ..., saltedge_client.SimplifiedAttempt
+    ]
+) -> saltedge_client.SimplifiedAttempt:
     return saltedge_simplified_attempt_factory()
 
 
 @pytest.fixture
-def saltedge_connection_factory(saltedge_simplified_attempt):
+def saltedge_connection_factory(
+    saltedge_simplified_attempt: saltedge_client.SimplifiedAttempt,
+) -> saltedge_client.Connection:
     created_at = parse_datetime("2020-09-06T11:35:46Z")
     updated_at = parse_datetime("2020-09-07T10:55:46Z")
     last_success_at = parse_datetime("2020-09-07T10:55:46Z")
     next_refresh_possible_at = parse_datetime("2020-09-07T12:35:46Z")
 
     def create_connection(
-        id="111111111111111111",
-        secret="AtQX6Q8vRyMrPjUVtW7J_O1n06qYQ25bvUJ8CIC80-8",
-        provider_id="1234",
-        provider_code="fakebank_simple_xf",
-        provider_name="Fakebank Simple",
-        daily_refresh=False,
-        customer_id="222222222222222222",
-        created_at=created_at,
-        updated_at=updated_at,
-        last_success_at=last_success_at,
-        status="active",
-        country_code="XF",
-        next_refresh_possible_at=next_refresh_possible_at,
-        store_credentials=True,
-        last_attempt=None,
-        show_consent_confirmation=False,
-        last_consent_id="555555555555555555",
-    ):
+        id: str = "111111111111111111",
+        secret: str = "AtQX6Q8vRyMrPjUVtW7J_O1n06qYQ25bvUJ8CIC80-8",
+        provider_id: str = "1234",
+        provider_code: str = "fakebank_simple_xf",
+        provider_name: str = "Fakebank Simple",
+        daily_refresh: bool = False,
+        customer_id: str = "222222222222222222",
+        created_at: str = created_at,
+        updated_at: str = updated_at,
+        last_success_at: str = last_success_at,
+        status: str = "active",
+        country_code: str = "XF",
+        next_refresh_possible_at: str = next_refresh_possible_at,
+        store_credentials: bool = True,
+        last_attempt: saltedge_client.SimplifiedAttempt = None,
+        show_consent_confirmation: bool = False,
+        last_consent_id: str = "555555555555555555",
+    ) -> saltedge_client.Connection:
         if not last_attempt:
             last_attempt = saltedge_simplified_attempt
         return saltedge_client.Connection(
@@ -396,26 +420,28 @@ def saltedge_connection_factory(saltedge_simplified_attempt):
 
 
 @pytest.fixture
-def saltedge_connection(saltedge_connection_factory):
+def saltedge_connection(
+    saltedge_connection_factory: Callable[..., saltedge_client.Connection]
+) -> saltedge_client.Connection:
     return saltedge_connection_factory()
 
 
 @pytest.fixture
-def saltedge_account_factory():
+def saltedge_account_factory() -> saltedge_client.Account:
     created_at = parse_datetime("2020-09-07T08:35:46Z")
     updated_at = parse_datetime("2020-09-07T08:35:46Z")
 
     def create_account(
-        id="333333333333333333",
-        name="Fake account 1",
-        nature="card",
-        balance=2007.2,
-        currency_code="EUR",
-        extra=None,
-        connection_id="111111111111111111",
-        created_at=created_at,
-        updated_at=updated_at,
-    ):
+        id: str = "333333333333333333",
+        name: str = "Fake account 1",
+        nature: str = "card",
+        balance: float = 2007.2,
+        currency_code: str = "EUR",
+        extra: Dict = None,
+        connection_id: str = "111111111111111111",
+        created_at: str = created_at,
+        updated_at: str = updated_at,
+    ) -> saltedge_client.Account:
         if not extra:
             extra = {"client_name": "Fake name"}
         return saltedge_client.Account(
@@ -434,31 +460,33 @@ def saltedge_account_factory():
 
 
 @pytest.fixture
-def saltedge_account(saltedge_account_factory):
+def saltedge_account(
+    saltedge_account_factory: Callable[..., saltedge_client.Account]
+) -> saltedge_client.Account:
     return saltedge_account_factory()
 
 
 @pytest.fixture
-def saltedge_transaction_factory():
+def saltedge_transaction_factory() -> Callable[..., saltedge_client.Transaction]:
     made_on = parse_date("2020-05-03")
     created_at = parse_datetime("2020-09-05T11:35:46Z")
     updated_at = parse_datetime("2020-09-06T11:35:46Z")
 
     def create_transaction(
-        id="444444444444444444",
-        mode="normal",
-        status="posted",
-        made_on=made_on,
-        amount=-200.0,
-        currency_code="USD",
-        description="test transaction",
-        category="income",
-        duplicated=False,
-        extra=None,
-        account_id="333333333333333333",
-        created_at=created_at,
-        updated_at=updated_at,
-    ):
+        id: str = "444444444444444444",
+        mode: str = "normal",
+        status: str = "posted",
+        made_on: str = made_on,
+        amount: float = -200.0,
+        currency_code: str = "USD",
+        description: str = "test transaction",
+        category: str = "income",
+        duplicated: bool = False,
+        extra: Dict = None,
+        account_id: str = "333333333333333333",
+        created_at: str = created_at,
+        updated_at: str = updated_at,
+    ) -> saltedge_client.Transaction:
         if not extra:
             extra = {
                 "original_amount": -3974.6,
@@ -486,12 +514,14 @@ def saltedge_transaction_factory():
 
 
 @pytest.fixture
-def saltedge_transaction(saltedge_transaction_factory):
+def saltedge_transaction(
+    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction]
+) -> saltedge_client.Transaction:
     return saltedge_transaction_factory()
 
 
 @pytest.fixture(scope="class")
-def selenium():
+def selenium() -> WebDriver:
     o = Options()
     o.headless = True
     s = WebDriver(options=o)
@@ -500,22 +530,24 @@ def selenium():
 
 
 @pytest.fixture
-def live_server_path(live_server):
-    def f(path):
+def live_server_path(live_server: LiveServer) -> Callable[[str], str]:
+    def f(path: str) -> str:
         return live_server.url + path
 
     return f
 
 
 @pytest.fixture
-def authenticate_selenium(selenium, live_server, client, user_foo):
+def authenticate_selenium(
+    selenium: WebDriver, live_server: LiveServer, client: Client, user_foo: User
+) -> Callable[..., WebDriver]:
     def f(
-        user=user_foo,
-        password="password",
-        selenium=selenium,
-        live_server=live_server,
-        client=client,
-    ):
+        user: User = user_foo,
+        password: str = "password",
+        selenium: WebDriver = selenium,
+        live_server: LiveServer = live_server,
+        client: Client = client,
+    ) -> WebDriver:
         client.login(username=user.username, password=password)
         selenium.get(live_server.url)
         cookie = client.cookies["sessionid"]
@@ -528,7 +560,7 @@ def authenticate_selenium(selenium, live_server, client, user_foo):
 
 
 @pytest.fixture
-def predefined_customer():
+def predefined_customer() -> saltedge_client.Customer:
     return (
         saltedge_wrapper.factory.customers_api()
         .customers_customer_id_get(os.environ["CUSTOMER_ID"])
@@ -537,7 +569,7 @@ def predefined_customer():
 
 
 @pytest.fixture
-def predefined_saltedge_connection():
+def predefined_saltedge_connection() -> saltedge_client.Connection:
     return (
         saltedge_wrapper.factory.connections_api()
         .connections_connection_id_get(os.environ["CONNECTION_ID"])
@@ -546,7 +578,9 @@ def predefined_saltedge_connection():
 
 
 @pytest.fixture
-def predefined_saltedge_account(predefined_saltedge_connection):
+def predefined_saltedge_account(
+    predefined_saltedge_connection: saltedge_client.Connection,
+) -> saltedge_client.Account:
     return (
         saltedge_wrapper.factory.accounts_api()
         .accounts_get(predefined_saltedge_connection.id)
@@ -555,19 +589,27 @@ def predefined_saltedge_account(predefined_saltedge_connection):
 
 
 @pytest.fixture
-def predefined_user(user_factory, predefined_customer):
+def predefined_user(
+    user_factory: Callable[..., User], predefined_customer: saltedge_client.Customer
+) -> User:
     return user_factory(username=predefined_customer.identifier)
 
 
 @pytest.fixture
-def predefined_profile(profile_factory, predefined_customer, predefined_user):
+def predefined_profile(
+    profile_factory: Callable[..., Profile],
+    predefined_customer: saltedge_client.Customer,
+    predefined_user: User,
+) -> Profile:
     return profile_factory(user=predefined_user, external_id=predefined_customer.id)
 
 
 @pytest.fixture
 def predefined_connection(
-    connection_factory, predefined_saltedge_connection, predefined_user
-):
+    connection_factory: Callable[..., Connection],
+    predefined_saltedge_connection: saltedge_client.Connection,
+    predefined_user: User,
+) -> Connection:
     return connection_factory(
         provider=predefined_saltedge_connection.provider_name,
         external_id=predefined_saltedge_connection.id,
@@ -577,8 +619,11 @@ def predefined_connection(
 
 @pytest.fixture
 def predefined_account(
-    account_factory, predefined_saltedge_account, predefined_connection, predefined_user
-):
+    account_factory: Callable[..., Account],
+    predefined_saltedge_account: saltedge_client.Account,
+    predefined_connection: saltedge_client.Connection,
+    predefined_user: User,
+) -> Account:
     return account_factory(
         name=predefined_saltedge_account.name,
         external_id=predefined_saltedge_account.id,
