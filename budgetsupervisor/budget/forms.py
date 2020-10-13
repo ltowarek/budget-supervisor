@@ -1,3 +1,5 @@
+from typing import Any
+
 from django import forms
 
 from .models import Account, Connection
@@ -6,7 +8,7 @@ from .models import Account, Connection
 class ImportAccountsForm(forms.Form):
     connection = forms.ModelChoiceField(queryset=None)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
         self.fields["connection"].queryset = Connection.objects.filter(user=user)
@@ -15,7 +17,7 @@ class ImportAccountsForm(forms.Form):
 class ImportTransactionsForm(forms.Form):
     account = forms.ModelChoiceField(queryset=None)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
         self.fields["account"].queryset = Account.objects.filter(
@@ -36,12 +38,12 @@ class ReportBalanceForm(forms.Form):
     from_date = forms.DateField(required=False)
     to_date = forms.DateField(required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
         self.fields["accounts"].queryset = Account.objects.filter(user=user)
 
-    def clean(self):
+    def clean(self) -> None:
         cleaned_data = super().clean()
         from_date = cleaned_data.get("from_date")
         to_date = cleaned_data.get("to_date")

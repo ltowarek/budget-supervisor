@@ -1,12 +1,21 @@
+import datetime.date
+from typing import Any, Dict, List
+
 import swagger_client as saltedge_client
 from django.conf import settings
 from django.db import models
 from django.db.models import Sum
 from django.utils.translation import gettext_lazy as _
+from users.models import User
 
 
 class ConnectionManager(models.Manager):
-    def create_in_saltedge(self, redirect_url, customer_id, connect_sessions_api):
+    def create_in_saltedge(
+        self,
+        redirect_url: str,
+        customer_id: int,
+        connect_sessions_api: saltedge_client.ConnectSessionsApi,
+    ) -> str:
         attempt = saltedge_client.AttemptRequestBody(
             return_to=redirect_url, store_credentials=False
         )
@@ -20,7 +29,12 @@ class ConnectionManager(models.Manager):
         response = connect_sessions_api.connect_sessions_create_post(body=body)
         return response.data.connect_url
 
-    def import_from_saltedge(self, user, customer_id, connections_api):
+    def import_from_saltedge(
+        self,
+        user: User,
+        customer_id: int,
+        connections_api: saltedge_client.ConnectionsApi,
+    ) -> List[Any]:
         response = connections_api.connections_get(str(customer_id))
         new_connections = []
         for imported_connection in response.data:
@@ -34,7 +48,9 @@ class ConnectionManager(models.Manager):
                 new_connections.append(c)
         return new_connections
 
-    def remove_from_saltedge(self, connection, connections_api):
+    def remove_from_saltedge(
+        self, connection: Any, connections_api: saltedge_client.ConnectionsApi
+    ) -> None:
         connections_api.connections_connection_id_delete(str(connection.external_id))
         connection.external_id = None
         connection.save()
@@ -49,12 +65,14 @@ class Connection(models.Model):
 
     objects = ConnectionManager()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.provider)
 
 
 class AccountManager(models.Manager):
-    def import_from_saltedge(self, user, connection_id, accounts_api):
+    def import_from_saltedge(
+        self, user: User, connection_id: int, accounts_api: saltedge_client.AccountsApi
+    ) -> List[Any]:
         response = accounts_api.accounts_get(str(connection_id))
         new_accounts = []
         for imported_account in response.data:
@@ -92,7 +110,7 @@ class Account(models.Model):
 
     objects = AccountManager()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.name)
 
 
@@ -103,12 +121,18 @@ class Category(models.Model):
     class Meta:
         verbose_name_plural = "Categories"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.name)
 
 
 class TransactionManager(models.Manager):
-    def import_from_saltedge(self, user, connection_id, account_id, transactions_api):
+    def import_from_saltedge(
+        self,
+        user: User,
+        connection_id: int,
+        account_id: int,
+        transactions_api: saltedge_client.TransactionsApi,
+    ) -> List[Any]:
         response = transactions_api.transactions_get(
             str(connection_id), account_id=str(account_id)
         )
@@ -134,7 +158,13 @@ class TransactionManager(models.Manager):
                 new_transactions.append(t)
         return new_transactions
 
-    def get_balance(self, accounts, user, from_date=None, to_date=None):
+    def get_balance(
+        self,
+        accounts: List[Account],
+        user: User,
+        from_date: datetime.date = None,
+        to_date: datetime.date = None,
+    ) -> Dict[str, float]:
         q = {"account__in": accounts, "user": user}
         if from_date:
             q["date__gte"] = from_date
@@ -165,5 +195,5 @@ class Transaction(models.Model):
 
     objects = TransactionManager()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.description)

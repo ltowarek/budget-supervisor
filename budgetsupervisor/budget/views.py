@@ -1,8 +1,11 @@
-from typing import List
+from typing import Any, Dict, List
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import QuerySet
+from django.forms import ModelForm
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, TemplateView
@@ -37,7 +40,7 @@ class IndexView(LoginRequiredMixin, TemplateView):
 class ConnectionsListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         return Connection.objects.filter(user=self.request.user).order_by("provider")
 
 
@@ -46,14 +49,14 @@ class ConnectionCreate(LoginRequiredMixin, FormView):
     form_class = CreateConnectionForm
     success_url = reverse_lazy("connections:connection_import")
 
-    def form_valid(self, form):
+    def form_valid(self, form: CreateConnectionForm) -> HttpResponseRedirect:
         redirect_url = self.request.build_absolute_uri(str(self.success_url))
         connect_url = Connection.objects.create_in_saltedge(
             redirect_url, self.request.user.profile.external_id, connect_sessions_api()
         )
         return redirect(connect_url)
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict:
         context = super().get_context_data(**kwargs)
         context["profile"] = self.request.user.profile
         return context
@@ -67,7 +70,7 @@ class ConnectionUpdate(
     success_url = reverse_lazy("connections:connection_list")
     success_message = "Connection was updated successfully"
 
-    def test_func(self):
+    def test_func(self) -> bool:
         obj = self.get_object()
         return obj.user == self.request.user
 
@@ -77,11 +80,11 @@ class ConnectionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     success_url = reverse_lazy("connections:connection_list")
     success_message = "Connection was deleted successfully"
 
-    def test_func(self):
+    def test_func(self) -> bool:
         obj = self.get_object()
         return obj.user == self.request.user
 
-    def delete(self, *args, **kwargs):
+    def delete(self, *args: Any, **kwargs: Any) -> HttpResponseRedirect:
         connection = self.get_object()
         if connection.external_id:
             Connection.objects.remove_from_saltedge(connection, connections_api())
@@ -97,14 +100,14 @@ class ImportConnectionsView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy("connections:connection_list")
     success_message = "Connections were imported successfully: {}"
 
-    def form_valid(self, form):
+    def form_valid(self, form: ImportConnectionsForm) -> HttpResponseRedirect:
         imported = Connection.objects.import_from_saltedge(
             self.request.user, self.request.user.profile.external_id, connections_api()
         )
         messages.success(self.request, self.success_message.format(len(imported)))
         return super().form_valid(form)
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict:
         context = super().get_context_data(**kwargs)
         context["profile"] = self.request.user.profile
         return context
@@ -113,7 +116,7 @@ class ImportConnectionsView(LoginRequiredMixin, FormView):
 class AccountListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         return Account.objects.filter(user=self.request.user).order_by("name")
 
 
@@ -126,7 +129,7 @@ class AccountCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     success_url = reverse_lazy("accounts:account_list")
     success_message = "Account was created successfully"
 
-    def form_valid(self, form):
+    def form_valid(self, form: ModelForm) -> HttpResponseRedirect:
         form.instance.user = self.request.user
         return super().form_valid(form)
 
@@ -139,7 +142,7 @@ class AccountUpdate(
     success_url = reverse_lazy("accounts:account_list")
     success_message = "Account was updated successfully"
 
-    def test_func(self):
+    def test_func(self) -> bool:
         obj = self.get_object()
         return obj.user == self.request.user
 
@@ -149,11 +152,11 @@ class AccountDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     success_url = reverse_lazy("accounts:account_list")
     success_message = "Account was deleted successfully"
 
-    def test_func(self):
+    def test_func(self) -> bool:
         obj = self.get_object()
         return obj.user == self.request.user
 
-    def delete(self, *args, **kwargs):
+    def delete(self, *args: Any, **kwargs: Any) -> HttpResponseRedirect:
         output = super().delete(*args, **kwargs)
         messages.success(self.request, self.success_message)
         return output
@@ -165,7 +168,7 @@ class ImportAccountsView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy("accounts:account_list")
     success_message = "Accounts were imported successfully: {}"
 
-    def form_valid(self, form):
+    def form_valid(self, form: ImportAccountsForm) -> HttpResponseRedirect:
         connection = form.cleaned_data["connection"]
         imported = Account.objects.import_from_saltedge(
             self.request.user, connection.external_id, accounts_api()
@@ -173,12 +176,12 @@ class ImportAccountsView(LoginRequiredMixin, FormView):
         messages.success(self.request, self.success_message.format(len(imported)))
         return super().form_valid(form)
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> Dict:
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict:
         context = super().get_context_data(**kwargs)
         context["profile"] = self.request.user.profile
         return context
@@ -187,7 +190,7 @@ class ImportAccountsView(LoginRequiredMixin, FormView):
 class TransactionListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         return Transaction.objects.filter(user=self.request.user).order_by("-date")
 
 
@@ -197,11 +200,11 @@ class TransactionCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     success_url = reverse_lazy("transactions:transaction_list")
     success_message = "Transaction was created successfully"
 
-    def form_valid(self, form):
+    def form_valid(self, form: ModelForm) -> HttpResponseRedirect:
         form.instance.user = self.request.user
         return super().form_valid(form)
 
-    def get_form(self, *args, **kwargs):
+    def get_form(self, *args: Any, **kwargs: Any) -> ModelForm:
         form = super().get_form(*args, **kwargs)
         form.fields["account"].queryset = Account.objects.filter(user=self.request.user)
         form.fields["category"].queryset = Category.objects.filter(
@@ -218,11 +221,11 @@ class TransactionUpdate(
     success_url = reverse_lazy("transactions:transaction_list")
     success_message = "Transaction was updated successfully"
 
-    def test_func(self):
+    def test_func(self) -> bool:
         obj = self.get_object()
         return obj.user == self.request.user
 
-    def get_form(self, *args, **kwargs):
+    def get_form(self, *args: Any, **kwargs: Any) -> ModelForm:
         form = super().get_form(*args, **kwargs)
         form.fields["account"].queryset = Account.objects.filter(user=self.request.user)
         form.fields["category"].queryset = Category.objects.filter(
@@ -236,11 +239,11 @@ class TransactionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     success_url = reverse_lazy("transactions:transaction_list")
     success_message = "Transaction was deleted successfully"
 
-    def test_func(self):
+    def test_func(self) -> bool:
         obj = self.get_object()
         return obj.user == self.request.user
 
-    def delete(self, *args, **kwargs):
+    def delete(self, *args: Any, **kwargs: Any) -> HttpResponseRedirect:
         output = super().delete(*args, **kwargs)
         messages.success(self.request, self.success_message)
         return output
@@ -252,7 +255,7 @@ class ImportTransactionsView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy("transactions:transaction_list")
     success_message = "Transactions were imported successfully: {}"
 
-    def form_valid(self, form):
+    def form_valid(self, form: ImportTransactionsForm) -> HttpResponseRedirect:
         account = form.cleaned_data["account"]
         imported = Transaction.objects.import_from_saltedge(
             self.request.user,
@@ -263,12 +266,12 @@ class ImportTransactionsView(LoginRequiredMixin, FormView):
         messages.success(self.request, self.success_message.format(len(imported)))
         return super().form_valid(form)
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> Dict:
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict:
         context = super().get_context_data(**kwargs)
         context["profile"] = self.request.user.profile
         return context
@@ -277,7 +280,7 @@ class ImportTransactionsView(LoginRequiredMixin, FormView):
 class CategoryListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         return Category.objects.filter(user=self.request.user).order_by("name")
 
 
@@ -287,7 +290,7 @@ class CategoryCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     success_url = reverse_lazy("categories:category_list")
     success_message = "Category was created successfully"
 
-    def form_valid(self, form):
+    def form_valid(self, form: ModelForm) -> HttpResponseRedirect:
         form.instance.user = self.request.user
         return super().form_valid(form)
 
@@ -300,7 +303,7 @@ class CategoryUpdate(
     success_url = reverse_lazy("categories:category_list")
     success_message = "Category was updated successfully"
 
-    def test_func(self):
+    def test_func(self) -> bool:
         obj = self.get_object()
         return obj.user == self.request.user
 
@@ -310,11 +313,11 @@ class CategoryDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     success_url = reverse_lazy("categories:category_list")
     success_message = "Category was deleted successfully"
 
-    def test_func(self):
+    def test_func(self) -> bool:
         obj = self.get_object()
         return obj.user == self.request.user
 
-    def delete(self, *args, **kwargs):
+    def delete(self, *args: Any, **kwargs: Any) -> HttpResponseRedirect:
         output = super().delete(*args, **kwargs)
         messages.success(self.request, self.success_message)
         return output
@@ -324,21 +327,21 @@ class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
     template_name = "budget/report_balance.html"
     form_class = ReportBalanceForm
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         form = self.get_form()
         if form.is_valid():
             return self.form_valid(form)
         else:
             return self.form_invalid(form)
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> Dict:
         kwargs = super().get_form_kwargs()
         if self.request.GET:
             kwargs["data"] = self.request.GET
         kwargs["user"] = self.request.user
         return kwargs
 
-    def form_valid(self, form):
+    def form_valid(self, form: ReportBalanceForm) -> HttpResponse:
         balance = Transaction.objects.get_balance(
             form.cleaned_data["accounts"],
             self.request.user,
