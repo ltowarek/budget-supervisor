@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Dict, List
+from typing import Dict, List
 
 import swagger_client as saltedge_client
 from django.conf import settings
@@ -34,7 +34,7 @@ class ConnectionManager(models.Manager):
         user: User,
         customer_id: int,
         connections_api: saltedge_client.ConnectionsApi,
-    ) -> List[Any]:
+    ) -> List["Connection"]:
         response = connections_api.connections_get(str(customer_id))
         new_connections = []
         for imported_connection in response.data:
@@ -49,7 +49,7 @@ class ConnectionManager(models.Manager):
         return new_connections
 
     def remove_from_saltedge(
-        self, connection: Any, connections_api: saltedge_client.ConnectionsApi
+        self, connection: "Connection", connections_api: saltedge_client.ConnectionsApi
     ) -> None:
         connections_api.connections_connection_id_delete(str(connection.external_id))
         connection.external_id = None
@@ -72,7 +72,7 @@ class Connection(models.Model):
 class AccountManager(models.Manager):
     def import_from_saltedge(
         self, user: User, connection_id: int, accounts_api: saltedge_client.AccountsApi
-    ) -> List[Any]:
+    ) -> List["Account"]:
         response = accounts_api.accounts_get(str(connection_id))
         new_accounts = []
         for imported_account in response.data:
@@ -132,7 +132,7 @@ class TransactionManager(models.Manager):
         connection_id: int,
         account_id: int,
         transactions_api: saltedge_client.TransactionsApi,
-    ) -> List[Any]:
+    ) -> List["Transaction"]:
         response = transactions_api.transactions_get(
             str(connection_id), account_id=str(account_id)
         )
