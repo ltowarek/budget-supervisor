@@ -1,13 +1,17 @@
 import datetime
+from typing import Callable, Iterator, List, Optional
 
 import pytest
+import swagger_client as saltedge_client
 from budget.models import Account, Category, Connection, Transaction
 from django.shortcuts import reverse
 from django.utils.dateparse import parse_date
 from django.utils.formats import date_format
 from saltedge_wrapper.factory import connections_api
+from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
+from users.models import Profile, User
 
 pytestmark = pytest.mark.selenium
 
@@ -17,7 +21,12 @@ class TestIndex:
 
 
 class TestConnectionList:
-    def test_menu(self, authenticate_selenium, live_server_path, user_foo):
+    def test_menu(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("connections:connection_list"))
         selenium.get(url)
@@ -33,7 +42,12 @@ class TestConnectionList:
             reverse("connections:connection_import")
         )
 
-    def test_table_header(self, authenticate_selenium, live_server_path, user_foo):
+    def test_table_header(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("connections:connection_list"))
         selenium.get(url)
@@ -45,8 +59,12 @@ class TestConnectionList:
         assert elements[2].text == "Actions"
 
     def test_table_body(
-        self, authenticate_selenium, live_server_path, connection_factory, user_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        connection_factory: Callable[..., Connection],
+        user_foo: User,
+    ) -> None:
         number_of_connections = 20
         for i in range(number_of_connections):
             connection_factory(f"provider {i}", user=user_foo)
@@ -76,7 +94,13 @@ class TestConnectionList:
                 reverse("connections:connection_delete", kwargs={"pk": connection.pk})
             )
 
-    def test_pagination(self, authenticate_selenium, live_server_path, user_foo):
+    # TODO: Create pagination template
+    def test_pagination(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("connections:connection_list"))
         selenium.get(url)
@@ -86,7 +110,9 @@ class TestConnectionList:
 
 
 @pytest.fixture
-def remove_temporary_connections(predefined_saltedge_connection, predefined_user):
+def remove_temporary_connections(
+    predefined_saltedge_connection: saltedge_client.Connection, predefined_user: User
+) -> Iterator[None]:
     Connection.objects.import_from_saltedge(
         predefined_user, predefined_user.profile.external_id, connections_api()
     )
@@ -101,11 +127,11 @@ def remove_temporary_connections(predefined_saltedge_connection, predefined_user
 class TestConnectionCreate:
     def test_saltedge_connect_session_creation(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        remove_temporary_connections,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        remove_temporary_connections: Callable[..., None],
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.create_saltedge_connection(selenium, live_server_path)
         assert selenium.current_url == live_server_path(
@@ -113,8 +139,11 @@ class TestConnectionCreate:
         )
 
     def test_cant_create_connection_if_external_synchronization_is_disabled(
-        self, authenticate_selenium, live_server_path, user_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("connections:connection_create"))
         selenium.get(url)
@@ -125,7 +154,9 @@ class TestConnectionCreate:
         )
 
     @classmethod
-    def create_saltedge_connection(cls, selenium, live_server_path):
+    def create_saltedge_connection(
+        cls, selenium: WebDriver, live_server_path: Callable[[str], str]
+    ) -> None:
         url = live_server_path(reverse("connections:connection_create"))
         selenium.get(url)
         element = selenium.find_element_by_xpath('//input[@value="Submit"]')
@@ -150,16 +181,24 @@ class TestConnectionCreate:
 
 class TestConnectionUpdate:
     def test_dummy(
-        self, authenticate_selenium, live_server_path, user_foo, connection_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        connection_foo: Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_category(selenium, live_server_path, connection_foo)
         # There is no field to check
         assert True
 
     def test_message(
-        self, authenticate_selenium, live_server_path, user_foo, connection_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        connection_foo: Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_category(selenium, live_server_path, connection_foo)
         messages = [
@@ -168,7 +207,12 @@ class TestConnectionUpdate:
         ]
         assert "Connection was updated successfully" in messages
 
-    def update_category(self, selenium, live_server_path, connection):
+    def update_category(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        connection: Connection,
+    ) -> None:
         url = live_server_path(
             reverse("connections:connection_update", kwargs={"pk": connection.pk})
         )
@@ -179,20 +223,28 @@ class TestConnectionUpdate:
 
 class TestConnectionDelete:
     def test_connection_is_deleted_internally(
-        self, authenticate_selenium, live_server_path, user_foo, connection_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        connection_foo: Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_connection(selenium, live_server_path, connection_foo)
         assert Connection.objects.filter(user=user_foo).count() == 0
 
-    def test_connection_is_deleted_externally(self):
+    def test_connection_is_deleted_externally(self) -> None:
         # TODO: There is a need to create SaltEdge connection programatically
         # without a need for Selenium
         assert True
 
     def test_redirect(
-        self, authenticate_selenium, live_server_path, user_foo, connection_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        connection_foo: Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_connection(selenium, live_server_path, connection_foo)
         assert selenium.current_url == live_server_path(
@@ -200,8 +252,12 @@ class TestConnectionDelete:
         )
 
     def test_message(
-        self, authenticate_selenium, live_server_path, user_foo, connection_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        connection_foo: Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_connection(selenium, live_server_path, connection_foo)
         messages = [
@@ -210,7 +266,12 @@ class TestConnectionDelete:
         ]
         assert "Connection was deleted successfully" in messages
 
-    def delete_connection(self, selenium, live_server_path, connection):
+    def delete_connection(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        connection: Connection,
+    ) -> None:
         url = live_server_path(
             reverse("connections:connection_delete", kwargs={"pk": connection.pk})
         )
@@ -222,11 +283,11 @@ class TestConnectionDelete:
 class TestConnectionImport:
     def test_connection_is_imported(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        predefined_saltedge_connection,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        predefined_saltedge_connection: saltedge_client.Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_connections(selenium, live_server_path)
         connections = Connection.objects.filter(user=predefined_profile.user)
@@ -235,11 +296,11 @@ class TestConnectionImport:
 
     def test_redirect(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        predefined_saltedge_connection,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        predefined_saltedge_connection: saltedge_client.Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_connections(selenium, live_server_path)
         assert selenium.current_url == live_server_path(
@@ -248,11 +309,11 @@ class TestConnectionImport:
 
     def test_message(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        predefined_saltedge_connection,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        predefined_saltedge_connection: saltedge_client.Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_connections(selenium, live_server_path)
         messages = [
@@ -262,8 +323,11 @@ class TestConnectionImport:
         assert "Connections were imported successfully: 1" in messages
 
     def test_cant_import_connections_if_external_synchronization_is_disabled(
-        self, authenticate_selenium, live_server_path, user_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("connections:connection_import"))
         selenium.get(url)
@@ -273,7 +337,9 @@ class TestConnectionImport:
             == "Enable external synchronization before importing connections"
         )
 
-    def import_connections(self, selenium, live_server_path):
+    def import_connections(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str]
+    ) -> None:
         url = live_server_path(reverse("connections:connection_import"))
         selenium.get(url)
         element = selenium.find_element_by_xpath('//input[@value="Import"]')
@@ -281,7 +347,12 @@ class TestConnectionImport:
 
 
 class TestAccountList:
-    def test_menu(self, authenticate_selenium, live_server_path, user_foo):
+    def test_menu(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("accounts:account_list"))
         selenium.get(url)
@@ -297,7 +368,12 @@ class TestAccountList:
             reverse("accounts:account_import")
         )
 
-    def test_table_header(self, authenticate_selenium, live_server_path, user_foo):
+    def test_table_header(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("accounts:account_list"))
         selenium.get(url)
@@ -310,8 +386,12 @@ class TestAccountList:
         assert elements[3].text == "Actions"
 
     def test_table_body(
-        self, authenticate_selenium, live_server_path, account_factory, user_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        account_factory: Callable[..., Account],
+        user_foo: User,
+    ) -> None:
         number_of_accounts = 20
         for i in range(number_of_accounts):
             account_factory(
@@ -348,7 +428,12 @@ class TestAccountList:
                 reverse("accounts:account_delete", kwargs={"pk": account.pk})
             )
 
-    def test_pagination(self, authenticate_selenium, live_server_path, user_foo):
+    def test_pagination(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("accounts:account_list"))
         selenium.get(url)
@@ -359,22 +444,35 @@ class TestAccountList:
 
 class TestAccountCreate:
     def test_account_is_created(
-        self, authenticate_selenium, live_server_path, user_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.create_account(selenium, live_server_path, "account name", "Cash")
         account = Account.objects.filter(user=user_foo).last()
         assert account.name == "account name"
         assert account.account_type == Account.AccountType.CASH
 
-    def test_redirect(self, authenticate_selenium, live_server_path, user_foo):
+    def test_redirect(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.create_account(selenium, live_server_path, "account name", "Cash")
         assert selenium.current_url == live_server_path(
             reverse("accounts:account_list")
         )
 
-    def test_message(self, authenticate_selenium, live_server_path, user_foo):
+    def test_message(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.create_account(selenium, live_server_path, "account name", "Cash")
         messages = [
@@ -383,7 +481,13 @@ class TestAccountCreate:
         ]
         assert "Account was created successfully" in messages
 
-    def create_account(self, selenium, live_server_path, name, account_type):
+    def create_account(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        name: str,
+        account_type: str,
+    ) -> None:
         url = live_server_path(reverse("accounts:account_create"))
         selenium.get(url)
         element = selenium.find_element_by_name("name")
@@ -396,8 +500,12 @@ class TestAccountCreate:
 
 class TestAccountUpdate:
     def test_account_is_updated(
-        self, authenticate_selenium, live_server_path, user_foo, account_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_account(
             selenium, live_server_path, account_foo, "account name", "Cash"
@@ -406,8 +514,12 @@ class TestAccountUpdate:
         assert account_foo.account_type == Account.AccountType.CASH
 
     def test_redirect(
-        self, authenticate_selenium, live_server_path, user_foo, account_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_account(
             selenium, live_server_path, account_foo, "account name", "Cash"
@@ -417,8 +529,12 @@ class TestAccountUpdate:
         )
 
     def test_message(
-        self, authenticate_selenium, live_server_path, user_foo, account_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_account(
             selenium, live_server_path, account_foo, "account name", "Cash"
@@ -429,7 +545,14 @@ class TestAccountUpdate:
         ]
         assert "Account was updated successfully" in messages
 
-    def update_account(self, selenium, live_server_path, account, name, account_type):
+    def update_account(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        account: Account,
+        name: str,
+        account_type: str,
+    ) -> None:
         url = live_server_path(
             reverse("accounts:account_update", kwargs={"pk": account.pk})
         )
@@ -446,20 +569,24 @@ class TestAccountUpdate:
 
 class TestAccountDelete:
     def test_account_is_deleted(
-        self, authenticate_selenium, live_server_path, user_foo, account_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_account(selenium, live_server_path, account_foo)
         assert Account.objects.filter(user=user_foo).count() == 0
 
     def test_related_transactions_are_deleted(
         self,
-        authenticate_selenium,
-        live_server_path,
-        user_foo,
-        account_foo,
-        transaction_factory,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
         number_of_transactions = 20
         for _ in range(number_of_transactions):
             transaction_factory()
@@ -468,8 +595,12 @@ class TestAccountDelete:
         assert Transaction.objects.filter(user=user_foo).count() == 0
 
     def test_redirect(
-        self, authenticate_selenium, live_server_path, user_foo, account_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_account(selenium, live_server_path, account_foo)
         assert selenium.current_url == live_server_path(
@@ -477,8 +608,12 @@ class TestAccountDelete:
         )
 
     def test_message(
-        self, authenticate_selenium, live_server_path, user_foo, account_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_account(selenium, live_server_path, account_foo)
         messages = [
@@ -487,7 +622,12 @@ class TestAccountDelete:
         ]
         assert "Account was deleted successfully" in messages
 
-    def delete_account(self, selenium, live_server_path, account):
+    def delete_account(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        account: Account,
+    ) -> None:
         url = live_server_path(
             reverse("accounts:account_delete", kwargs={"pk": account.pk})
         )
@@ -499,11 +639,11 @@ class TestAccountDelete:
 class TestAccountImport:
     def test_accounts_are_imported(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        predefined_connection,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        predefined_connection: Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_accounts(selenium, live_server_path, predefined_connection)
         accounts = Account.objects.filter(user=predefined_profile.user)
@@ -513,11 +653,11 @@ class TestAccountImport:
 
     def test_accounts_are_not_duplicated(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        predefined_connection,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        predefined_connection: Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_accounts(selenium, live_server_path, predefined_connection)
         count_pre = Account.objects.filter(user=predefined_profile.user).count()
@@ -527,11 +667,11 @@ class TestAccountImport:
 
     def test_redirect(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        predefined_connection,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        predefined_connection: Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_accounts(selenium, live_server_path, predefined_connection)
         assert selenium.current_url == live_server_path(
@@ -540,11 +680,11 @@ class TestAccountImport:
 
     def test_message(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        predefined_connection,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        predefined_connection: Connection,
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_accounts(selenium, live_server_path, predefined_connection)
         messages = [
@@ -554,8 +694,11 @@ class TestAccountImport:
         assert "Accounts were imported successfully: 5" in messages
 
     def test_cant_import_accounts_if_external_synchronization_is_disabled(
-        self, authenticate_selenium, live_server_path, user_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("accounts:account_import"))
         selenium.get(url)
@@ -564,7 +707,12 @@ class TestAccountImport:
             element.text == "Enable external synchronization before importing accounts"
         )
 
-    def import_accounts(self, selenium, live_server_path, connection):
+    def import_accounts(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        connection: Connection,
+    ) -> None:
         url = live_server_path(reverse("accounts:account_import"))
         selenium.get(url)
         select = Select(selenium.find_element_by_name("connection"))
@@ -574,7 +722,12 @@ class TestAccountImport:
 
 
 class TestTransactionList:
-    def test_menu(self, authenticate_selenium, live_server_path, user_foo):
+    def test_menu(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("transactions:transaction_list"))
         selenium.get(url)
@@ -590,7 +743,12 @@ class TestTransactionList:
             reverse("transactions:transaction_import")
         )
 
-    def test_table_header(self, authenticate_selenium, live_server_path, user_foo):
+    def test_table_header(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("transactions:transaction_list"))
         selenium.get(url)
@@ -607,13 +765,13 @@ class TestTransactionList:
 
     def test_table_body(
         self,
-        authenticate_selenium,
-        live_server_path,
-        transaction_factory,
-        user_foo,
-        category_foo,
-        account_foo,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        transaction_factory: Callable[..., Transaction],
+        user_foo: User,
+        category_foo: Category,
+        account_foo: Account,
+    ) -> None:
         number_of_transactions = 20
         for i in range(number_of_transactions):
             transaction_factory(
@@ -661,7 +819,12 @@ class TestTransactionList:
                 )
             )
 
-    def test_pagination(self, authenticate_selenium, live_server_path, user_foo):
+    def test_pagination(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("transactions:transaction_list"))
         selenium.get(url)
@@ -673,12 +836,12 @@ class TestTransactionList:
 class TestTransactionCreate:
     def test_transaction_is_created(
         self,
-        authenticate_selenium,
-        live_server_path,
-        user_foo,
-        category_foo,
-        account_foo,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_foo: Category,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.create_transaction(
             selenium,
@@ -699,8 +862,12 @@ class TestTransactionCreate:
         assert transaction.account == account_foo
 
     def test_transaction_category_can_be_empty(
-        self, authenticate_selenium, live_server_path, user_foo, account_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.create_transaction(
             selenium,
@@ -717,12 +884,12 @@ class TestTransactionCreate:
 
     def test_redirect(
         self,
-        authenticate_selenium,
-        live_server_path,
-        user_foo,
-        category_foo,
-        account_foo,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_foo: Category,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.create_transaction(
             selenium,
@@ -740,12 +907,12 @@ class TestTransactionCreate:
 
     def test_message(
         self,
-        authenticate_selenium,
-        live_server_path,
-        user_foo,
-        category_foo,
-        account_foo,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_foo: Category,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.create_transaction(
             selenium,
@@ -765,15 +932,15 @@ class TestTransactionCreate:
 
     def create_transaction(
         self,
-        selenium,
-        live_server_path,
-        date,
-        amount,
-        payee,
-        category,
-        description,
-        account,
-    ):
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        date: datetime.date,
+        amount: float,
+        payee: str,
+        category: Optional[Category],
+        description: str,
+        account: Account,
+    ) -> None:
         url = live_server_path(reverse("transactions:transaction_create"))
         selenium.get(url)
         element = selenium.find_element_by_name("date")
@@ -796,13 +963,13 @@ class TestTransactionCreate:
 class TestTransactionUpdate:
     def test_transaction_is_updated(
         self,
-        authenticate_selenium,
-        live_server_path,
-        user_foo,
-        transaction_foo,
-        category_foo,
-        account_foo,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_foo: Transaction,
+        category_foo: Category,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_transaction(
             selenium,
@@ -824,13 +991,13 @@ class TestTransactionUpdate:
 
     def test_redirect(
         self,
-        authenticate_selenium,
-        live_server_path,
-        user_foo,
-        transaction_foo,
-        category_foo,
-        account_foo,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_foo: Transaction,
+        category_foo: Category,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_transaction(
             selenium,
@@ -849,13 +1016,13 @@ class TestTransactionUpdate:
 
     def test_message(
         self,
-        authenticate_selenium,
-        live_server_path,
-        user_foo,
-        transaction_foo,
-        category_foo,
-        account_foo,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_foo: Transaction,
+        category_foo: Category,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_transaction(
             selenium,
@@ -876,16 +1043,16 @@ class TestTransactionUpdate:
 
     def update_transaction(
         self,
-        selenium,
-        live_server_path,
-        transaction,
-        date,
-        amount,
-        payee,
-        category,
-        description,
-        account,
-    ):
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        transaction: Transaction,
+        date: datetime.date,
+        amount: float,
+        payee: str,
+        category: Category,
+        description: str,
+        account: Account,
+    ) -> None:
         url = live_server_path(
             reverse("transactions:transaction_update", kwargs={"pk": transaction.pk})
         )
@@ -913,15 +1080,23 @@ class TestTransactionUpdate:
 
 class TestTransactionDelete:
     def test_transaction_is_deleted(
-        self, authenticate_selenium, live_server_path, user_foo, transaction_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_foo: Transaction,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_transaction(selenium, live_server_path, transaction_foo)
         assert Transaction.objects.filter(user=user_foo).count() == 0
 
     def test_redirect(
-        self, authenticate_selenium, live_server_path, user_foo, transaction_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_foo: Transaction,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_transaction(selenium, live_server_path, transaction_foo)
         assert selenium.current_url == live_server_path(
@@ -929,8 +1104,12 @@ class TestTransactionDelete:
         )
 
     def test_message(
-        self, authenticate_selenium, live_server_path, user_foo, transaction_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_foo: Transaction,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_transaction(selenium, live_server_path, transaction_foo)
         messages = [
@@ -939,7 +1118,12 @@ class TestTransactionDelete:
         ]
         assert "Transaction was deleted successfully" in messages
 
-    def delete_transaction(self, selenium, live_server_path, transaction):
+    def delete_transaction(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        transaction: Transaction,
+    ) -> None:
         url = live_server_path(
             reverse("transactions:transaction_delete", kwargs={"pk": transaction.pk})
         )
@@ -951,11 +1135,11 @@ class TestTransactionDelete:
 class TestTransactionImport:
     def test_transactions_are_imported(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        predefined_account,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        predefined_account: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_transactions(selenium, live_server_path, predefined_account)
         transactions = Transaction.objects.filter(user=predefined_profile.user)
@@ -965,11 +1149,11 @@ class TestTransactionImport:
 
     def test_transactions_are_not_duplicated(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        predefined_account,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        predefined_account: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_transactions(selenium, live_server_path, predefined_account)
         count_pre = Transaction.objects.filter(user=predefined_profile.user).count()
@@ -979,11 +1163,11 @@ class TestTransactionImport:
 
     def test_redirect(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        predefined_account,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        predefined_account: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_transactions(selenium, live_server_path, predefined_account)
         assert selenium.current_url == live_server_path(
@@ -992,11 +1176,11 @@ class TestTransactionImport:
 
     def test_message(
         self,
-        authenticate_selenium,
-        live_server_path,
-        predefined_profile,
-        predefined_account,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        predefined_account: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.import_transactions(selenium, live_server_path, predefined_account)
         messages = [
@@ -1006,8 +1190,11 @@ class TestTransactionImport:
         assert "Transactions were imported successfully: 17" in messages
 
     def test_cant_import_transactions_if_external_synchronization_is_disabled(
-        self, authenticate_selenium, live_server_path, user_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("transactions:transaction_import"))
         selenium.get(url)
@@ -1017,7 +1204,12 @@ class TestTransactionImport:
             == "Enable external synchronization before importing transactions"
         )
 
-    def import_transactions(self, selenium, live_server_path, account):
+    def import_transactions(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        account: Account,
+    ) -> None:
         url = live_server_path(reverse("transactions:transaction_import"))
         selenium.get(url)
         select = Select(selenium.find_element_by_name("account"))
@@ -1027,7 +1219,12 @@ class TestTransactionImport:
 
 
 class TestCategoryList:
-    def test_menu(self, authenticate_selenium, live_server_path, user_foo):
+    def test_menu(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("categories:category_list"))
         selenium.get(url)
@@ -1039,7 +1236,12 @@ class TestCategoryList:
             reverse("categories:category_create")
         )
 
-    def test_table_header(self, authenticate_selenium, live_server_path, user_foo):
+    def test_table_header(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("categories:category_list"))
         selenium.get(url)
@@ -1051,8 +1253,12 @@ class TestCategoryList:
         assert elements[2].text == "Actions"
 
     def test_table_body(
-        self, authenticate_selenium, live_server_path, category_factory, user_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        category_factory: Callable[..., Category],
+        user_foo: User,
+    ) -> None:
         existing_categories = Category.objects.filter(user=user_foo).count()
         number_of_categories = 5
         for i in range(number_of_categories):
@@ -1085,7 +1291,12 @@ class TestCategoryList:
                 reverse("categories:category_delete", kwargs={"pk": category.pk})
             )
 
-    def test_pagination(self, authenticate_selenium, live_server_path, user_foo):
+    def test_pagination(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         url = live_server_path(reverse("categories:category_list"))
         selenium.get(url)
@@ -1096,16 +1307,22 @@ class TestCategoryList:
 
 class TestCategoryCreate:
     def test_category_is_created(
-        self, authenticate_selenium, live_server_path, user_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.create_category(selenium, live_server_path, "category foo")
         category = Category.objects.filter(user=user_foo).last()
         assert category.name == "category foo"
 
     def test_redirect(
-        self, authenticate_selenium, live_server_path, user_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.create_category(selenium, live_server_path, "category foo")
         assert selenium.current_url == live_server_path(
@@ -1113,8 +1330,11 @@ class TestCategoryCreate:
         )
 
     def test_message(
-        self, authenticate_selenium, live_server_path, user_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.create_category(selenium, live_server_path, "category foo")
         messages = [
@@ -1123,7 +1343,9 @@ class TestCategoryCreate:
         ]
         assert "Category was created successfully" in messages
 
-    def create_category(self, selenium, live_server_path, name):
+    def create_category(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str], name: str
+    ) -> None:
         url = live_server_path(reverse("categories:category_create"))
         selenium.get(url)
         element = selenium.find_element_by_name("name")
@@ -1134,15 +1356,23 @@ class TestCategoryCreate:
 
 class TestCategoryUpdate:
     def test_category_is_updated(
-        self, authenticate_selenium, live_server_path, user_foo, category_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_foo: Category,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_category(selenium, live_server_path, category_foo, "new name")
         assert category_foo.name == "new name"
 
     def test_redirect(
-        self, authenticate_selenium, live_server_path, user_foo, category_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_foo: Category,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_category(selenium, live_server_path, category_foo, "new name")
         assert selenium.current_url == live_server_path(
@@ -1150,8 +1380,12 @@ class TestCategoryUpdate:
         )
 
     def test_message(
-        self, authenticate_selenium, live_server_path, user_foo, category_foo,
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_foo: Category,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_category(selenium, live_server_path, category_foo, "new name")
         messages = [
@@ -1160,7 +1394,13 @@ class TestCategoryUpdate:
         ]
         assert "Category was updated successfully" in messages
 
-    def update_category(self, selenium, live_server_path, category, name):
+    def update_category(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        category: Category,
+        name: str,
+    ) -> None:
         url = live_server_path(
             reverse("categories:category_update", kwargs={"pk": category.pk})
         )
@@ -1175,16 +1415,24 @@ class TestCategoryUpdate:
 
 class TestCategoryDelete:
     def test_category_is_deleted(
-        self, authenticate_selenium, live_server_path, user_foo, category_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_foo: Category,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         existing_categories = Category.objects.filter(user=user_foo).count()
         self.delete_category(selenium, live_server_path, category_foo)
         assert Category.objects.filter(user=user_foo).count() == existing_categories - 1
 
     def test_redirect(
-        self, authenticate_selenium, live_server_path, user_foo, category_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_foo: Category,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_category(selenium, live_server_path, category_foo)
         assert selenium.current_url == live_server_path(
@@ -1192,8 +1440,12 @@ class TestCategoryDelete:
         )
 
     def test_message(
-        self, authenticate_selenium, live_server_path, user_foo, category_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_foo: Category,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_category(selenium, live_server_path, category_foo)
         messages = [
@@ -1202,7 +1454,12 @@ class TestCategoryDelete:
         ]
         assert "Category was deleted successfully" in messages
 
-    def delete_category(self, selenium, live_server_path, category):
+    def delete_category(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        category: Category,
+    ) -> None:
         url = live_server_path(
             reverse("categories:category_delete", kwargs={"pk": category.pk})
         )
@@ -1213,8 +1470,12 @@ class TestCategoryDelete:
 
 class TestReportBalance:
     def test_table_header(
-        self, authenticate_selenium, live_server_path, user_foo, account_foo
-    ):
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.report_balance(selenium, live_server_path, [account_foo])
 
@@ -1225,13 +1486,13 @@ class TestReportBalance:
 
     def test_table_body(
         self,
-        authenticate_selenium,
-        live_server_path,
-        user_foo,
-        account_factory,
-        category_factory,
-        transaction_factory,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_factory: Callable[..., Account],
+        category_factory: Callable[..., Category],
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
         number_of_accounts = 10
         for i in range(number_of_accounts):
             account_factory(name=f"account {i}", user=user_foo)
@@ -1270,12 +1531,12 @@ class TestReportBalance:
 
     def test_table_body_null_categories_are_included(
         self,
-        authenticate_selenium,
-        live_server_path,
-        user_foo,
-        account_foo,
-        transaction_foo,
-    ):
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+        transaction_foo: Transaction,
+    ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.report_balance(selenium, live_server_path, [account_foo])
 
@@ -1285,8 +1546,13 @@ class TestReportBalance:
         assert elements[1].find_elements_by_xpath(".//td")[0].text == "Total"
 
     def report_balance(
-        self, selenium, live_server_path, accounts, from_date=None, to_date=None
-    ):
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        accounts: List[Account],
+        from_date: datetime.date = None,
+        to_date: datetime.date = None,
+    ) -> None:
         url = live_server_path(reverse("reports:report_balance"))
         selenium.get(url)
         select = Select(selenium.find_element_by_name("accounts"))

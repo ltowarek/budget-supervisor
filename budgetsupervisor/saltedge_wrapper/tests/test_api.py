@@ -1,3 +1,5 @@
+from typing import Any, Callable, Iterable
+
 import pytest
 import swagger_client as saltedge_client
 from saltedge_wrapper.factory import (
@@ -12,10 +14,10 @@ pytestmark = pytest.mark.saltedge
 
 
 @pytest.fixture
-def customer_factory():
+def customer_factory() -> Iterable[Callable[..., saltedge_client.Customer]]:
     created_ids = []
 
-    def create_customer(**kwargs):
+    def create_customer(**kwargs: Any) -> saltedge_client.Customer:
         data = saltedge_client.CustomerRequestBodyData(**kwargs)
         body = saltedge_client.CustomerRequestBody(data)
         customer = customers_api().customers_post(body=body).data
@@ -31,27 +33,33 @@ def customer_factory():
 
 
 @pytest.fixture
-def customer_1234(customer_factory):
+def customer_1234(
+    customer_factory: Callable[..., saltedge_client.Customer]
+) -> saltedge_client.Customer:
     return customer_factory(identifier="test_1234")
 
 
-def test_create_customer_successfully(customer_factory):
+def test_create_customer_successfully(
+    customer_factory: Callable[..., saltedge_client.Customer]
+) -> None:
     identifier = "test"
     customer = customer_factory(identifier=identifier)
     assert customer.identifier == identifier
 
 
-def test_remove_customer_successfully(customer_1234):
+def test_remove_customer_successfully(customer_1234: saltedge_client.Customer) -> None:
     response = customers_api().customers_customer_id_delete(customer_1234.id)
     assert response.data.deleted is True
 
 
-def test_show_customer_successfully(customer_1234):
+def test_show_customer_successfully(customer_1234: saltedge_client.Customer) -> None:
     response = customers_api().customers_customer_id_get(customer_1234.id)
     assert response.data == customer_1234
 
 
-def test_list_customers_successfully(customer_factory):
+def test_list_customers_successfully(
+    customer_factory: Callable[..., saltedge_client.Customer]
+) -> None:
     customer_a = customer_factory(identifier="test_a")
     customer_b = customer_factory(identifier="test_b")
     response = customers_api().customers_get()
@@ -59,7 +67,9 @@ def test_list_customers_successfully(customer_factory):
     assert customer_b in response.data
 
 
-def test_create_connect_session_successfully(predefined_customer):
+def test_create_connect_session_successfully(
+    predefined_customer: saltedge_client.Customer,
+) -> None:
     return_to = "http://www.example.com"
     attempt = saltedge_client.AttemptRequestBody(
         return_to=return_to, store_credentials=False
@@ -75,7 +85,9 @@ def test_create_connect_session_successfully(predefined_customer):
     assert "https://www.saltedge.com/connect?token=" in response.data.connect_url
 
 
-def test_show_connection_successfully(predefined_saltedge_connection):
+def test_show_connection_successfully(
+    predefined_saltedge_connection: saltedge_client.Connection,
+) -> None:
     response = connections_api().connections_connection_id_get(
         predefined_saltedge_connection.id
     )
@@ -83,15 +95,18 @@ def test_show_connection_successfully(predefined_saltedge_connection):
 
 
 def test_list_connections_successfully(
-    predefined_saltedge_connection, predefined_customer,
-):
+    predefined_saltedge_connection: saltedge_client.Connection,
+    predefined_customer: saltedge_client.Customer,
+) -> None:
     response = connections_api().connections_get(predefined_customer.id)
     assert predefined_saltedge_connection in response.data
 
 
 def test_list_accounts_successfully(
-    predefined_saltedge_connection, predefined_customer, predefined_saltedge_account
-):
+    predefined_saltedge_connection: saltedge_client.Connection,
+    predefined_customer: saltedge_client.Customer,
+    predefined_saltedge_account: saltedge_client.Account,
+) -> None:
     response = accounts_api().accounts_get(
         predefined_saltedge_connection.id, customer_id=predefined_customer.id
     )
@@ -99,8 +114,9 @@ def test_list_accounts_successfully(
 
 
 def test_list_transactions_successfully(
-    predefined_saltedge_connection, predefined_saltedge_account
-):
+    predefined_saltedge_connection: saltedge_client.Connection,
+    predefined_saltedge_account: saltedge_client.Account,
+) -> None:
     response = transactions_api().transactions_get(
         predefined_saltedge_connection.id, account_id=predefined_saltedge_account.id
     )
@@ -108,8 +124,9 @@ def test_list_transactions_successfully(
 
 
 def test_transaction_categories_lowercase(
-    predefined_saltedge_connection, predefined_saltedge_account
-):
+    predefined_saltedge_connection: saltedge_client.Connection,
+    predefined_saltedge_account: saltedge_client.Account,
+) -> None:
     response = transactions_api().transactions_get(
         predefined_saltedge_connection.id, account_id=predefined_saltedge_account.id
     )
@@ -118,8 +135,9 @@ def test_transaction_categories_lowercase(
 
 
 def test_transaction_categories_no_spaces(
-    predefined_saltedge_connection, predefined_saltedge_account
-):
+    predefined_saltedge_connection: saltedge_client.Connection,
+    predefined_saltedge_account: saltedge_client.Account,
+) -> None:
     response = transactions_api().transactions_get(
         predefined_saltedge_connection.id, account_id=predefined_saltedge_account.id
     )

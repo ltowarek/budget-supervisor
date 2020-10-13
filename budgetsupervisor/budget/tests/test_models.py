@@ -1,15 +1,20 @@
 import datetime
+from typing import Callable
 
 import swagger_client as saltedge_client
-from budget.models import Account, Connection, Transaction
+from budget.models import Account, Category, Connection, Transaction
 from django.utils.dateparse import parse_date
+from users.models import Profile, User
 
 
-def test_connection_str(connection_foo):
+def test_connection_str(connection_foo: Connection) -> None:
     assert str(connection_foo) == "foo"
 
 
-def test_connection_create_in_saltedge(profile_foo_external, connect_sessions_api):
+def test_connection_create_in_saltedge(
+    profile_foo_external: Profile,
+    connect_sessions_api: saltedge_client.ConnectSessionsApi,
+) -> None:
     data = saltedge_client.ConnectSessionResponseData(connect_url="example.com")
     connect_sessions_api.connect_sessions_create_post.return_value = saltedge_client.ConnectSessionResponse(
         data=data
@@ -22,8 +27,8 @@ def test_connection_create_in_saltedge(profile_foo_external, connect_sessions_ap
 
 
 def test_connection_import_from_saltedge_no_objects(
-    profile_foo_external, connections_api
-):
+    profile_foo_external: Profile, connections_api: saltedge_client.ConnectionsApi
+) -> None:
     connections_api.connections_get.return_value = saltedge_client.ConnectionsResponse(
         data=[]
     )
@@ -37,8 +42,10 @@ def test_connection_import_from_saltedge_no_objects(
 
 
 def test_connection_import_from_saltedge_one_new_object(
-    profile_foo_external, connections_api, saltedge_connection_factory
-):
+    profile_foo_external: Profile,
+    connections_api: saltedge_client.ConnectionsApi,
+    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
+) -> None:
     mock_connections = [saltedge_connection_factory(id="1", provider_name="foo")]
     connections_api.connections_get.return_value = saltedge_client.ConnectionsResponse(
         data=mock_connections
@@ -58,8 +65,10 @@ def test_connection_import_from_saltedge_one_new_object(
 
 
 def test_connection_import_from_saltedge_two_new_objects(
-    profile_foo_external, connections_api, saltedge_connection_factory
-):
+    profile_foo_external: Profile,
+    connections_api: saltedge_client.ConnectionsApi,
+    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
+) -> None:
     mock_connections = [
         saltedge_connection_factory(id="1", provider_name="foo"),
         saltedge_connection_factory(id="2", provider_name="bar"),
@@ -82,8 +91,10 @@ def test_connection_import_from_saltedge_two_new_objects(
 
 
 def test_connection_import_from_saltedge_no_new_objects(
-    profile_foo_external, connections_api, saltedge_connection_factory
-):
+    profile_foo_external: Profile,
+    connections_api: saltedge_client.ConnectionsApi,
+    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
+) -> None:
     mock_connections = [
         saltedge_connection_factory(id="1"),
         saltedge_connection_factory(id="2"),
@@ -103,7 +114,9 @@ def test_connection_import_from_saltedge_no_new_objects(
     assert len(imported_connections) == 0
 
 
-def test_connection_remove_saltedge(connection_foo_external, connections_api):
+def test_connection_remove_saltedge(
+    connection_foo_external: Connection, connections_api: saltedge_client.ConnectionsApi
+) -> None:
     data = saltedge_client.RemovedConnectionResponseData(
         removed=True, id=str(connection_foo_external.external_id)
     )
@@ -116,11 +129,13 @@ def test_connection_remove_saltedge(connection_foo_external, connections_api):
     assert connection_foo_external.external_id is None
 
 
-def test_account_str(account_foo):
+def test_account_str(account_foo: Account) -> None:
     assert str(account_foo) == "foo"
 
 
-def test_account_import_from_saltedge_no_objects(connection_foo_external, accounts_api):
+def test_account_import_from_saltedge_no_objects(
+    connection_foo_external: Connection, accounts_api: saltedge_client.AccountsApi
+) -> None:
     accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(data=[])
 
     assert Account.objects.all().count() == 0
@@ -132,8 +147,10 @@ def test_account_import_from_saltedge_no_objects(connection_foo_external, accoun
 
 
 def test_account_import_from_saltedge_one_new_object(
-    connection_foo_external, accounts_api, saltedge_account_factory
-):
+    connection_foo_external: Connection,
+    accounts_api: saltedge_client.AccountsApi,
+    saltedge_account_factory: Callable[..., saltedge_client.Account],
+) -> None:
     mock_accounts = [saltedge_account_factory(id="1", name="foo")]
     accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(
         data=mock_accounts
@@ -155,8 +172,10 @@ def test_account_import_from_saltedge_one_new_object(
 
 
 def test_account_import_from_saltedge_two_new_objects(
-    connection_foo_external, accounts_api, saltedge_account_factory
-):
+    connection_foo_external: Connection,
+    accounts_api: saltedge_client.AccountsApi,
+    saltedge_account_factory: Callable[..., saltedge_client.Account],
+) -> None:
     mock_accounts = [
         saltedge_account_factory(id="1", name="foo"),
         saltedge_account_factory(id="2", name="bar"),
@@ -181,8 +200,10 @@ def test_account_import_from_saltedge_two_new_objects(
 
 
 def test_account_import_from_saltedge_no_new_objects(
-    connection_foo_external, accounts_api, saltedge_account_factory
-):
+    connection_foo_external: Connection,
+    accounts_api: saltedge_client.AccountsApi,
+    saltedge_account_factory: Callable[..., saltedge_client.Account],
+) -> None:
     mock_accounts = [
         saltedge_account_factory(id="1"),
         saltedge_account_factory(id="2"),
@@ -202,17 +223,17 @@ def test_account_import_from_saltedge_no_new_objects(
     assert len(imported_accounts) == 0
 
 
-def test_category_str(category_foo):
+def test_category_str(category_foo: Category) -> None:
     assert str(category_foo) == "foo"
 
 
-def test_transaction_str(transaction_foo):
+def test_transaction_str(transaction_foo: Transaction) -> None:
     assert str(transaction_foo) == "transaction foo"
 
 
 def test_transaction_category_is_set_to_null_when_category_is_deleted(
-    transaction_factory, category_foo
-):
+    transaction_factory: Callable[..., Transaction], category_foo: Category
+) -> None:
     transaction = transaction_factory(category=category_foo)
     category_foo.delete()
     transaction.refresh_from_db()
@@ -220,8 +241,8 @@ def test_transaction_category_is_set_to_null_when_category_is_deleted(
 
 
 def test_transaction_import_from_saltedge_no_objects(
-    account_foo_external, transactions_api
-):
+    account_foo_external: Account, transactions_api: saltedge_client.TransactionsApi
+) -> None:
     transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
         data=[]
     )
@@ -238,8 +259,10 @@ def test_transaction_import_from_saltedge_no_objects(
 
 
 def test_transaction_import_from_saltedge_one_new_object(
-    account_foo_external, transactions_api, saltedge_transaction_factory
-):
+    account_foo_external: Account,
+    transactions_api: saltedge_client.TransactionsApi,
+    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
+) -> None:
     mock_transactions = [
         saltedge_transaction_factory(
             id="1",
@@ -274,8 +297,10 @@ def test_transaction_import_from_saltedge_one_new_object(
 
 
 def test_transaction_import_from_saltedge_two_new_objects(
-    account_foo_external, transactions_api, saltedge_transaction_factory
-):
+    account_foo_external: Account,
+    transactions_api: saltedge_client.TransactionsApi,
+    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
+) -> None:
     mock_transactions = [
         saltedge_transaction_factory(
             id="1",
@@ -317,8 +342,10 @@ def test_transaction_import_from_saltedge_two_new_objects(
 
 
 def test_transaction_import_from_saltedge_no_new_objects(
-    account_foo_external, transactions_api, saltedge_transaction_factory
-):
+    account_foo_external: Account,
+    transactions_api: saltedge_client.TransactionsApi,
+    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
+) -> None:
     mock_transactions = [
         saltedge_transaction_factory(
             id="1", account_id=account_foo_external.external_id
@@ -349,8 +376,11 @@ def test_transaction_import_from_saltedge_no_new_objects(
 
 
 def test_transaction_get_balance_filter_by_user(
-    user_factory, account_factory, category_factory, transaction_factory
-):
+    user_factory: Callable[..., User],
+    account_factory: Callable[..., Account],
+    category_factory: Callable[..., Category],
+    transaction_factory: Callable[..., Transaction],
+) -> None:
     user_abc = user_factory("abc")
     user_xyz = user_factory("xyz")
 
@@ -375,8 +405,11 @@ def test_transaction_get_balance_filter_by_user(
 
 
 def test_transaction_get_balance_filter_by_account(
-    user_factory, account_factory, category_factory, transaction_factory
-):
+    user_factory: Callable[..., User],
+    account_factory: Callable[..., Account],
+    category_factory: Callable[..., Category],
+    transaction_factory: Callable[..., Transaction],
+) -> None:
     user_abc = user_factory("abc")
 
     account_abc_1 = account_factory("abc_1", user=user_abc)
@@ -403,8 +436,11 @@ def test_transaction_get_balance_filter_by_account(
 
 
 def test_transaction_get_balance_per_category(
-    user_factory, account_factory, category_factory, transaction_factory
-):
+    user_factory: Callable[..., User],
+    account_factory: Callable[..., Account],
+    category_factory: Callable[..., Category],
+    transaction_factory: Callable[..., Transaction],
+) -> None:
     user_abc = user_factory("abc")
     account_abc = account_factory("abc", user=user_abc)
     category_abc_1 = category_factory("abc_1", user_abc)
@@ -423,8 +459,11 @@ def test_transaction_get_balance_per_category(
 
 
 def test_transaction_get_balance_filter_by_from_date(
-    user_factory, account_factory, category_factory, transaction_factory
-):
+    user_factory: Callable[..., User],
+    account_factory: Callable[..., Account],
+    category_factory: Callable[..., Category],
+    transaction_factory: Callable[..., Transaction],
+) -> None:
     user_abc = user_factory("abc")
     account_abc = account_factory("abc", user=user_abc)
     category_abc = category_factory("abc", user_abc)
@@ -459,8 +498,11 @@ def test_transaction_get_balance_filter_by_from_date(
 
 
 def test_transaction_get_balance_filter_by_to_date(
-    user_factory, account_factory, category_factory, transaction_factory
-):
+    user_factory: Callable[..., User],
+    account_factory: Callable[..., Account],
+    category_factory: Callable[..., Category],
+    transaction_factory: Callable[..., Transaction],
+) -> None:
     user_abc = user_factory("abc")
     account_abc = account_factory("abc", user=user_abc)
     category_abc = category_factory("abc", user_abc)

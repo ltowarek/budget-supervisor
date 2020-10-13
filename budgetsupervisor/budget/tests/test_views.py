@@ -1,20 +1,27 @@
 import datetime
+from typing import Callable
 
-from budget.models import Account, Category
+import swagger_client as saltedge_client
+from budget.models import Account, Category, Connection, Transaction
 from django.contrib.messages import get_messages
+from django.test import Client
 from django.urls import resolve, reverse
+from pytest_mock import MockFixture
 from swagger_client import ConnectSessionResponse, ConnectSessionResponseData
+from users.models import User
 from utils import get_url_path
 
 
-def test_index_view_get(client, user_foo, login_user):
+def test_index_view_get(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("budget_index")
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_index_view_get_not_logged_in(client):
+def test_index_view_get_not_logged_in(client: Client) -> None:
     url = reverse("budget_index")
     response = client.get(url)
     assert response.status_code == 302
@@ -22,8 +29,11 @@ def test_index_view_get_not_logged_in(client):
 
 
 def test_connection_list_view_get_single_connection(
-    client, user_foo, login_user, connection_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_list")
     response = client.get(url)
@@ -31,7 +41,7 @@ def test_connection_list_view_get_single_connection(
     assert list(response.context["connection_list"]) == [connection_foo]
 
 
-def test_connection_list_view_get_not_logged_in(client):
+def test_connection_list_view_get_not_logged_in(client: Client) -> None:
     url = reverse("connections:connection_list")
     response = client.get(url)
     assert response.status_code == 302
@@ -39,8 +49,11 @@ def test_connection_list_view_get_not_logged_in(client):
 
 
 def test_connection_list_view_get_multiple_connections(
-    client, user_foo, login_user, connection_factory
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_factory: Callable[..., Connection],
+) -> None:
     login_user(user_foo)
     connection_a = connection_factory("a")
     connection_b = connection_factory("b")
@@ -51,8 +64,11 @@ def test_connection_list_view_get_multiple_connections(
 
 
 def test_connection_list_view_get_ordered_by_provider(
-    client, user_foo, login_user, connection_factory
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_factory: Callable[..., Connection],
+) -> None:
     login_user(user_foo)
     connection_b = connection_factory("b")
     connection_a = connection_factory("a")
@@ -63,8 +79,11 @@ def test_connection_list_view_get_ordered_by_provider(
 
 
 def test_connection_list_view_get_current_user(
-    client, user_factory, login_user, connection_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    connection_factory: Callable[..., Connection],
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -76,7 +95,9 @@ def test_connection_list_view_get_current_user(
     assert list(response.context["connection_list"]) == [connection_a]
 
 
-def test_connection_create_view_get(client, user_foo, login_user):
+def test_connection_create_view_get(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_create")
     response = client.get(url)
@@ -84,7 +105,7 @@ def test_connection_create_view_get(client, user_foo, login_user):
     assert response.context["profile"] == user_foo.profile
 
 
-def test_connection_create_view_get_not_logged_in(client):
+def test_connection_create_view_get_not_logged_in(client: Client) -> None:
     url = reverse("connections:connection_create")
     response = client.get(url)
     assert response.status_code == 302
@@ -92,8 +113,12 @@ def test_connection_create_view_get_not_logged_in(client):
 
 
 def test_connection_create_view_post_redirect(
-    client, user_foo, login_user, mocker, connect_sessions_api
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    mocker: MockFixture,
+    connect_sessions_api: saltedge_client.ConnectSessionsApi,
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_create")
     connect_sessions_api.connect_sessions_create_post.return_value = ConnectSessionResponse(
@@ -109,14 +134,21 @@ def test_connection_create_view_post_redirect(
     assert response.url == "example.com"
 
 
-def test_connection_update_view_get(client, user_foo, login_user, connection_foo):
+def test_connection_update_view_get(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_update", kwargs={"pk": connection_foo.pk})
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_connection_update_view_get_not_logged_in(client, connection_foo):
+def test_connection_update_view_get_not_logged_in(
+    client: Client, connection_foo: Connection
+) -> None:
     url = reverse("connections:connection_update", kwargs={"pk": connection_foo.pk})
     response = client.get(url)
     assert response.status_code == 302
@@ -124,19 +156,24 @@ def test_connection_update_view_get_not_logged_in(client, connection_foo):
 
 
 def test_connection_update_view_post_redirect(
-    client, user_foo, login_user, connection_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_update", kwargs={"pk": connection_foo.pk})
-    data = {}
-    response = client.post(url, data=data)
+    response = client.post(url, data={})
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "connection_list"
 
 
 def test_connection_update_view_post_message(
-    client, user_foo, login_user, connection_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_update", kwargs={"pk": connection_foo.pk})
     data = {
@@ -148,8 +185,11 @@ def test_connection_update_view_post_message(
 
 
 def test_connection_update_view_post_different_user(
-    client, user_factory, login_user, connection_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    connection_factory: Callable[..., Connection],
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -161,14 +201,21 @@ def test_connection_update_view_post_different_user(
     assert response.status_code == 403
 
 
-def test_connection_delete_view_get(client, user_foo, login_user, connection_foo):
+def test_connection_delete_view_get(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_connection_delete_view_get_not_logged_in(client, connection_foo):
+def test_connection_delete_view_get_not_logged_in(
+    client: Client, connection_foo: Connection
+) -> None:
     url = reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
     response = client.get(url)
     assert response.status_code == 302
@@ -176,8 +223,11 @@ def test_connection_delete_view_get_not_logged_in(client, connection_foo):
 
 
 def test_connection_delete_view_post_redirect(
-    client, user_foo, login_user, connection_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
     response = client.post(url)
@@ -186,8 +236,11 @@ def test_connection_delete_view_post_redirect(
 
 
 def test_connection_delete_view_post_message(
-    client, user_foo, login_user, connection_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
     response = client.post(url)
@@ -197,8 +250,13 @@ def test_connection_delete_view_post_message(
 
 
 def test_connection_delete_view_post_external(
-    client, user_foo, login_user, connection_foo_external, mocker, connections_api
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo_external: Connection,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+) -> None:
     login_user(user_foo)
     url = reverse(
         "connections:connection_delete", kwargs={"pk": connection_foo_external.pk}
@@ -212,8 +270,11 @@ def test_connection_delete_view_post_external(
 
 
 def test_connection_delete_view_post_different_user(
-    client, user_factory, login_user, connection_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    connection_factory: Callable[..., Connection],
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -224,7 +285,9 @@ def test_connection_delete_view_post_different_user(
     assert response.status_code == 403
 
 
-def test_connection_import_view_get(client, user_foo, login_user):
+def test_connection_import_view_get(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_import")
     response = client.get(url)
@@ -232,7 +295,7 @@ def test_connection_import_view_get(client, user_foo, login_user):
     assert response.context["profile"] == user_foo.profile
 
 
-def test_connection_import_view_get_not_logged_in(client):
+def test_connection_import_view_get_not_logged_in(client: Client) -> None:
     url = reverse("connections:connection_import")
     response = client.get(url)
     assert response.status_code == 302
@@ -240,8 +303,13 @@ def test_connection_import_view_get_not_logged_in(client):
 
 
 def test_connection_import_view_post_redirect(
-    client, user_foo, login_user, connection_foo, mocker, connections_api
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_import")
     data = {"connection": connection_foo.id}
@@ -254,8 +322,13 @@ def test_connection_import_view_post_redirect(
 
 
 def test_connection_import_view_post_message(
-    client, user_foo, login_user, connection_foo, mocker, connections_api
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_import")
     data = {"connection": connection_foo.id}
@@ -269,8 +342,11 @@ def test_connection_import_view_post_message(
 
 
 def test_account_list_view_get_single_account(
-    client, user_foo, login_user, account_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo: Account,
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_list")
     response = client.get(url)
@@ -278,7 +354,7 @@ def test_account_list_view_get_single_account(
     assert list(response.context["account_list"]) == [account_foo]
 
 
-def test_account_list_view_get_not_logged_in(client):
+def test_account_list_view_get_not_logged_in(client: Client) -> None:
     url = reverse("accounts:account_list")
     response = client.get(url)
     assert response.status_code == 302
@@ -286,8 +362,11 @@ def test_account_list_view_get_not_logged_in(client):
 
 
 def test_account_list_view_get_multiple_accounts(
-    client, user_foo, login_user, account_factory
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_factory: Callable[..., Account],
+) -> None:
     login_user(user_foo)
     account_a = account_factory("a")
     account_b = account_factory("b")
@@ -298,8 +377,11 @@ def test_account_list_view_get_multiple_accounts(
 
 
 def test_account_list_view_get_ordered_by_name(
-    client, user_foo, login_user, account_factory
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_factory: Callable[..., Account],
+) -> None:
     login_user(user_foo)
     account_b = account_factory("b")
     account_a = account_factory("a")
@@ -310,8 +392,11 @@ def test_account_list_view_get_ordered_by_name(
 
 
 def test_account_list_view_get_current_user(
-    client, user_factory, login_user, account_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    account_factory: Callable[..., Account],
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -323,21 +408,25 @@ def test_account_list_view_get_current_user(
     assert list(response.context["account_list"]) == [account_a]
 
 
-def test_account_create_view_get(client, user_foo, login_user):
+def test_account_create_view_get(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_create")
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_account_create_view_get_not_logged_in(client):
+def test_account_create_view_get_not_logged_in(client: Client) -> None:
     url = reverse("accounts:account_create")
     response = client.get(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_account_create_view_post_redirect(client, user_foo, login_user):
+def test_account_create_view_post_redirect(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_create")
     data = {"name": "a", "account_type": Account.AccountType.ACCOUNT}
@@ -346,7 +435,9 @@ def test_account_create_view_post_redirect(client, user_foo, login_user):
     assert resolve(get_url_path(response)).url_name == "account_list"
 
 
-def test_account_create_view_post_message(client, user_foo, login_user):
+def test_account_create_view_post_message(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_create")
     data = {"name": "a", "account_type": Account.AccountType.ACCOUNT}
@@ -356,21 +447,33 @@ def test_account_create_view_post_message(client, user_foo, login_user):
     assert "Account was created successfully" in messages
 
 
-def test_account_update_view_get(client, user_foo, login_user, account_foo):
+def test_account_update_view_get(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo: Account,
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_update", kwargs={"pk": account_foo.pk})
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_account_update_view_get_not_logged_in(client, account_foo):
+def test_account_update_view_get_not_logged_in(
+    client: Client, account_foo: Account
+) -> None:
     url = reverse("accounts:account_update", kwargs={"pk": account_foo.pk})
     response = client.get(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_account_update_view_post_redirect(client, user_foo, login_user, account_foo):
+def test_account_update_view_post_redirect(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo: Account,
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_update", kwargs={"pk": account_foo.pk})
     data = {"name": "bar", "account_type": Account.AccountType.ACCOUNT}
@@ -379,7 +482,12 @@ def test_account_update_view_post_redirect(client, user_foo, login_user, account
     assert resolve(get_url_path(response)).url_name == "account_list"
 
 
-def test_account_update_view_post_message(client, user_foo, login_user, account_foo):
+def test_account_update_view_post_message(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo: Account,
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_update", kwargs={"pk": account_foo.pk})
     data = {"name": "bar", "account_type": Account.AccountType.ACCOUNT}
@@ -390,8 +498,11 @@ def test_account_update_view_post_message(client, user_foo, login_user, account_
 
 
 def test_account_update_view_post_different_user(
-    client, user_factory, login_user, account_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    account_factory: Callable[..., Account],
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -403,21 +514,33 @@ def test_account_update_view_post_different_user(
     assert response.status_code == 403
 
 
-def test_account_delete_view_get(client, user_foo, login_user, account_foo):
+def test_account_delete_view_get(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo: Account,
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_delete", kwargs={"pk": account_foo.pk})
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_account_delete_view_get_not_logged_in(client, account_foo):
+def test_account_delete_view_get_not_logged_in(
+    client: Client, account_foo: Account
+) -> None:
     url = reverse("accounts:account_delete", kwargs={"pk": account_foo.pk})
     response = client.get(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_account_delete_view_post_redirect(client, user_foo, login_user, account_foo):
+def test_account_delete_view_post_redirect(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo: Account,
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_delete", kwargs={"pk": account_foo.pk})
     response = client.post(url)
@@ -425,7 +548,12 @@ def test_account_delete_view_post_redirect(client, user_foo, login_user, account
     assert resolve(get_url_path(response)).url_name == "account_list"
 
 
-def test_account_delete_view_post_message(client, user_foo, login_user, account_foo):
+def test_account_delete_view_post_message(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo: Account,
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_delete", kwargs={"pk": account_foo.pk})
     response = client.post(url)
@@ -435,8 +563,11 @@ def test_account_delete_view_post_message(client, user_foo, login_user, account_
 
 
 def test_account_delete_view_post_different_user(
-    client, user_factory, login_user, account_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    account_factory: Callable[..., Account],
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -447,7 +578,9 @@ def test_account_delete_view_post_different_user(
     assert response.status_code == 403
 
 
-def test_account_import_view_get(client, user_foo, login_user):
+def test_account_import_view_get(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_import")
     response = client.get(url)
@@ -455,7 +588,7 @@ def test_account_import_view_get(client, user_foo, login_user):
     assert response.context["profile"] == user_foo.profile
 
 
-def test_account_import_view_get_not_logged_in(client):
+def test_account_import_view_get_not_logged_in(client: Client) -> None:
     url = reverse("accounts:account_import")
     response = client.get(url)
     assert response.status_code == 302
@@ -463,8 +596,13 @@ def test_account_import_view_get_not_logged_in(client):
 
 
 def test_account_import_view_post_redirect(
-    client, user_foo, login_user, connection_foo, mocker, accounts_api
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+    mocker: MockFixture,
+    accounts_api: saltedge_client.AccountsApi,
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_import")
     data = {"connection": connection_foo.id}
@@ -475,8 +613,13 @@ def test_account_import_view_post_redirect(
 
 
 def test_account_import_view_post_message(
-    client, user_foo, login_user, connection_foo, mocker, accounts_api
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+    mocker: MockFixture,
+    accounts_api: saltedge_client.AccountsApi,
+) -> None:
     login_user(user_foo)
     url = reverse("accounts:account_import")
     data = {"connection": connection_foo.id}
@@ -488,8 +631,11 @@ def test_account_import_view_post_message(
 
 
 def test_transaction_list_view_get_single_transaction(
-    client, user_foo, login_user, transaction_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    transaction_foo: Transaction,
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_list")
     response = client.get(url)
@@ -497,7 +643,7 @@ def test_transaction_list_view_get_single_transaction(
     assert list(response.context["transaction_list"]) == [transaction_foo]
 
 
-def test_transaction_list_view_get_not_logged_in(client):
+def test_transaction_list_view_get_not_logged_in(client: Client) -> None:
     url = reverse("transactions:transaction_list")
     response = client.get(url)
     assert response.status_code == 302
@@ -505,8 +651,11 @@ def test_transaction_list_view_get_not_logged_in(client):
 
 
 def test_transaction_list_view_get_multiple_transactions(
-    client, user_foo, login_user, transaction_factory
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    transaction_factory: Callable[..., Transaction],
+) -> None:
     login_user(user_foo)
     transaction_a = transaction_factory()
     transaction_b = transaction_factory()
@@ -517,8 +666,11 @@ def test_transaction_list_view_get_multiple_transactions(
 
 
 def test_transaction_list_view_get_ordered_by_date(
-    client, user_foo, login_user, transaction_factory
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    transaction_factory: Callable[..., Transaction],
+) -> None:
     login_user(user_foo)
     transaction_b = transaction_factory(
         datetime.date.today() - datetime.timedelta(days=1)
@@ -531,8 +683,11 @@ def test_transaction_list_view_get_ordered_by_date(
 
 
 def test_transaction_list_view_get_current_user(
-    client, user_factory, login_user, transaction_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    transaction_factory: Callable[..., Transaction],
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -544,14 +699,16 @@ def test_transaction_list_view_get_current_user(
     assert list(response.context["transaction_list"]) == [transaction_a]
 
 
-def test_transaction_create_view_get(client, user_foo, login_user):
+def test_transaction_create_view_get(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_create")
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_transaction_create_view_get_not_logged_in(client):
+def test_transaction_create_view_get_not_logged_in(client: Client) -> None:
     url = reverse("transactions:transaction_create")
     response = client.get(url)
     assert response.status_code == 302
@@ -559,8 +716,12 @@ def test_transaction_create_view_get_not_logged_in(client):
 
 
 def test_transaction_create_view_post_redirect(
-    client, user_foo, login_user, account_foo, category_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo: Account,
+    category_foo: Category,
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_create")
     data = {
@@ -575,8 +736,12 @@ def test_transaction_create_view_post_redirect(
 
 
 def test_transaction_create_view_post_message(
-    client, user_foo, login_user, account_foo, category_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo: Account,
+    category_foo: Category,
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_create")
     data = {
@@ -591,14 +756,21 @@ def test_transaction_create_view_post_message(
     assert "Transaction was created successfully" in messages
 
 
-def test_transaction_update_view_get(client, user_foo, login_user, transaction_foo):
+def test_transaction_update_view_get(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    transaction_foo: Transaction,
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_update", kwargs={"pk": transaction_foo.pk})
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_transaction_update_view_get_not_logged_in(client, transaction_foo):
+def test_transaction_update_view_get_not_logged_in(
+    client: Client, transaction_foo: Transaction
+) -> None:
     url = reverse("transactions:transaction_update", kwargs={"pk": transaction_foo.pk})
     response = client.get(url)
     assert response.status_code == 302
@@ -606,8 +778,13 @@ def test_transaction_update_view_get_not_logged_in(client, transaction_foo):
 
 
 def test_transaction_update_view_post_redirect(
-    client, user_foo, login_user, transaction_foo, account_foo, category_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    transaction_foo: Transaction,
+    account_foo: Account,
+    category_foo: Category,
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_update", kwargs={"pk": transaction_foo.pk})
     data = {
@@ -622,8 +799,13 @@ def test_transaction_update_view_post_redirect(
 
 
 def test_transaction_update_view_post_message(
-    client, user_foo, login_user, transaction_foo, account_foo, category_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    transaction_foo: Transaction,
+    account_foo: Account,
+    category_foo: Category,
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_update", kwargs={"pk": transaction_foo.pk})
     data = {
@@ -639,8 +821,11 @@ def test_transaction_update_view_post_message(
 
 
 def test_transaction_update_view_post_different_user(
-    client, user_factory, login_user, transaction_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    transaction_factory: Callable[..., Transaction],
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -654,14 +839,21 @@ def test_transaction_update_view_post_different_user(
     assert response.status_code == 403
 
 
-def test_transaction_delete_view_get(client, user_foo, login_user, transaction_foo):
+def test_transaction_delete_view_get(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    transaction_foo: Transaction,
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_delete", kwargs={"pk": transaction_foo.pk})
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_transaction_delete_view_get_not_logged_in(client, transaction_foo):
+def test_transaction_delete_view_get_not_logged_in(
+    client: Client, transaction_foo: Transaction
+) -> None:
     url = reverse("transactions:transaction_delete", kwargs={"pk": transaction_foo.pk})
     response = client.get(url)
     assert response.status_code == 302
@@ -669,8 +861,11 @@ def test_transaction_delete_view_get_not_logged_in(client, transaction_foo):
 
 
 def test_transaction_delete_view_post_redirect(
-    client, user_foo, login_user, transaction_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    transaction_foo: Transaction,
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_delete", kwargs={"pk": transaction_foo.pk})
     response = client.post(url)
@@ -679,8 +874,11 @@ def test_transaction_delete_view_post_redirect(
 
 
 def test_transaction_delete_view_post_message(
-    client, user_foo, login_user, transaction_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    transaction_foo: Transaction,
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_delete", kwargs={"pk": transaction_foo.pk})
     response = client.post(url)
@@ -690,8 +888,11 @@ def test_transaction_delete_view_post_message(
 
 
 def test_transaction_delete_view_post_different_user(
-    client, user_factory, login_user, transaction_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    transaction_factory: Transaction,
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -702,7 +903,9 @@ def test_transaction_delete_view_post_different_user(
     assert response.status_code == 403
 
 
-def test_transaction_import_view_get(client, user_foo, login_user):
+def test_transaction_import_view_get(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_import")
     response = client.get(url)
@@ -710,7 +913,7 @@ def test_transaction_import_view_get(client, user_foo, login_user):
     assert response.context["profile"] == user_foo.profile
 
 
-def test_transaction_import_view_get_not_logged_in(client):
+def test_transaction_import_view_get_not_logged_in(client: Client) -> None:
     url = reverse("transactions:transaction_import")
     response = client.get(url)
     assert response.status_code == 302
@@ -718,8 +921,13 @@ def test_transaction_import_view_get_not_logged_in(client):
 
 
 def test_transaction_import_view_post_redirect(
-    client, user_foo, login_user, account_foo_external, mocker, transactions_api
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo_external: Account,
+    mocker: MockFixture,
+    transactions_api: saltedge_client.TransactionsApi,
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_import")
     data = {"account": account_foo_external.id}
@@ -732,8 +940,13 @@ def test_transaction_import_view_post_redirect(
 
 
 def test_transaction_import_view_post_message(
-    client, user_foo, login_user, account_foo_external, mocker, transactions_api
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo_external: Account,
+    mocker: MockFixture,
+    transactions_api: saltedge_client.TransactionsApi,
+) -> None:
     login_user(user_foo)
     url = reverse("transactions:transaction_import")
     data = {"account": account_foo_external.id}
@@ -746,7 +959,12 @@ def test_transaction_import_view_post_message(
     assert "Transactions were imported successfully: 0" in messages
 
 
-def test_category_list_view_get(client, user_foo, login_user, category_factory):
+def test_category_list_view_get(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    category_factory: Callable[..., Category],
+) -> None:
     login_user(user_foo)
     categories = [
         category_factory("a"),
@@ -759,7 +977,7 @@ def test_category_list_view_get(client, user_foo, login_user, category_factory):
     assert len(response.context["category_list"]) == len(categories)
 
 
-def test_category_list_view_get_not_logged_in(client):
+def test_category_list_view_get_not_logged_in(client: Client) -> None:
     url = reverse("categories:category_list")
     response = client.get(url)
     assert response.status_code == 302
@@ -767,8 +985,11 @@ def test_category_list_view_get_not_logged_in(client):
 
 
 def test_category_list_view_get_ordered_by_name(
-    client, user_foo, login_user, category_factory
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    category_factory: Callable[..., Category],
+) -> None:
     login_user(user_foo)
     category_factory("b")
     category_factory("a")
@@ -781,8 +1002,11 @@ def test_category_list_view_get_ordered_by_name(
 
 
 def test_category_list_view_get_current_user(
-    client, user_factory, login_user, category_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    category_factory: Callable[..., Category],
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -796,21 +1020,25 @@ def test_category_list_view_get_current_user(
     )
 
 
-def test_category_create_view_get(client, user_foo, login_user):
+def test_category_create_view_get(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("categories:category_create")
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_category_create_view_get_not_logged_in(client):
+def test_category_create_view_get_not_logged_in(client: Client) -> None:
     url = reverse("categories:category_create")
     response = client.get(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_category_create_view_post_redirect(client, user_foo, login_user):
+def test_category_create_view_post_redirect(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("categories:category_create")
     data = {
@@ -821,7 +1049,9 @@ def test_category_create_view_post_redirect(client, user_foo, login_user):
     assert resolve(get_url_path(response)).url_name == "category_list"
 
 
-def test_category_create_view_post_message(client, user_foo, login_user):
+def test_category_create_view_post_message(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("categories:category_create")
     data = {
@@ -833,21 +1063,33 @@ def test_category_create_view_post_message(client, user_foo, login_user):
     assert "Category was created successfully" in messages
 
 
-def test_category_update_view_get(client, user_foo, login_user, category_foo):
+def test_category_update_view_get(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    category_foo: Category,
+) -> None:
     login_user(user_foo)
     url = reverse("categories:category_update", kwargs={"pk": category_foo.pk})
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_category_update_view_get_not_logged_in(client, category_foo):
+def test_category_update_view_get_not_logged_in(
+    client: Client, category_foo: Category
+) -> None:
     url = reverse("categories:category_update", kwargs={"pk": category_foo.pk})
     response = client.get(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_category_update_view_post_redirect(client, user_foo, login_user, category_foo):
+def test_category_update_view_post_redirect(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    category_foo: Category,
+) -> None:
     login_user(user_foo)
     url = reverse("categories:category_update", kwargs={"pk": category_foo.pk})
     data = {
@@ -858,7 +1100,12 @@ def test_category_update_view_post_redirect(client, user_foo, login_user, catego
     assert resolve(get_url_path(response)).url_name == "category_list"
 
 
-def test_category_update_view_post_message(client, user_foo, login_user, category_foo):
+def test_category_update_view_post_message(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    category_foo: Category,
+) -> None:
     login_user(user_foo)
     url = reverse("categories:category_update", kwargs={"pk": category_foo.pk})
     data = {
@@ -871,8 +1118,11 @@ def test_category_update_view_post_message(client, user_foo, login_user, categor
 
 
 def test_category_update_view_post_different_user(
-    client, user_factory, login_user, category_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    category_factory: Callable[..., Category],
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -884,21 +1134,33 @@ def test_category_update_view_post_different_user(
     assert response.status_code == 403
 
 
-def test_category_delete_view_get(client, user_foo, login_user, category_foo):
+def test_category_delete_view_get(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    category_foo: Category,
+) -> None:
     login_user(user_foo)
     url = reverse("categories:category_delete", kwargs={"pk": category_foo.pk})
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_category_delete_view_get_not_logged_in(client, category_foo):
+def test_category_delete_view_get_not_logged_in(
+    client: Client, category_foo: Category
+) -> None:
     url = reverse("categories:category_delete", kwargs={"pk": category_foo.pk})
     response = client.get(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_category_delete_view_post_redirect(client, user_foo, login_user, category_foo):
+def test_category_delete_view_post_redirect(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    category_foo: Category,
+) -> None:
     login_user(user_foo)
     url = reverse("categories:category_delete", kwargs={"pk": category_foo.pk})
     response = client.post(url)
@@ -906,7 +1168,12 @@ def test_category_delete_view_post_redirect(client, user_foo, login_user, catego
     assert resolve(get_url_path(response)).url_name == "category_list"
 
 
-def test_category_delete_view_post_message(client, user_foo, login_user, category_foo):
+def test_category_delete_view_post_message(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    category_foo: Category,
+) -> None:
     login_user(user_foo)
     url = reverse("categories:category_delete", kwargs={"pk": category_foo.pk})
     response = client.post(url)
@@ -916,8 +1183,11 @@ def test_category_delete_view_post_message(client, user_foo, login_user, categor
 
 
 def test_category_delete_view_post_different_user(
-    client, user_factory, login_user, category_factory
-):
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    category_factory: Callable[..., Category],
+) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
     login_user(user_a)
@@ -928,23 +1198,29 @@ def test_category_delete_view_post_different_user(
     assert response.status_code == 403
 
 
-def test_report_balance_view_get(client, user_foo, login_user):
+def test_report_balance_view_get(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
     login_user(user_foo)
     url = reverse("reports:report_balance")
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_report_balance_view_get_not_logged_in(client):
+def test_report_balance_view_get_not_logged_in(client: Client) -> None:
     url = reverse("reports:report_balance")
     response = client.get(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "login"
 
 
+# TODO: Create user_foo_logged_in fixture instead of passing login_user
 def test_report_balance_view_get_with_parameters(
-    client, user_foo, login_user, account_foo
-):
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo: Account,
+) -> None:
     login_user(user_foo)
     url = reverse("reports:report_balance")
     data = {

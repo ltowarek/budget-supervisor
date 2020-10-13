@@ -1,4 +1,4 @@
-import datetime.date
+import datetime
 from typing import Any, Dict, List
 
 import swagger_client as saltedge_client
