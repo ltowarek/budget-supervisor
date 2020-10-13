@@ -94,7 +94,6 @@ class TestConnectionList:
                 reverse("connections:connection_delete", kwargs={"pk": connection.pk})
             )
 
-    # TODO: Create pagination template
     def test_pagination(
         self,
         authenticate_selenium: Callable[..., WebDriver],
