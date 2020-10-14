@@ -256,6 +256,42 @@ class TestConnectionDelete:
         self.delete_connection(selenium, live_server_path, connection)
         assert not Connection.objects.filter(pk=connection.pk).exists()
 
+    def test_accounts_are_disconnected(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        connection_external_factory: Callable[..., Connection],
+        account_factory: Callable[..., Account],
+    ) -> None:
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        connection = connection_external_factory(
+            selenium, live_server_path, predefined_profile
+        )
+        account = account_factory("foo", connection=connection, external_id=123)
+        self.delete_connection(selenium, live_server_path, connection)
+        account.refresh_from_db()
+        assert account.external_id is None
+
+    def test_transactions_are_disconnected(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        connection_external_factory: Callable[..., Connection],
+        account_factory: Callable[..., Account],
+        transaction_factory: Callable[..., Account],
+    ) -> None:
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        connection = connection_external_factory(
+            selenium, live_server_path, predefined_profile
+        )
+        account = account_factory("foo", connection=connection, external_id=123)
+        transaction = transaction_factory(account=account, external_id=123)
+        self.delete_connection(selenium, live_server_path, connection)
+        transaction.refresh_from_db()
+        assert transaction.external_id is None
+
     def test_connection_is_deleted_externally(
         self,
         authenticate_selenium: Callable[..., WebDriver],

@@ -48,7 +48,6 @@ class ConnectionManager(models.Manager):
                 new_connections.append(c)
         return new_connections
 
-    # TODO: Remove from saltedge when deleting Connection itself
     def remove_from_saltedge(
         self, connection: "Connection", connections_api: saltedge_client.ConnectionsApi
     ) -> None:

@@ -240,6 +240,46 @@ def test_connection_delete_view_post_redirect(
     assert resolve(get_url_path(response)).url_name == "connection_list"
 
 
+def test_connection_delete_view_post_disconnect_accounts(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+    account_foo_external: Account,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+) -> None:
+    login_user(user_foo)
+    url = reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api
+    )
+    response = client.post(url)
+    assert response.status_code == 302
+    account_foo_external.refresh_from_db()
+    assert account_foo_external.external_id is None
+
+
+def test_connection_delete_view_post_disconnect_transactions(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+    transaction_foo_external: Transaction,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+) -> None:
+    login_user(user_foo)
+    url = reverse("connections:connection_delete", kwargs={"pk": connection_foo.pk})
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api
+    )
+    response = client.post(url)
+    assert response.status_code == 302
+    transaction_foo_external.refresh_from_db()
+    assert transaction_foo_external.external_id is None
+
+
 def test_connection_delete_view_post_message(
     client: Client,
     user_foo: User,
