@@ -86,9 +86,7 @@ class ConnectionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def delete(self, *args: Any, **kwargs: Any) -> HttpResponseRedirect:
         connection = self.get_object()
-        if connection.external_id:
-            Connection.objects.remove_from_saltedge(connection, connections_api())
-            # TODO: Remove external_id from related accounts/transactions.
+        Connection.objects.remove_from_saltedge(connection, connections_api())
         output = super().delete(*args, **kwargs)
         messages.success(self.request, self.success_message)
         return output

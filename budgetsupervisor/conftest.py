@@ -173,7 +173,7 @@ def transaction_factory(
             category=category,
             description=description,
             account=account,
-            external_id=None,
+            external_id=external_id,
             user=user,
         )
 
@@ -187,9 +187,11 @@ def transaction_foo(transaction_factory: Callable[..., Transaction]) -> Transact
 
 @pytest.fixture
 def transaction_foo_external(
-    transaction_factory: Callable[..., Transaction]
+    transaction_factory: Callable[..., Transaction], account_foo_external: Account
 ) -> Transaction:
-    return transaction_factory(description="transaction foo", external_id=123)
+    return transaction_factory(
+        description="transaction foo", external_id=123, account=account_foo_external
+    )
 
 
 @pytest.fixture

@@ -99,9 +99,8 @@ class Account(models.Model):
         max_length=1, choices=AccountType.choices, default=AccountType.ACCOUNT
     )
     external_id = models.BigIntegerField(blank=True, null=True, editable=False)
-    # TODO: If connection is removed then related accounts should not be deleted
     connection = models.ForeignKey(
-        Connection, on_delete=models.CASCADE, blank=True, null=True, editable=False
+        Connection, on_delete=models.SET_NULL, blank=True, null=True, editable=False
     )
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 

@@ -535,3 +535,35 @@ def test_transaction_get_balance_filter_by_to_date(
     )
 
     assert output == {"abc": 4.00 + 5.00, "Total": 4.00 + 5.00}
+
+
+def test_delete_transaction_when_account_is_deleted(
+    transaction_foo_external: Transaction, account_foo_external: Account
+) -> None:
+    account_foo_external.delete()
+    assert not Transaction.objects.filter(pk=transaction_foo_external.pk).exists()
+
+
+def test_disconnect_transaction_when_connection_is_deleted(
+    transaction_foo_external: Transaction, connection_foo: Connection
+) -> None:
+    connection_foo.delete()
+    transaction_foo_external.refresh_from_db()
+    assert transaction_foo_external.external_id is None
+
+
+def test_do_not_delete_account_when_connection_is_deleted(
+    account_foo_external: Account, connection_foo: Connection
+) -> None:
+    connection_foo.delete()
+    account_foo_external.refresh_from_db()
+    assert Account.objects.filter(pk=account_foo_external.pk).exists()
+    assert account_foo_external.connection is None
+
+
+def test_disconnect_account_when_connection_is_deleted(
+    account_foo_external: Account, connection_foo: Connection
+) -> None:
+    connection_foo.delete()
+    account_foo_external.refresh_from_db()
+    assert account_foo_external.external_id is None
