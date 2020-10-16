@@ -5,6 +5,7 @@ from budget.models import Account, Connection, Transaction
 from django.shortcuts import reverse
 from saltedge_wrapper.factory import customers_api
 from selenium.webdriver.firefox.webdriver import WebDriver
+from swagger_client.rest import ApiException
 from users.models import Profile, User
 
 pytestmark = pytest.mark.selenium
@@ -243,6 +244,23 @@ class TestProfileDisconnect:
         self.disable_external_synchronization(selenium, live_server_path, profile_foo)
         assert profile_foo.external_id is None
 
+    def test_customer_is_deleted(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        profile_foo: Profile,
+        remove_temporary_customers: Callable[[], Iterable[None]],
+    ) -> None:
+        api = customers_api()
+        Profile.objects.create_in_saltedge(profile_foo, api)
+        external_id = profile_foo.external_id
+        selenium = authenticate_selenium(user=profile_foo.user)
+        assert api.customers_customer_id_get(external_id)
+        self.disable_external_synchronization(selenium, live_server_path, profile_foo)
+        with pytest.raises(ApiException) as e:
+            api.customers_customer_id_get(external_id)
+        assert "CustomerNotFound" in str(e.value)
+
     def test_redirect(
         self,
         authenticate_selenium: Callable[..., WebDriver],
@@ -322,3 +340,105 @@ class TestProfileDisconnect:
         selenium.get(url)
         selenium.find_element_by_xpath('//input[@value="Submit"]').click()
         profile.refresh_from_db()
+
+
+class TestUserDelete:
+    def test_user_is_deleted(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_user(selenium, live_server_path, user_foo)
+        assert not User.objects.filter(pk=user_foo.pk).exists()
+
+    def test_profile_is_deleted(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_user(selenium, live_server_path, user_foo)
+        assert not Profile.objects.filter(pk=user_foo.profile.pk).exists()
+
+    def test_redirect(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_user(selenium, live_server_path, user_foo)
+        assert selenium.current_url == live_server_path(reverse("login"))
+
+    def test_message(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_user(selenium, live_server_path, user_foo)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+        ]
+        assert "User was deleted successfully" in messages
+
+    def test_connections_are_deleted(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        connection_foo: Connection,
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_user(selenium, live_server_path, user_foo)
+        assert not Connection.objects.filter(user=user_foo).count() == 0
+
+    def test_accounts_are_deleted(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_user(selenium, live_server_path, user_foo)
+        assert not Account.objects.filter(user=user_foo).count() == 0
+
+    def test_transactions_are_deleted(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_foo: Transaction,
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        self.delete_user(selenium, live_server_path, user_foo)
+        assert not Transaction.objects.filter(user=user_foo).count() == 0
+
+    def test_customer_is_deleted(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        remove_temporary_customers: Callable[[], Iterable[None]],
+    ) -> None:
+        api = customers_api()
+        Profile.objects.create_in_saltedge(user_foo.profile, api)
+        selenium = authenticate_selenium(user=user_foo)
+        assert api.customers_customer_id_get(user_foo.profile.external_id)
+        self.delete_user(selenium, live_server_path, user_foo)
+        with pytest.raises(ApiException) as e:
+            api.customers_customer_id_get(user_foo.profile.external_id)
+        assert "CustomerNotFound" in str(e.value)
+
+    def delete_user(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str], user: User,
+    ) -> None:
+        url = live_server_path(reverse("user_delete"))
+        selenium.get(url)
+        selenium.find_element_by_xpath('//input[@value="Yes, delete."]').click()

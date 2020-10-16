@@ -218,3 +218,53 @@ def test_profile_disconnect_view_post_disconnect_transactions(
     assert response.status_code == 302
     transaction_foo_external.refresh_from_db()
     assert transaction_foo_external.external_id is None
+
+
+def test_user_delete_view_get(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    customers_api: saltedge_client.CustomersApi,
+) -> None:
+    login_user(user_foo)
+    url = reverse("user_delete")
+    response = client.get(url)
+    assert response.status_code == 200
+
+
+def test_user_delete_view_get_not_logged_in(client: Client) -> None:
+    url = reverse("user_delete")
+    response = client.get(url)
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "login"
+
+
+def test_user_delete_view_post_redirect(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    mocker: MockFixture,
+    customers_api: saltedge_client.CustomersApi,
+) -> None:
+    login_user(user_foo)
+    url = reverse("user_delete")
+    mocker.patch("users.views.customers_api", autospec=True, return_value=customers_api)
+    response = client.post(url)
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "login"
+
+
+def test_user_delete_view_post_message(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    mocker: MockFixture,
+    customers_api: saltedge_client.CustomersApi,
+) -> None:
+    login_user(user_foo)
+    url = reverse("user_delete")
+    mocker.patch("users.views.customers_api", autospec=True, return_value=customers_api)
+    response = client.post(url)
+    assert response.status_code == 302
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "User was deleted successfully" in messages

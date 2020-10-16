@@ -551,3 +551,24 @@ def test_do_not_delete_account_when_connection_is_deleted(
     account_foo_external.refresh_from_db()
     assert Account.objects.filter(pk=account_foo_external.pk).exists()
     assert account_foo_external.connection is None
+
+
+def test_delete_transaction_when_user_is_deleted(
+    transaction_foo: Transaction, user_foo: User
+) -> None:
+    user_foo.delete()
+    assert not Transaction.objects.filter(pk=transaction_foo.pk).exists()
+
+
+def test_delete_account_when_user_is_deleted(
+    account_foo: Account, user_foo: User
+) -> None:
+    user_foo.delete()
+    assert not Account.objects.filter(pk=account_foo.pk).exists()
+
+
+def test_delete_connection_when_user_is_deleted(
+    connection_foo: Connection, user_foo: User
+) -> None:
+    user_foo.delete()
+    assert not Connection.objects.filter(pk=connection_foo.pk).exists()
