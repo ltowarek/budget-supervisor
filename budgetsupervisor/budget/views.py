@@ -33,6 +33,8 @@ from .forms import (
 from .models import Account, Category, Connection, Transaction
 
 
+# TODO: Create home page with marketing info and use it on / url
+# TODO: Rename IndexView to BudgetView or DashboardView and use it on /budget/ url
 class IndexView(LoginRequiredMixin, TemplateView):
     template_name = "budget/index.html"
 
@@ -327,6 +329,7 @@ class CategoryDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return output
 
 
+# TODO: Add ReportCurrentBalanceView with info about current balance for each account + total
 class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
     template_name = "budget/report_balance.html"
     form_class = ReportBalanceForm

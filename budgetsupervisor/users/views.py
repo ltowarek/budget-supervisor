@@ -14,6 +14,9 @@ from .forms import ProfileConnectForm, ProfileDisconnectForm, SignUpForm
 from .models import Profile, User
 
 
+# TODO: Add Terms and Conditions
+# TODO: Add Privacy Policy
+# TODO: Add Cookie Policy
 class SignUpView(CreateView):
     template_name = "users/signup.html"
     form_class = SignUpForm
