@@ -1,6 +1,7 @@
 from typing import Callable, Iterable
 
 import pytest
+from budget.models import Account, Connection, Transaction
 from django.shortcuts import reverse
 from saltedge_wrapper.factory import customers_api
 from selenium.webdriver.firefox.webdriver import WebDriver
@@ -269,6 +270,47 @@ class TestProfileDisconnect:
             for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
         ]
         assert "Profile was disconnected successfully" in messages
+
+    def test_connections_deleted(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        profile_foo: Profile,
+        connection_foo: Connection,
+        remove_temporary_customers: Callable[[], Iterable[None]],
+    ) -> None:
+        selenium = authenticate_selenium(user=profile_foo.user)
+        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        self.disable_external_synchronization(selenium, live_server_path, profile_foo)
+        assert not Connection.objects.filter(pk=connection_foo.pk).exists()
+
+    def test_accounts_disconnected(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        profile_foo: Profile,
+        account_foo_external: Account,
+        remove_temporary_customers: Callable[[], Iterable[None]],
+    ) -> None:
+        selenium = authenticate_selenium(user=profile_foo.user)
+        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        self.disable_external_synchronization(selenium, live_server_path, profile_foo)
+        account_foo_external.refresh_from_db()
+        assert account_foo_external.external_id is None
+
+    def test_transactions_disconnected(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        profile_foo: Profile,
+        transaction_foo_external: Transaction,
+        remove_temporary_customers: Callable[[], Iterable[None]],
+    ) -> None:
+        selenium = authenticate_selenium(user=profile_foo.user)
+        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        self.disable_external_synchronization(selenium, live_server_path, profile_foo)
+        transaction_foo_external.refresh_from_db()
+        assert transaction_foo_external.external_id is None
 
     def disable_external_synchronization(
         self,

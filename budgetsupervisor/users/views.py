@@ -1,5 +1,6 @@
 from typing import List
 
+from budget.models import Account, Connection, Transaction
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import QuerySet
@@ -50,7 +51,14 @@ class ProfileDisconnectView(LoginRequiredMixin, SuccessMessageMixin, FormView):
     def form_valid(self, form: ProfileDisconnectForm) -> HttpResponseRedirect:
         profile = self.request.user.profile
         Profile.objects.remove_from_saltedge(profile, customers_api())
-        # TODO: Remove external_id from related connections/accounts/transactions.
+
+        connections = Connection.objects.filter(user=profile.user)
+        accounts = Account.objects.filter(connection__in=connections)
+        accounts.update(external_id=None)
+        transactions = Transaction.objects.filter(account__in=accounts)
+        transactions.update(external_id=None)
+        connections.delete()
+
         return super().form_valid(form)
 
 

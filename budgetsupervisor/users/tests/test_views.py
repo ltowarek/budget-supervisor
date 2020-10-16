@@ -1,6 +1,7 @@
 from typing import Callable, Dict
 
 import swagger_client as saltedge_client
+from budget.models import Account, Connection, Transaction
 from django.contrib.messages import get_messages
 from django.test import Client
 from django.urls import resolve, reverse
@@ -159,3 +160,61 @@ def test_profile_disconnect_view_post_message(
     assert response.status_code == 302
     messages = [m.message for m in get_messages(response.wsgi_request)]
     assert "Profile was disconnected successfully" in messages
+
+
+def test_profile_disconnect_view_post_delete_connections(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+    mocker: MockFixture,
+    customers_api: saltedge_client.CustomersApi,
+) -> None:
+    login_user(user_foo)
+    url = reverse("profile_disconnect")
+    mocker.patch("users.views.customers_api", autospec=True, return_value=customers_api)
+    response = client.post(url)
+    assert response.status_code == 302
+    assert not Connection.objects.filter(pk=connection_foo.pk).exists()
+
+
+def test_profile_disconnect_view_post_disconnect_accounts(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo_external: Account,
+    mocker: MockFixture,
+    customers_api: saltedge_client.CustomersApi,
+    connections_api: saltedge_client.ConnectionsApi,
+) -> None:
+    login_user(user_foo)
+    url = reverse("profile_disconnect")
+    mocker.patch("users.views.customers_api", autospec=True, return_value=customers_api)
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api
+    )
+    response = client.post(url)
+    assert response.status_code == 302
+    account_foo_external.refresh_from_db()
+    assert account_foo_external.external_id is None
+
+
+def test_profile_disconnect_view_post_disconnect_transactions(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    transaction_foo_external: Transaction,
+    mocker: MockFixture,
+    customers_api: saltedge_client.CustomersApi,
+    connections_api: saltedge_client.ConnectionsApi,
+) -> None:
+    login_user(user_foo)
+    url = reverse("profile_disconnect")
+    mocker.patch("users.views.customers_api", autospec=True, return_value=customers_api)
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api
+    )
+    response = client.post(url)
+    assert response.status_code == 302
+    transaction_foo_external.refresh_from_db()
+    assert transaction_foo_external.external_id is None
