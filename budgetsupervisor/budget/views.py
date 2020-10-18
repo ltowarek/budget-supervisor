@@ -365,3 +365,6 @@ class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
         return self.render_to_response(
             self.get_context_data(form=form, balance=balance)
         )
+
+
+# TODO: Add TransactionSearch
