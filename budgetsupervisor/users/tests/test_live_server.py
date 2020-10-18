@@ -35,7 +35,7 @@ class TestLogin:
             == "Your username and password didn't match. Please try again."
         )
 
-    def test_next_redirects_to_requsted_url(
+    def test_next_redirects_to_requested_url(
         self,
         selenium: WebDriver,
         live_server_path: Callable[[str], str],
@@ -138,6 +138,19 @@ class TestProfileUpdate:
         element = selenium.find_element_by_xpath('//input[@value="Submit"]')
         element.click()
         profile.refresh_from_db()
+
+    def test_profile_can_be_deleted(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        profile_foo: Profile,
+    ) -> None:
+        selenium = authenticate_selenium(user=profile_foo.user)
+        url = live_server_path(reverse("profile"))
+        selenium.get(url)
+        element = selenium.find_element_by_link_text("Delete account")
+        assert element
+        assert element.get_attribute("href") == live_server_path(reverse("user_delete"))
 
     def test_synchronization_can_be_enabled_if_not_already_enabled(
         self,
