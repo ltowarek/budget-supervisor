@@ -1,5 +1,21 @@
 from typing import Any, Dict, List
 
+from budget.forms import (
+    CreateConnectionForm,
+    ImportAccountsForm,
+    ImportConnectionsForm,
+    ImportTransactionsForm,
+    ReportBalanceForm,
+)
+from budget.models import Account, Category, Connection, Transaction
+from budget.services import (
+    create_connection_in_saltedge,
+    get_category_balance,
+    import_accounts_from_saltedge,
+    import_connections_from_saltedge,
+    import_transactions_from_saltedge,
+    remove_connection_from_saltedge,
+)
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -23,15 +39,6 @@ from saltedge_wrapper.factory import (
     transactions_api,
 )
 
-from .forms import (
-    CreateConnectionForm,
-    ImportAccountsForm,
-    ImportConnectionsForm,
-    ImportTransactionsForm,
-    ReportBalanceForm,
-)
-from .models import Account, Category, Connection, Transaction
-
 
 # TODO: Create home page with marketing info and use it on / url
 # TODO: Rename IndexView to BudgetView or DashboardView and use it on /budget/ url
@@ -53,7 +60,7 @@ class ConnectionCreate(LoginRequiredMixin, FormView):
 
     def form_valid(self, form: CreateConnectionForm) -> HttpResponseRedirect:
         redirect_url = self.request.build_absolute_uri(str(self.success_url))
-        connect_url = Connection.objects.create_in_saltedge(
+        connect_url = create_connection_in_saltedge(
             redirect_url, self.request.user.profile.external_id, connect_sessions_api()
         )
         return redirect(connect_url)
@@ -88,7 +95,7 @@ class ConnectionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def delete(self, *args: Any, **kwargs: Any) -> HttpResponseRedirect:
         connection = self.get_object()
-        Connection.objects.remove_from_saltedge(connection, connections_api())
+        remove_connection_from_saltedge(connection, connections_api())
         accounts = Account.objects.filter(connection=connection)
         accounts.update(external_id=None)
         for account in accounts:
@@ -107,7 +114,7 @@ class ImportConnectionsView(LoginRequiredMixin, FormView):
     success_message = "Connections were imported successfully: {}"
 
     def form_valid(self, form: ImportConnectionsForm) -> HttpResponseRedirect:
-        imported = Connection.objects.import_from_saltedge(
+        imported = import_connections_from_saltedge(
             self.request.user, self.request.user.profile.external_id, connections_api()
         )
         messages.success(self.request, self.success_message.format(len(imported)))
@@ -176,7 +183,7 @@ class ImportAccountsView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form: ImportAccountsForm) -> HttpResponseRedirect:
         connection = form.cleaned_data["connection"]
-        imported = Account.objects.import_from_saltedge(
+        imported = import_accounts_from_saltedge(
             self.request.user, connection.external_id, accounts_api()
         )
         messages.success(self.request, self.success_message.format(len(imported)))
@@ -263,7 +270,7 @@ class ImportTransactionsView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form: ImportTransactionsForm) -> HttpResponseRedirect:
         account = form.cleaned_data["account"]
-        imported = Transaction.objects.import_from_saltedge(
+        imported = import_transactions_from_saltedge(
             self.request.user,
             account.connection.external_id,
             account.external_id,
@@ -349,7 +356,7 @@ class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
         return kwargs
 
     def form_valid(self, form: ReportBalanceForm) -> HttpResponse:
-        balance = Transaction.objects.get_balance(
+        balance = get_category_balance(
             form.cleaned_data["accounts"],
             self.request.user,
             form.cleaned_data["from_date"],

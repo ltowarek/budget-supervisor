@@ -9,9 +9,9 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 from saltedge_wrapper.factory import customers_api
-
-from .forms import ProfileConnectForm, ProfileDisconnectForm, SignUpForm
-from .models import Profile, User
+from users.forms import ProfileConnectForm, ProfileDisconnectForm, SignUpForm
+from users.models import Profile, User
+from users.services import create_customer_in_saltedge, remove_customer_from_saltedge
 
 
 # TODO: Add Terms and Conditions
@@ -34,7 +34,7 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
     def delete(self, *args: Any, **kwargs: Any) -> HttpResponseRedirect:
         user = self.get_object()
         if user.profile.external_id:
-            Profile.objects.remove_from_saltedge(user.profile, customers_api())
+            remove_customer_from_saltedge(user.profile, customers_api())
         output = super().delete(*args, **kwargs)
         messages.success(self.request, self.success_message)
         return output
@@ -59,7 +59,7 @@ class ProfileConnectView(LoginRequiredMixin, SuccessMessageMixin, FormView):
 
     def form_valid(self, form: ProfileConnectForm) -> HttpResponseRedirect:
         profile = self.request.user.profile
-        Profile.objects.create_in_saltedge(profile, customers_api())
+        create_customer_in_saltedge(profile, customers_api())
         return super().form_valid(form)
 
 
@@ -71,7 +71,7 @@ class ProfileDisconnectView(LoginRequiredMixin, SuccessMessageMixin, FormView):
 
     def form_valid(self, form: ProfileDisconnectForm) -> HttpResponseRedirect:
         profile = self.request.user.profile
-        Profile.objects.remove_from_saltedge(profile, customers_api())
+        remove_customer_from_saltedge(profile, customers_api())
 
         connections = Connection.objects.filter(user=profile.user)
         accounts = Account.objects.filter(connection__in=connections)

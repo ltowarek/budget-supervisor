@@ -7,6 +7,7 @@ from saltedge_wrapper.factory import customers_api
 from selenium.webdriver.firefox.webdriver import WebDriver
 from swagger_client.rest import ApiException
 from users.models import Profile, User
+from users.services import create_customer_in_saltedge
 
 pytestmark = pytest.mark.selenium
 
@@ -240,7 +241,7 @@ class TestProfileDisconnect:
         remove_temporary_customers: Callable[[], Iterable[None]],
     ) -> None:
         selenium = authenticate_selenium(user=profile_foo.user)
-        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        create_customer_in_saltedge(profile_foo, customers_api())
         self.disable_external_synchronization(selenium, live_server_path, profile_foo)
         assert profile_foo.external_id is None
 
@@ -252,7 +253,7 @@ class TestProfileDisconnect:
         remove_temporary_customers: Callable[[], Iterable[None]],
     ) -> None:
         api = customers_api()
-        Profile.objects.create_in_saltedge(profile_foo, api)
+        create_customer_in_saltedge(profile_foo, api)
         external_id = profile_foo.external_id
         selenium = authenticate_selenium(user=profile_foo.user)
         assert api.customers_customer_id_get(external_id)
@@ -269,7 +270,7 @@ class TestProfileDisconnect:
         remove_temporary_customers: Callable[[], Iterable[None]],
     ) -> None:
         selenium = authenticate_selenium(user=profile_foo.user)
-        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        create_customer_in_saltedge(profile_foo, customers_api())
         self.disable_external_synchronization(selenium, live_server_path, profile_foo)
         assert selenium.current_url == live_server_path(reverse("profile"))
 
@@ -281,7 +282,7 @@ class TestProfileDisconnect:
         remove_temporary_customers: Callable[[], Iterable[None]],
     ) -> None:
         selenium = authenticate_selenium(user=profile_foo.user)
-        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        create_customer_in_saltedge(profile_foo, customers_api())
         self.disable_external_synchronization(selenium, live_server_path, profile_foo)
         messages = [
             m.text
@@ -298,7 +299,7 @@ class TestProfileDisconnect:
         remove_temporary_customers: Callable[[], Iterable[None]],
     ) -> None:
         selenium = authenticate_selenium(user=profile_foo.user)
-        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        create_customer_in_saltedge(profile_foo, customers_api())
         self.disable_external_synchronization(selenium, live_server_path, profile_foo)
         assert not Connection.objects.filter(pk=connection_foo.pk).exists()
 
@@ -311,7 +312,7 @@ class TestProfileDisconnect:
         remove_temporary_customers: Callable[[], Iterable[None]],
     ) -> None:
         selenium = authenticate_selenium(user=profile_foo.user)
-        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        create_customer_in_saltedge(profile_foo, customers_api())
         self.disable_external_synchronization(selenium, live_server_path, profile_foo)
         account_foo_external.refresh_from_db()
         assert account_foo_external.external_id is None
@@ -325,7 +326,7 @@ class TestProfileDisconnect:
         remove_temporary_customers: Callable[[], Iterable[None]],
     ) -> None:
         selenium = authenticate_selenium(user=profile_foo.user)
-        Profile.objects.create_in_saltedge(profile_foo, customers_api())
+        create_customer_in_saltedge(profile_foo, customers_api())
         self.disable_external_synchronization(selenium, live_server_path, profile_foo)
         transaction_foo_external.refresh_from_db()
         assert transaction_foo_external.external_id is None
@@ -428,7 +429,7 @@ class TestUserDelete:
         remove_temporary_customers: Callable[[], Iterable[None]],
     ) -> None:
         api = customers_api()
-        Profile.objects.create_in_saltedge(user_foo.profile, api)
+        create_customer_in_saltedge(user_foo.profile, api)
         selenium = authenticate_selenium(user=user_foo)
         assert api.customers_customer_id_get(user_foo.profile.external_id)
         self.delete_user(selenium, live_server_path, user_foo)
