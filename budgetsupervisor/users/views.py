@@ -33,6 +33,7 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
 
     def delete(self, *args: Any, **kwargs: Any) -> HttpResponseRedirect:
         user = self.get_object()
+        # TODO: All bussiness logic should be removed from views and put into services
         if user.profile.external_id:
             remove_customer_from_saltedge(user.profile, customers_api())
         output = super().delete(*args, **kwargs)
