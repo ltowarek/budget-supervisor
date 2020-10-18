@@ -4,7 +4,6 @@ import swagger_client as saltedge_client
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models.signals import post_save
 
 
 class User(AbstractUser):
@@ -39,13 +38,3 @@ class Profile(models.Model):
 
     def __str__(self) -> str:
         return str(self.user)
-
-
-def create_user_profile(
-    sender: str, instance: User, created: bool, **kwargs: int
-) -> None:
-    if created:
-        Profile.objects.create(user=instance)
-
-
-post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
