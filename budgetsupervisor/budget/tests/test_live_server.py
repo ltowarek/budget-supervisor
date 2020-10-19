@@ -1648,3 +1648,88 @@ class TestReportBalance:
             element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
         element = selenium.find_element_by_xpath('//input[@value="Submit"]')
         element.click()
+
+
+class TestNavigationBar:
+    def test_authenticated_budget_links(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        self.open_navigation_bar(selenium, live_server_path)
+
+        elements = selenium.find_elements_by_xpath(
+            '//nav/div[@id="navbarNav"]/ul[@id="budgetActions"]/li/a'
+        )
+        assert elements[0].text == "Home"
+        assert elements[0].get_attribute("href") == live_server_path(
+            reverse("budget_index")
+        )
+        assert elements[1].text == "Connections"
+        assert elements[1].get_attribute("href") == live_server_path(
+            reverse("connections:connection_list")
+        )
+        assert elements[2].text == "Accounts"
+        assert elements[2].get_attribute("href") == live_server_path(
+            reverse("accounts:account_list")
+        )
+        assert elements[3].text == "Transactions"
+        assert elements[3].get_attribute("href") == live_server_path(
+            reverse("transactions:transaction_list")
+        )
+        assert elements[4].text == "Categories"
+        assert elements[4].get_attribute("href") == live_server_path(
+            reverse("categories:category_list")
+        )
+        assert elements[5].text == "Balance"
+        assert elements[5].get_attribute("href") == live_server_path(
+            reverse("reports:report_balance")
+        )
+
+    def test_not_authenticated_budget_links(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str],
+    ) -> None:
+        self.open_navigation_bar(selenium, live_server_path)
+
+        elements = selenium.find_elements_by_xpath(
+            '//nav/div[@id="navbarNav"]/ul[@id="budgetActions"]/li/a'
+        )
+        assert len(elements) == 0
+
+    def test_authenticated_profile_links(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        self.open_navigation_bar(selenium, live_server_path)
+
+        elements = selenium.find_elements_by_xpath(
+            '//nav/div[@id="navbarNav"]/ul[@id="profileActions"]/li/a'
+        )
+        assert elements[0].text == "User: foo"
+        assert elements[0].get_attribute("href") == live_server_path(reverse("profile"))
+        assert elements[1].text == "Logout"
+        assert elements[1].get_attribute("href") == live_server_path(reverse("logout"))
+
+    def test_not_authenticated_profile_links(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str],
+    ) -> None:
+        self.open_navigation_bar(selenium, live_server_path)
+
+        elements = selenium.find_elements_by_xpath(
+            '//nav/div[@id="navbarNav"]/ul[@id="profileActions"]/li/a'
+        )
+        assert elements[0].text == "Login"
+        assert elements[0].get_attribute("href") == live_server_path(reverse("login"))
+        assert elements[1].text == "Try it Free"
+        assert elements[1].get_attribute("href") == live_server_path(reverse("signup"))
+
+    def open_navigation_bar(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str],
+    ) -> None:
+        url = live_server_path(reverse("login"))
+        selenium.get(url)

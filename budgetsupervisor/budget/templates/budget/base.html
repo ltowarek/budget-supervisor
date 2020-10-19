@@ -13,24 +13,38 @@
 </head>
 
 <body>
-    <div>
-        <ul>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
             {% if user.is_authenticated %}
-            <li><a href="{% url 'budget_index' %}">Home</a></li>
-            <li><a href="{% url 'connections:connection_list' %}">Connections</a></li>
-            <li><a href="{% url 'accounts:account_list' %}">Accounts</a></li>
-            <li><a href="{% url 'transactions:transaction_list' %}">Transactions</a></li>
-            <li><a href="{% url 'categories:category_list' %}">Categories</a></li>
-            <li><a href="{% url 'reports:report_balance' %}">Balance</a></li>
-            <li>User: {{ user.get_username }}</li>
-            <li><a href="{% url 'profile' %}">Profile</a></li>
-            <li><a href="{% url 'logout' %}?next={{request.path}}">Logout</a></li>
-            {% else %}
-            <li><a href="{% url 'login' %}?next={{request.path}}">Login</a></li>
-            <li><a href="{% url 'signup' %}">Try it Free</a></li>
+            <ul class="navbar-nav mr-auto" id="budgetActions">
+                <li class="nav-item"><a class="nav-link" href="{% url 'budget_index' %}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'connections:connection_list' %}">Connections</a>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:account_list' %}">Accounts</a></li>
+                <li class="nav-item"><a class="nav-link"
+                        href="{% url 'transactions:transaction_list' %}">Transactions</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'categories:category_list' %}">Categories</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'reports:report_balance' %}">Balance</a></li>
+            </ul>
             {% endif %}
-        </ul>
-    </div>
+
+            <ul class="navbar-nav ml-auto" id="profileActions">
+                {% if user.is_authenticated %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}">User: {{ user.get_username }}</a>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
+                {% else %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'signup' %}">Try it Free</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
     <div>
         {% if messages %}
         <ul class="messages">
