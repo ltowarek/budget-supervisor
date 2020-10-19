@@ -123,9 +123,11 @@ class TestProfileUpdate:
         self.update_profile(selenium, live_server_path, profile_foo)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Profile was updated successfully" in messages
+        assert any(
+            "Profile was updated successfully" in message for message in messages
+        )
 
     def update_profile(
         self,
@@ -229,9 +231,11 @@ class TestProfileConnect:
         self.enable_external_synchronization(selenium, live_server_path, profile_foo)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Profile was connected successfully" in messages
+        assert any(
+            "Profile was connected successfully" in message for message in messages
+        )
 
     def enable_external_synchronization(
         self,
@@ -299,9 +303,11 @@ class TestProfileDisconnect:
         self.disable_external_synchronization(selenium, live_server_path, profile_foo)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Profile was disconnected successfully" in messages
+        assert any(
+            "Profile was disconnected successfully" in message for message in messages
+        )
 
     def test_connections_deleted(
         self,
@@ -397,9 +403,9 @@ class TestUserDelete:
         self.delete_user(selenium, live_server_path, user_foo)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "User was deleted successfully" in messages
+        assert any("User was deleted successfully" in message for message in messages)
 
     def test_connections_are_deleted(
         self,

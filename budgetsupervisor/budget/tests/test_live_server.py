@@ -207,9 +207,11 @@ class TestConnectionUpdate:
         self.update_category(selenium, live_server_path, connection_foo)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Connection was updated successfully" in messages
+        assert any(
+            "Connection was updated successfully" in message for message in messages
+        )
 
     def update_category(
         self,
@@ -344,9 +346,11 @@ class TestConnectionDelete:
         self.delete_connection(selenium, live_server_path, connection)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Connection was deleted successfully" in messages
+        assert any(
+            "Connection was deleted successfully" in message for message in messages
+        )
 
     def delete_connection(
         self,
@@ -400,9 +404,12 @@ class TestConnectionImport:
         self.import_connections(selenium, live_server_path)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Connections were imported successfully: 1" in messages
+        assert any(
+            "Connections were imported successfully: 1" in message
+            for message in messages
+        )
 
     def test_cant_import_connections_if_external_synchronization_is_disabled(
         self,
@@ -559,9 +566,11 @@ class TestAccountCreate:
         self.create_account(selenium, live_server_path, "account name", "Cash")
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Account was created successfully" in messages
+        assert any(
+            "Account was created successfully" in message for message in messages
+        )
 
     def create_account(
         self,
@@ -623,9 +632,11 @@ class TestAccountUpdate:
         )
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Account was updated successfully" in messages
+        assert any(
+            "Account was updated successfully" in message for message in messages
+        )
 
     def update_account(
         self,
@@ -700,9 +711,11 @@ class TestAccountDelete:
         self.delete_account(selenium, live_server_path, account_foo)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Account was deleted successfully" in messages
+        assert any(
+            "Account was deleted successfully" in message for message in messages
+        )
 
     def delete_account(
         self,
@@ -771,9 +784,11 @@ class TestAccountImport:
         self.import_accounts(selenium, live_server_path, predefined_connection)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Accounts were imported successfully: 5" in messages
+        assert any(
+            "Accounts were imported successfully: 5" in message for message in messages
+        )
 
     def test_cant_import_accounts_if_external_synchronization_is_disabled(
         self,
@@ -1008,9 +1023,11 @@ class TestTransactionCreate:
         )
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Transaction was created successfully" in messages
+        assert any(
+            "Transaction was created successfully" in message for message in messages
+        )
 
     def create_transaction(
         self,
@@ -1119,9 +1136,11 @@ class TestTransactionUpdate:
         )
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Transaction was updated successfully" in messages
+        assert any(
+            "Transaction was updated successfully" in message for message in messages
+        )
 
     def update_transaction(
         self,
@@ -1196,9 +1215,11 @@ class TestTransactionDelete:
         self.delete_transaction(selenium, live_server_path, transaction_foo)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Transaction was deleted successfully" in messages
+        assert any(
+            "Transaction was deleted successfully" in message for message in messages
+        )
 
     def delete_transaction(
         self,
@@ -1267,9 +1288,12 @@ class TestTransactionImport:
         self.import_transactions(selenium, live_server_path, predefined_account)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Transactions were imported successfully: 17" in messages
+        assert any(
+            "Transactions were imported successfully: 17" in message
+            for message in messages
+        )
 
     def test_cant_import_transactions_if_external_synchronization_is_disabled(
         self,
@@ -1421,9 +1445,11 @@ class TestCategoryCreate:
         self.create_category(selenium, live_server_path, "category foo")
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Category was created successfully" in messages
+        assert any(
+            "Category was created successfully" in message for message in messages
+        )
 
     def create_category(
         self, selenium: WebDriver, live_server_path: Callable[[str], str], name: str
@@ -1472,9 +1498,11 @@ class TestCategoryUpdate:
         self.update_category(selenium, live_server_path, category_foo, "new name")
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Category was updated successfully" in messages
+        assert any(
+            "Category was updated successfully" in message for message in messages
+        )
 
     def update_category(
         self,
@@ -1532,9 +1560,11 @@ class TestCategoryDelete:
         self.delete_category(selenium, live_server_path, category_foo)
         messages = [
             m.text
-            for m in selenium.find_elements_by_xpath('//ul[@class="messages"]/li')
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
         ]
-        assert "Category was deleted successfully" in messages
+        assert any(
+            "Category was deleted successfully" in message for message in messages
+        )
 
     def delete_category(
         self,

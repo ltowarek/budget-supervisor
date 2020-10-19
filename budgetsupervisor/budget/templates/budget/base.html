@@ -45,15 +45,13 @@
         </div>
     </nav>
 
-    <div>
-        {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-            <li {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
+    {% for message in messages %}
+    <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
     </div>
+    {% endfor %}
+
     <div>{% block content %}{% endblock %}</div>
 
     <script src="{% static 'js/jquery-3.5.1.slim.min.js' %}"></script>
