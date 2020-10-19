@@ -1658,7 +1658,7 @@ class TestNavigationBar:
         user_foo: User,
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
-        self.open_navigation_bar(selenium, live_server_path)
+        self.open_page_with_navigation_bar(selenium, live_server_path)
 
         elements = selenium.find_elements_by_xpath(
             '//nav/div[@id="navbarNav"]/ul[@id="budgetActions"]/li/a'
@@ -1691,7 +1691,7 @@ class TestNavigationBar:
     def test_not_authenticated_budget_links(
         self, selenium: WebDriver, live_server_path: Callable[[str], str],
     ) -> None:
-        self.open_navigation_bar(selenium, live_server_path)
+        self.open_page_with_navigation_bar(selenium, live_server_path)
 
         elements = selenium.find_elements_by_xpath(
             '//nav/div[@id="navbarNav"]/ul[@id="budgetActions"]/li/a'
@@ -1705,7 +1705,7 @@ class TestNavigationBar:
         user_foo: User,
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
-        self.open_navigation_bar(selenium, live_server_path)
+        self.open_page_with_navigation_bar(selenium, live_server_path)
 
         elements = selenium.find_elements_by_xpath(
             '//nav/div[@id="navbarNav"]/ul[@id="profileActions"]/li/a'
@@ -1718,7 +1718,7 @@ class TestNavigationBar:
     def test_not_authenticated_profile_links(
         self, selenium: WebDriver, live_server_path: Callable[[str], str],
     ) -> None:
-        self.open_navigation_bar(selenium, live_server_path)
+        self.open_page_with_navigation_bar(selenium, live_server_path)
 
         elements = selenium.find_elements_by_xpath(
             '//nav/div[@id="navbarNav"]/ul[@id="profileActions"]/li/a'
@@ -1728,8 +1728,98 @@ class TestNavigationBar:
         assert elements[1].text == "Try it Free"
         assert elements[1].get_attribute("href") == live_server_path(reverse("signup"))
 
-    def open_navigation_bar(
+    def open_page_with_navigation_bar(
         self, selenium: WebDriver, live_server_path: Callable[[str], str],
     ) -> None:
         url = live_server_path(reverse("login"))
         selenium.get(url)
+
+
+class TestPagination:
+    def test_single_page(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        number_of_pages = 1
+        paginate_by = 25
+        for _ in range(number_of_pages * paginate_by):
+            transaction_factory(user=user_foo)
+
+        base_url = live_server_path(reverse("transactions:transaction_list"))
+        url = base_url
+
+        selenium = authenticate_selenium(user=user_foo)
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath(
+            '//nav/ul[contains(@class, "pagination")]/li/a'
+        )
+        assert elements[0].text == "Previous"
+        assert elements[0].get_attribute("href") == url + "#"
+        assert elements[1].text == "1"
+        assert elements[1].get_attribute("href") == base_url + "?page=1"
+        assert elements[2].text == "Next"
+        assert elements[2].get_attribute("href") == url + "#"
+
+    def test_previous_page(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        number_of_pages = 2
+        paginate_by = 25
+        for _ in range(number_of_pages * paginate_by):
+            transaction_factory(user=user_foo)
+
+        base_url = live_server_path(reverse("transactions:transaction_list"))
+        url = base_url + "?page=2"
+
+        selenium = authenticate_selenium(user=user_foo)
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath(
+            '//nav/ul[contains(@class, "pagination")]/li/a'
+        )
+        assert elements[0].text == "Previous"
+        assert elements[0].get_attribute("href") == base_url + "?page=1"
+        assert elements[1].text == "1"
+        assert elements[1].get_attribute("href") == base_url + "?page=1"
+        assert elements[2].text == "2"
+        assert elements[2].get_attribute("href") == base_url + "?page=2"
+        assert elements[3].text == "Next"
+        assert elements[3].get_attribute("href") == url + "#"
+
+    def test_next_page(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        number_of_pages = 2
+        paginate_by = 25
+        for _ in range(number_of_pages * paginate_by):
+            transaction_factory(user=user_foo)
+
+        base_url = live_server_path(reverse("transactions:transaction_list"))
+        url = base_url + "?page=1"
+
+        selenium = authenticate_selenium(user=user_foo)
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath(
+            '//nav/ul[contains(@class, "pagination")]/li/a'
+        )
+        assert elements[0].text == "Previous"
+        assert elements[0].get_attribute("href") == url + "#"
+        assert elements[1].text == "1"
+        assert elements[1].get_attribute("href") == base_url + "?page=1"
+        assert elements[2].text == "2"
+        assert elements[2].get_attribute("href") == base_url + "?page=2"
+        assert elements[3].text == "Next"
+        assert elements[3].get_attribute("href") == base_url + "?page=2"
