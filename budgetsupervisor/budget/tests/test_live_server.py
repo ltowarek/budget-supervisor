@@ -904,7 +904,7 @@ class TestTransactionList:
             assert cells[4].text == str(transaction.category)
             assert cells[5].text == transaction.description
 
-            actions = cells[6].find_elements_by_xpath(".//ul/li/a")
+            actions = cells[6].find_elements_by_xpath(".//a")
             assert actions[0].text == "Update"
             assert actions[0].get_attribute("href") == live_server_path(
                 reverse(

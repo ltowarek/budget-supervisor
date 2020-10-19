@@ -10,7 +10,7 @@ Transactions
     <a class="btn btn-primary mr-3" href="{% url 'transactions:transaction_import' %}">Import</a>
 </div>
 
-<table class="table table-bordered">
+<table class="table table-bordered text-center">
     <thead class="thead-light">
         <tr>
             <th>ID</th>
@@ -32,10 +32,10 @@ Transactions
             <td>{{ transaction.category }}</td>
             <td>{{ transaction.description }}</td>
             <td>
-                <ul>
-                    <li><a href="{% url 'transactions:transaction_update' transaction.id %}">Update</a></li>
-                    <li><a href="{% url 'transactions:transaction_delete' transaction.id %}">Delete</a></li>
-                </ul>
+                <a class="btn btn-outline-primary btn-sm mr-1"
+                    href="{% url 'transactions:transaction_update' transaction.id %}">Update</a>
+                <a class="btn btn-outline-primary btn-sm mr-1"
+                    href="{% url 'transactions:transaction_delete' transaction.id %}">Delete</a>
             </td>
         </tr>
         {% endfor %}
