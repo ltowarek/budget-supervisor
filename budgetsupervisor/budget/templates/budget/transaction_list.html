@@ -1,13 +1,13 @@
 {% extends "budget/base.html" %}
 
 {% block content %}
-<ul id="menu">
-    <li><a href="{% url 'transactions:transaction_create' %}">Create</a></li>
-    <li><a href="{% url 'transactions:transaction_import' %}">Import</a></li>
-</ul>
+<div class="btn-toolbar my-3 justify-content-center">
+    <a class="btn btn-primary mr-3" href="{% url 'transactions:transaction_create' %}">Create</a>
+    <a class="btn btn-primary mr-3" href="{% url 'transactions:transaction_import' %}">Import</a>
+</div>
 
 <table class="table table-bordered">
-    <thead>
+    <thead class="thead-light">
         <tr>
             <th>ID</th>
             <th>Date</th>

@@ -829,7 +829,9 @@ class TestTransactionList:
         url = live_server_path(reverse("transactions:transaction_list"))
         selenium.get(url)
 
-        elements = selenium.find_elements_by_xpath('//ul[@id="menu"]/li/a')
+        elements = selenium.find_elements_by_xpath(
+            '//div[contains(@class, "btn-toolbar")]/a'
+        )
         assert len(elements) == 2
         assert elements[0].text == "Create"
         assert elements[0].get_attribute("href") == live_server_path(
