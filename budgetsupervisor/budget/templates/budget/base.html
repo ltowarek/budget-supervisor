@@ -60,6 +60,10 @@
         {% endfor %}
 
         <div>{% block content %}{% endblock %}</div>
+
+        <footer class="text-center">
+            <p>&copy; {% now "Y" %} Copyright: <strong>Lukasz Towarek</strong></p>
+        </footer>
     </div>
 
     <script src="{% static 'js/jquery-3.5.1.slim.min.js' %}"></script>
