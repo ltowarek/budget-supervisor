@@ -13,46 +13,51 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            {% if user.is_authenticated %}
-            <ul class="navbar-nav mr-auto" id="budgetActions">
-                <li class="nav-item"><a class="nav-link" href="{% url 'budget_index' %}">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'connections:connection_list' %}">Connections</a>
-                </li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:account_list' %}">Accounts</a></li>
-                <li class="nav-item"><a class="nav-link"
-                        href="{% url 'transactions:transaction_list' %}">Transactions</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'categories:category_list' %}">Categories</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'reports:report_balance' %}">Balance</a></li>
-            </ul>
-            {% endif %}
-
-            <ul class="navbar-nav ml-auto" id="profileActions">
+    <div class="container-fluid">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
                 {% if user.is_authenticated %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}">User: {{ user.get_username }}</a>
-                </li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
-                {% else %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'signup' %}">Try it Free</a></li>
+                <ul class="navbar-nav mr-auto" id="budgetActions">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'budget_index' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link"
+                            href="{% url 'connections:connection_list' %}">Connections</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'accounts:account_list' %}">Accounts</a></li>
+                    <li class="nav-item"><a class="nav-link"
+                            href="{% url 'transactions:transaction_list' %}">Transactions</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'categories:category_list' %}">Categories</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'reports:report_balance' %}">Balance</a></li>
+                </ul>
                 {% endif %}
-            </ul>
+
+                <ul class="navbar-nav ml-auto" id="profileActions">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}">User:
+                            {{ user.get_username }}</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
+                    {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'signup' %}">Try it Free</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+
+        {% for message in messages %}
+        <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
         </div>
-    </nav>
+        {% endfor %}
 
-    {% for message in messages %}
-    <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <div>{% block content %}{% endblock %}</div>
     </div>
-    {% endfor %}
-
-    <div>{% block content %}{% endblock %}</div>
 
     <script src="{% static 'js/jquery-3.5.1.slim.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
