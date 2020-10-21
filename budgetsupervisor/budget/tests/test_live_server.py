@@ -1057,7 +1057,7 @@ class TestTransactionCreate:
         element.send_keys(description)
         select = Select(selenium.find_element_by_name("account"))
         select.select_by_visible_text(account.name)
-        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 
@@ -1176,7 +1176,7 @@ class TestTransactionUpdate:
         element.send_keys(description)
         select = Select(selenium.find_element_by_name("account"))
         select.select_by_visible_text(account.name)
-        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
         transaction.refresh_from_db()
 

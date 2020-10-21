@@ -36,6 +36,7 @@ ALLOWED_HOSTS: List = []
 INSTALLED_APPS = [
     "budget.apps.BudgetConfig",
     "users.apps.UsersConfig",
+    "widget_tweaks",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
