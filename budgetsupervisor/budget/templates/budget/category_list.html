@@ -1,12 +1,16 @@
 {% extends "budget/base.html" %}
 
-{% block content %}
-<ul id="menu">
-    <li><a href="{% url 'categories:category_create' %}">Create</a></li>
-</ul>
+{% block title %}
+Categories
+{% endblock %}
 
-<table>
-    <thead>
+{% block content %}
+<div class="btn-toolbar my-3 justify-content-center">
+    <a class="btn btn-primary mr-3" href="{% url 'categories:category_create' %}">Create</a>
+</div>
+
+<table class="table table-bordered text-center">
+    <thead class="thead-light">
         <tr>
             <th>ID</th>
             <th>Name</th>
@@ -19,10 +23,10 @@
             <td>{{ category.id }}</td>
             <td>{{ category.name }}</td>
             <td>
-                <ul>
-                    <li><a href="{% url 'categories:category_update' category.id %}">Update</a></li>
-                    <li><a href="{% url 'categories:category_delete' category.id %}">Delete</a></li>
-                </ul>
+                <a class="btn btn-outline-primary btn-sm mr-1"
+                    href="{% url 'categories:category_update' category.id %}">Update</a>
+                <a class="btn btn-outline-primary btn-sm mr-1"
+                    href="{% url 'categories:category_delete' category.id %}">Delete</a>
             </td>
         </tr>
         {% endfor %}

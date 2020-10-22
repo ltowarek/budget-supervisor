@@ -1,11 +1,13 @@
 {% extends "budget/base.html" %}
 
+{% block title %}
+Connection
+{% endblock %}
+
 {% block content %}
 <form action="" method="post">
   {% csrf_token %}
-  <table>
-    {{ form.as_table }}
-  </table>
-  <input type="submit" value="Submit">
+  {% include "budget/form_snippet.html" %}
+  <button type="submit" class="btn btn-primary">Submit</button>
 </form>
 {% endblock %}

@@ -1,15 +1,17 @@
 {% extends "budget/base.html" %}
 
+{% block title %}
+Import Accounts
+{% endblock %}
+
 {% block content %}
 {% if not profile.external_id %}
 <p id="synchronization">Enable <a href="{% url 'profile' %}">external synchronization</a> before importing accounts</p>
 {% else %}
 <form action="" method="post">
   {% csrf_token %}
-  <table>
-    {{ form.as_table }}
-  </table>
-  <input type="submit" value="Import">
+  {% include "budget/form_snippet.html" %}
+  <button type="submit" class="btn btn-primary">Import</button>
 </form>
 {% endif %}
 {% endblock %}

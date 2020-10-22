@@ -36,7 +36,9 @@ class TestConnectionList:
         url = live_server_path(reverse("connections:connection_list"))
         selenium.get(url)
 
-        elements = selenium.find_elements_by_xpath('//ul[@id="menu"]/li/a')
+        elements = selenium.find_elements_by_xpath(
+            '//div[contains(@class, "btn-toolbar")]/a'
+        )
         assert len(elements) == 2
         assert elements[0].text == "Create"
         assert elements[0].get_attribute("href") == live_server_path(
@@ -89,7 +91,7 @@ class TestConnectionList:
             assert cells[0].text == str(connection.id)
             assert cells[1].text == connection.provider
 
-            actions = cells[2].find_elements_by_xpath(".//ul/li/a")
+            actions = cells[2].find_elements_by_xpath(".//a")
             assert actions[0].text == "Update"
             assert actions[0].get_attribute("href") == live_server_path(
                 reverse("connections:connection_update", kwargs={"pk": connection.pk})
@@ -163,7 +165,7 @@ class TestConnectionCreate:
     ) -> None:
         url = live_server_path(reverse("connections:connection_create"))
         selenium.get(url)
-        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
         element = selenium.find_element_by_id("providers-search")
         element.send_keys("Fake Demo Bank")
@@ -223,7 +225,7 @@ class TestConnectionUpdate:
             reverse("connections:connection_update", kwargs={"pk": connection.pk})
         )
         selenium.get(url)
-        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 
@@ -362,7 +364,7 @@ class TestConnectionDelete:
             reverse("connections:connection_delete", kwargs={"pk": connection.pk})
         )
         selenium.get(url)
-        element = selenium.find_element_by_xpath('//input[@value="Yes, delete."]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 
@@ -431,7 +433,7 @@ class TestConnectionImport:
     ) -> None:
         url = live_server_path(reverse("connections:connection_import"))
         selenium.get(url)
-        element = selenium.find_element_by_xpath('//input[@value="Import"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 
@@ -446,7 +448,9 @@ class TestAccountList:
         url = live_server_path(reverse("accounts:account_list"))
         selenium.get(url)
 
-        elements = selenium.find_elements_by_xpath('//ul[@id="menu"]/li/a')
+        elements = selenium.find_elements_by_xpath(
+            '//div[contains(@class, "btn-toolbar")]/a'
+        )
         assert len(elements) == 2
         assert elements[0].text == "Create"
         assert elements[0].get_attribute("href") == live_server_path(
@@ -507,7 +511,7 @@ class TestAccountList:
             assert cells[1].text == account.name
             assert cells[2].text == account.get_account_type_display()
 
-            actions = cells[3].find_elements_by_xpath(".//ul/li/a")
+            actions = cells[3].find_elements_by_xpath(".//a")
             assert actions[0].text == "Update"
             assert actions[0].get_attribute("href") == live_server_path(
                 reverse("accounts:account_update", kwargs={"pk": account.pk})
@@ -585,7 +589,7 @@ class TestAccountCreate:
         element.send_keys(name)
         select = Select(selenium.find_element_by_name("account_type"))
         select.select_by_visible_text(account_type)
-        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 
@@ -655,7 +659,7 @@ class TestAccountUpdate:
         element.send_keys(name)
         select = Select(selenium.find_element_by_name("account_type"))
         select.select_by_visible_text(account_type)
-        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
         account.refresh_from_db()
 
@@ -727,7 +731,7 @@ class TestAccountDelete:
             reverse("accounts:account_delete", kwargs={"pk": account.pk})
         )
         selenium.get(url)
-        element = selenium.find_element_by_xpath('//input[@value="Yes, delete."]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 
@@ -814,7 +818,7 @@ class TestAccountImport:
         selenium.get(url)
         select = Select(selenium.find_element_by_name("connection"))
         select.select_by_visible_text(connection.provider)
-        element = selenium.find_element_by_xpath('//input[@value="Import"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 
@@ -1233,7 +1237,7 @@ class TestTransactionDelete:
             reverse("transactions:transaction_delete", kwargs={"pk": transaction.pk})
         )
         selenium.get(url)
-        element = selenium.find_element_by_xpath('//input[@value="Yes, delete."]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 
@@ -1322,7 +1326,7 @@ class TestTransactionImport:
         selenium.get(url)
         select = Select(selenium.find_element_by_name("account"))
         select.select_by_visible_text(account.name)
-        element = selenium.find_element_by_xpath('//input[@value="Import"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 
@@ -1337,7 +1341,9 @@ class TestCategoryList:
         url = live_server_path(reverse("categories:category_list"))
         selenium.get(url)
 
-        elements = selenium.find_elements_by_xpath('//ul[@id="menu"]/li/a')
+        elements = selenium.find_elements_by_xpath(
+            '//div[contains(@class, "btn-toolbar")]/a'
+        )
         assert len(elements) == 1
         assert elements[0].text == "Create"
         assert elements[0].get_attribute("href") == live_server_path(
@@ -1389,7 +1395,7 @@ class TestCategoryList:
             assert cells[0].text == str(category.id)
             assert cells[1].text == category.name
 
-            actions = cells[2].find_elements_by_xpath(".//ul/li/a")
+            actions = cells[2].find_elements_by_xpath(".//a")
             assert actions[0].text == "Update"
             assert actions[0].get_attribute("href") == live_server_path(
                 reverse("categories:category_update", kwargs={"pk": category.pk})
@@ -1460,7 +1466,7 @@ class TestCategoryCreate:
         selenium.get(url)
         element = selenium.find_element_by_name("name")
         element.send_keys(name)
-        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 
@@ -1520,7 +1526,7 @@ class TestCategoryUpdate:
         element = selenium.find_element_by_name("name")
         element.clear()
         element.send_keys(name)
-        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
         category.refresh_from_db()
 
@@ -1578,7 +1584,7 @@ class TestCategoryDelete:
             reverse("categories:category_delete", kwargs={"pk": category.pk})
         )
         selenium.get(url)
-        element = selenium.find_element_by_xpath('//input[@value="Yes, delete."]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 
@@ -1593,7 +1599,7 @@ class TestReportBalance:
         selenium = authenticate_selenium(user=user_foo)
         self.report_balance(selenium, live_server_path, [account_foo])
 
-        elements = selenium.find_elements_by_xpath('//table[@id="report"]/thead/tr/th')
+        elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
         assert len(elements) == 2
         assert elements[0].text == "Category"
         assert elements[1].text == "Balance"
@@ -1639,7 +1645,7 @@ class TestReportBalance:
             selenium, live_server_path, selected_accounts, from_date, to_date
         )
 
-        elements = selenium.find_elements_by_xpath('//table[@id="report"]/tbody/tr')
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr")
         total = 1
         assert len(elements) == number_of_categories + total
 
@@ -1654,7 +1660,7 @@ class TestReportBalance:
         selenium = authenticate_selenium(user=user_foo)
         self.report_balance(selenium, live_server_path, [account_foo])
 
-        elements = selenium.find_elements_by_xpath('//table[@id="report"]/tbody/tr')
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr")
         assert len(elements) == 2
         assert elements[0].find_elements_by_xpath(".//td")[0].text == "None"
         assert elements[1].find_elements_by_xpath(".//td")[0].text == "Total"
@@ -1678,7 +1684,7 @@ class TestReportBalance:
         if to_date:
             element = selenium.find_element_by_name("to_date")
             element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
-        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
 

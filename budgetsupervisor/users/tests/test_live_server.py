@@ -30,9 +30,13 @@ class TestLogin:
         url = live_server_path(reverse("login"))
         selenium.get(url)
         self.login_user(selenium, "bar", "xyz")
-        assert (
-            selenium.find_element_by_id("form_errors").text
-            == "Your username and password didn't match. Please try again."
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
+        ]
+        assert any(
+            "Please enter a correct username and password." in message
+            for message in messages
         )
 
     def test_next_redirects_to_requested_url(
@@ -64,7 +68,7 @@ class TestLogin:
         username_input.send_keys(username)
         password_input = selenium.find_element_by_name("password")
         password_input.send_keys(password)
-        selenium.find_element_by_xpath('//input[@value="login"]').click()
+        selenium.find_element_by_xpath('//button[@type="submit"]').click()
 
 
 class TestSignUp:
@@ -86,9 +90,7 @@ class TestSignUp:
         selenium.get(url)
         self.sign_up_user(selenium, "foo", "password")
         assert (
-            selenium.find_element_by_class_name("errorlist")
-            .find_elements_by_tag_name("li")[0]
-            .text
+            selenium.find_element_by_class_name("invalid-feedback").text
             == "A user with that username already exists."
         )
 
@@ -99,7 +101,7 @@ class TestSignUp:
         password1_input.send_keys(password)
         password2_input = selenium.find_element_by_name("password2")
         password2_input.send_keys(password)
-        selenium.find_element_by_xpath('//input[@value="Sign Up"]').click()
+        selenium.find_element_by_xpath('//button[@type="submit"]').click()
 
 
 class TestProfileUpdate:
@@ -137,7 +139,7 @@ class TestProfileUpdate:
     ) -> None:
         url = live_server_path(reverse("profile"))
         selenium.get(url)
-        element = selenium.find_element_by_xpath('//input[@value="Submit"]')
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
         profile.refresh_from_db()
 
@@ -245,7 +247,7 @@ class TestProfileConnect:
     ) -> None:
         url = live_server_path(reverse("profile_connect"))
         selenium.get(url)
-        selenium.find_element_by_xpath('//input[@value="Submit"]').click()
+        selenium.find_element_by_xpath('//button[@type="submit"]').click()
         profile.refresh_from_db()
 
 
@@ -358,7 +360,7 @@ class TestProfileDisconnect:
     ) -> None:
         url = live_server_path(reverse("profile_disconnect"))
         selenium.get(url)
-        selenium.find_element_by_xpath('//input[@value="Submit"]').click()
+        selenium.find_element_by_xpath('//button[@type="submit"]').click()
         profile.refresh_from_db()
 
 
@@ -461,4 +463,4 @@ class TestUserDelete:
     ) -> None:
         url = live_server_path(reverse("user_delete"))
         selenium.get(url)
-        selenium.find_element_by_xpath('//input[@value="Yes, delete."]').click()
+        selenium.find_element_by_xpath('//button[@type="submit"]').click()

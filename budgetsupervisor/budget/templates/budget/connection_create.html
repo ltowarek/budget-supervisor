@@ -1,17 +1,18 @@
 {% extends "budget/base.html" %}
 
-{% block content %}
+{% block title %}
+Create Connection
+{% endblock %}
 
+{% block content %}
 {% if not profile.external_id %}
-<p id="synchronization">Enable <a href="{% url 'profile' %}">external synchronization</a> before creating a connection</p>
+<p id="synchronization">Enable <a href="{% url 'profile' %}">external synchronization</a> before creating a connection
+</p>
 {% else %}
 <form action="" method="post">
   {% csrf_token %}
-  <table>
-    {{ form.as_table }}
-  </table>
-  <input type="submit" value="Submit">
+  {% include "budget/form_snippet.html" %}
+  <button type="submit" class="btn btn-primary">Submit</button>
 </form>
 {% endif %}
-
 {% endblock %}

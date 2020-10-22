@@ -1,19 +1,24 @@
 {% extends "budget/base.html" %}
 
+{% block title %}
+Profile
+{% endblock %}
+
 {% block content %}
 <form action="" method="post">
   {% csrf_token %}
-  <table>
-    {{ form.as_table }}
-  </table>
-  <input type="submit" value="Submit">
+  {% include "budget/form_snippet.html" %}
+  <button type="submit" class="btn btn-primary">Submit</button>
 </form>
 
-<a href="{% url 'user_delete' %}">Delete account</a>
-{% if object.external_id %}
-<a id="synchronization" href="{% url 'profile_disconnect' %}">Disable external synchronization</a>
-{% else %}
-<a id="synchronization" href="{% url 'profile_connect' %}">Enable external synchronization</a>
-{% endif %}
-
+<div class="btn-toolbar my-3 justify-content-center">
+  <a class="btn btn-primary mr-3" href="{% url 'user_delete' %}">Delete account</a>
+  {% if object.external_id %}
+  <a class="btn btn-primary mr-3" id="synchronization" href="{% url 'profile_disconnect' %}">Disable external
+    synchronization</a>
+  {% else %}
+  <a class="btn btn-primary mr-3" id="synchronization" href="{% url 'profile_connect' %}">Enable external
+    synchronization</a>
+  {% endif %}
+</div>
 {% endblock %}

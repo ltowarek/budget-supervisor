@@ -1,15 +1,17 @@
 {% extends "budget/base.html" %}
 
+{% block title %}
+Category Balance
+{% endblock %}
+
 {% block content %}
 <form action="" method="get">
-  <table>
-    {{ form.as_table }}
-  </table>
-  <input type="submit" value="Submit">
+  {% include "budget/form_snippet.html" %}
+  <button type="submit" class="btn btn-primary">Submit</button>
 </form>
 
-<table id="report">
-  <thead>
+<table class="table table-bordered text-center mt-2">
+  <thead class="thead-light">
     <tr>
       <th>Category</th>
       <th>Balance</th>

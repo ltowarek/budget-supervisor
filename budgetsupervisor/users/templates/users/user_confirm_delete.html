@@ -1,12 +1,15 @@
 {% extends "budget/base.html" %}
 
-{% block content %}
-<h1>Delete User</h1>
+{% block title %}
+Delete User
+{% endblock %}
 
+{% block content %}
 <p>Are you sure you want to delete the user?</p>
 
 <form action="" method="POST">
   {% csrf_token %}
-  <input type="submit" value="Yes, delete.">
+  {% include "budget/form_snippet.html" %}
+  <button type="submit" class="btn btn-primary">Yes, delete.</button>
 </form>
 {% endblock %}
