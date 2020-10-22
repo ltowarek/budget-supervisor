@@ -71,6 +71,7 @@ class ConnectionCreate(LoginRequiredMixin, FormView):
         return context
 
 
+# TODO: Replace LoginRequiredMixin and UserPassesTestMixin with object-based PermissionRequiredMixin
 class ConnectionUpdate(
     LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
 ):
