@@ -147,6 +147,7 @@ class AccountCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return super().form_valid(form)
 
 
+# TODO: Show connection field, however it should be set as disabled/readonly.
 class AccountUpdate(
     LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
 ):
