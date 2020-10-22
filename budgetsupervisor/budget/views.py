@@ -200,6 +200,8 @@ class ImportAccountsView(LoginRequiredMixin, FormView):
         return context
 
 
+# TODO: Add filtering to the table. At least it should be possible to filter by account.
+# Link to filtered transactions by account should be also a possible action in the account list.
 class TransactionListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
