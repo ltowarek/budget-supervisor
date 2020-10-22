@@ -19,7 +19,8 @@ def test_login_view_get(client: Client) -> None:
 def test_logout_view_get(client: Client) -> None:
     url = reverse("logout")
     response = client.get(url)
-    assert response.status_code == 200
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "login"
 
 
 def test_sign_up_view_get(client: Client) -> None:
