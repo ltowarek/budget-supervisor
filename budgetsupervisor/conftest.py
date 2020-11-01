@@ -48,6 +48,11 @@ def user_foo(user_factory: Callable[..., User]) -> User:
 
 
 @pytest.fixture
+def user_foo_inactive(user_factory: Callable[..., User]) -> User:
+    return user_factory(username="foo", is_active=False)
+
+
+@pytest.fixture
 @pytest.mark.django_db
 def profile_factory(user_foo: User) -> Callable[..., Profile]:
     def create_profile(user: User = user_foo, external_id: int = None) -> Profile:

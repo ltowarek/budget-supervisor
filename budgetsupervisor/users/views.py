@@ -4,14 +4,22 @@ from budget.models import Account, Connection, Transaction
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.mail import send_mail
 from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
-from django.urls import reverse_lazy
+from django.template.loader import render_to_string
+from django.urls import reverse, reverse_lazy
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.views.generic import RedirectView
 from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 from saltedge_wrapper.factory import customers_api
 from users.forms import ProfileConnectForm, ProfileDisconnectForm, SignUpForm
 from users.models import Profile, User
 from users.services import create_customer_in_saltedge, remove_customer_from_saltedge
+from users.tokens import user_tokenizer
+
+from budgetsupervisor import settings
 
 
 # TODO: Add Terms and Conditions
@@ -21,6 +29,46 @@ class SignUpView(CreateView):
     template_name = "users/signup.html"
     form_class = SignUpForm
     success_url = reverse_lazy("login")
+
+    def form_valid(self, form: SignUpForm) -> HttpResponseRedirect:
+        response = super().form_valid(form)
+
+        user = self.object
+        user_id = urlsafe_base64_encode(force_bytes(user.id))
+        token = user_tokenizer.make_token(user)
+        url = self.request.build_absolute_uri(
+            str(reverse("activate", kwargs={"user_id": user_id, "token": token}))
+        )
+        message = render_to_string(
+            "users/activation_email.html", {"activation_url": url}
+        )
+
+        send_mail(
+            "Budget Supervisor Email Confirmation",
+            message,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[user.email],
+        )
+
+        return response
+
+
+class UserActivateView(RedirectView):
+    pattern_name = "login"
+
+    def get_redirect_url(self, user_id: str, token: str) -> HttpResponseRedirect:
+        user_id = force_str(urlsafe_base64_decode(user_id))
+        user = User.objects.filter(pk=user_id).first()
+        if user and user_tokenizer.check_token(user, token):
+            user.is_active = True
+            user.save()
+            messages.success(self.request, "Registration complete. Please login.")
+        else:
+            messages.error(
+                self.request,
+                "Registration confirmation error. Please click the reset password to generate a new confirmation email.",
+            )
+        return super().get_redirect_url()
 
 
 class UserDeleteView(LoginRequiredMixin, DeleteView):
@@ -41,6 +89,7 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
         return output
 
 
+# TODO: Show user name and email
 class ProfileUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Profile
     fields: List[str] = []

@@ -2,12 +2,16 @@ from typing import Callable, Iterable
 
 import pytest
 from budget.models import Account, Connection, Transaction
+from django.core import mail
 from django.shortcuts import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from saltedge_wrapper.factory import customers_api
 from selenium.webdriver.firefox.webdriver import WebDriver
 from swagger_client.rest import ApiException
 from users.models import Profile, User
 from users.services import create_customer_in_saltedge
+from users.tokens import user_tokenizer
 
 pytestmark = pytest.mark.selenium
 
@@ -38,6 +42,21 @@ class TestLogin:
             "Please enter a correct username and password." in message
             for message in messages
         )
+
+    def test_inactive_user_cant_log_in(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
+        user_foo.is_active = False
+        user_foo.save()
+
+        url = live_server_path(reverse("login"))
+        selenium.get(url)
+        self.login_user(selenium, "foo", "password")
+        assert selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
+        # Can't check if user is inactive or credentials are wrong - https://code.djangoproject.com/ticket/28645
 
     def test_next_redirects_to_requested_url(
         self,
@@ -77,10 +96,10 @@ class TestSignUp:
     ) -> None:
         url = live_server_path(reverse("signup"))
         selenium.get(url)
-        self.sign_up_user(selenium, "foo", "Foo Password")
+        self.sign_up_user(selenium, "foo", "Foo Password", "foo@example.com")
         assert selenium.current_url == live_server_path(reverse("login"))
 
-    def test_existing_user_cant_sign_up_again(
+    def test_user_with_existing_username_cant_sign_up(
         self,
         selenium: WebDriver,
         live_server_path: Callable[[str], str],
@@ -88,20 +107,138 @@ class TestSignUp:
     ) -> None:
         url = live_server_path(reverse("signup"))
         selenium.get(url)
-        self.sign_up_user(selenium, "foo", "password")
+        self.sign_up_user(selenium, "foo", "password", "foo@example.com")
         assert (
             selenium.find_element_by_class_name("invalid-feedback").text
             == "A user with that username already exists."
         )
 
-    def sign_up_user(self, selenium: WebDriver, username: str, password: str) -> None:
+    def test_sign_up_sends_activation_email(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str]
+    ) -> None:
+        url = live_server_path(reverse("signup"))
+        selenium.get(url)
+        self.sign_up_user(selenium, "foo", "Foo Password", "foo@example.com")
+        assert mail.outbox
+        activation_email = mail.outbox[0]
+        assert "foo@example.com" in activation_email.to
+        assert activation_email.subject == "Budget Supervisor Email Confirmation"
+        assert (
+            "Please click the following link to complete your registration."
+            in activation_email.body
+        )
+
+    def test_sign_up_creates_inactive_user(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str]
+    ) -> None:
+        url = live_server_path(reverse("signup"))
+        selenium.get(url)
+        self.sign_up_user(selenium, "foo", "Foo Password", "foo@example.com")
+        user = User.objects.get(username="foo")
+        assert user.is_active is False
+
+    def sign_up_user(
+        self, selenium: WebDriver, username: str, password: str, email: str
+    ) -> None:
         username_input = selenium.find_element_by_name("username")
         username_input.send_keys(username)
+        email_input = selenium.find_element_by_name("email")
+        email_input.send_keys(email)
         password1_input = selenium.find_element_by_name("password1")
         password1_input.send_keys(password)
         password2_input = selenium.find_element_by_name("password2")
         password2_input.send_keys(password)
         selenium.find_element_by_xpath('//button[@type="submit"]').click()
+
+
+class TestUserActivateView:
+    def test_user_is_activated(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user_foo_inactive: User,
+    ) -> None:
+        self.activate_user(selenium, live_server_path, user_foo_inactive)
+        assert user_foo_inactive.is_active is True
+
+    def test_redirect(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user_foo_inactive: User,
+    ) -> None:
+        self.activate_user(selenium, live_server_path, user_foo_inactive)
+        assert selenium.current_url == live_server_path(reverse("login"))
+
+    def test_message(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user_foo_inactive: User,
+    ) -> None:
+        self.activate_user(selenium, live_server_path, user_foo_inactive)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
+        ]
+        assert any(
+            "Registration complete. Please login." in message for message in messages
+        )
+
+    def test_invalid_user_id(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user_foo_inactive: User,
+    ) -> None:
+        user_id = urlsafe_base64_encode(force_bytes(123))
+        token = user_tokenizer.make_token(user_foo_inactive)
+        url = live_server_path(
+            reverse("activate", kwargs={"user_id": user_id, "token": token})
+        )
+        selenium.get(url)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
+        ]
+        assert any(
+            "Registration confirmation error. Please click the reset password to generate a new confirmation email."
+            in message
+            for message in messages
+        )
+
+    def test_invalid_token(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user_foo_inactive: User,
+    ) -> None:
+        user_id = urlsafe_base64_encode(force_bytes(user_foo_inactive.id))
+        token = "123"
+        url = live_server_path(
+            reverse("activate", kwargs={"user_id": user_id, "token": token})
+        )
+        selenium.get(url)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
+        ]
+        assert any(
+            "Registration confirmation error. Please click the reset password to generate a new confirmation email."
+            in message
+            for message in messages
+        )
+
+    def activate_user(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str], user: User
+    ) -> None:
+        user_id = urlsafe_base64_encode(force_bytes(user.id))
+        token = user_tokenizer.make_token(user)
+        url = live_server_path(
+            reverse("activate", kwargs={"user_id": user_id, "token": token})
+        )
+        selenium.get(url)
+        user.refresh_from_db()
 
 
 class TestProfileUpdate:

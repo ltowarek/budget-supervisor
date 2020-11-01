@@ -1,12 +1,16 @@
 from typing import Callable, Dict
 
+import pytest
 import swagger_client as saltedge_client
 from budget.models import Account, Connection, Transaction
 from django.contrib.messages import get_messages
 from django.test import Client
 from django.urls import resolve, reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from pytest_mock import MockFixture
 from users.models import User
+from users.tokens import user_tokenizer
 from utils import get_url_path
 
 
@@ -27,6 +31,66 @@ def test_sign_up_view_get(client: Client) -> None:
     url = reverse("signup")
     response = client.get(url)
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_sign_up_view_post_redirect(client: Client) -> None:
+    url = reverse("signup")
+    data = {
+        "username": "foo",
+        "email": "foo@example.com",
+        "password1": "Foo Password",
+        "password2": "Foo Password",
+    }
+    response = client.post(url, data=data)
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "login"
+
+
+def test_activate_view_get_redirect(client: Client, user_foo_inactive: User) -> None:
+    user_id = urlsafe_base64_encode(force_bytes(user_foo_inactive.id))
+    token = user_tokenizer.make_token(user_foo_inactive)
+    url = reverse("activate", kwargs={"user_id": user_id, "token": token})
+    response = client.get(url)
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "login"
+
+
+def test_activate_view_get_message(client: Client, user_foo_inactive: User) -> None:
+    user_id = urlsafe_base64_encode(force_bytes(user_foo_inactive.id))
+    token = user_tokenizer.make_token(user_foo_inactive)
+    url = reverse("activate", kwargs={"user_id": user_id, "token": token})
+    response = client.get(url)
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Registration complete. Please login." in messages
+
+
+def test_activate_view_get_invalid_user_message(
+    client: Client, user_foo_inactive: User
+) -> None:
+    user_id = urlsafe_base64_encode(force_bytes(123))
+    token = user_tokenizer.make_token(user_foo_inactive)
+    url = reverse("activate", kwargs={"user_id": user_id, "token": token})
+    response = client.get(url)
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert (
+        "Registration confirmation error. Please click the reset password to generate a new confirmation email."
+        in messages
+    )
+
+
+def test_activate_view_get_invalid_token_message(
+    client: Client, user_foo_inactive: User
+) -> None:
+    user_id = urlsafe_base64_encode(force_bytes(user_foo_inactive.id))
+    token = "123"
+    url = reverse("activate", kwargs={"user_id": user_id, "token": token})
+    response = client.get(url)
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert (
+        "Registration confirmation error. Please click the reset password to generate a new confirmation email."
+        in messages
+    )
 
 
 def test_profile_update_view_get(

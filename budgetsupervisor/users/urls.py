@@ -11,6 +11,11 @@ urlpatterns = [
     ),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("singup/", views.SignUpView.as_view(), name="signup"),
+    path(
+        "activate/<str:user_id>/<str:token>/",
+        views.UserActivateView.as_view(),
+        name="activate",
+    ),
     path("profile/", views.ProfileUpdateView.as_view(), name="profile"),
     path("profile/delete", views.UserDeleteView.as_view(), name="user_delete"),
     path("profile/connect", views.ProfileConnectView.as_view(), name="profile_connect"),

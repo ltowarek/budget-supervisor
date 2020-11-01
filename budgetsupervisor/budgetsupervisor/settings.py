@@ -133,3 +133,6 @@ MESSAGE_TAGS = {
     message_constants.WARNING: "alert-warning",
     message_constants.ERROR: "alert-danger",
 }
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_HOST_USER = "todo@example.com"
