@@ -28,6 +28,16 @@ class TestLogin:
         self.login_user(selenium, "foo", "password")
         assert selenium.current_url == live_server_path(reverse("budget_index"))
 
+    def test_password_reset_link_is_available(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str],
+    ) -> None:
+        url = live_server_path(reverse("login"))
+        selenium.get(url)
+        element = selenium.find_element_by_link_text("Forgot password?")
+        assert element.get_attribute("href") == live_server_path(
+            reverse("password_reset")
+        )
+
     def test_invalid_credentials_prints_error_message(
         self, selenium: WebDriver, live_server_path: Callable[[str], str]
     ) -> None:
@@ -239,6 +249,86 @@ class TestUserActivateView:
         )
         selenium.get(url)
         user.refresh_from_db()
+
+
+class TestPasswordResetView:
+    def test_email(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
+        self.reset_password(selenium, live_server_path, user_foo.email)
+        assert mail.outbox
+        password_reset_email = mail.outbox[0]
+        assert user_foo.email in password_reset_email.to
+        assert password_reset_email.subject == "Budget Supervisor Password Reset"
+        assert (
+            "Please click the following link to reset your password."
+            in password_reset_email.body
+        )
+
+    def test_redirect(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
+        self.reset_password(selenium, live_server_path, user_foo.email)
+        assert selenium.current_url == live_server_path(reverse("login"))
+
+    def reset_password(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str], email: str
+    ) -> None:
+        url = live_server_path(reverse("password_reset"))
+        selenium.get(url)
+        email_input = selenium.find_element_by_name("email")
+        email_input.send_keys(email)
+        selenium.find_element_by_xpath('//button[@type="submit"]').click()
+
+
+class TestPasswordResetConfirmationView:
+    def test_password_is_changed(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
+        old_password = user_foo.password
+        self.reset_password(selenium, live_server_path, user_foo, "New Password")
+        user_foo.refresh_from_db()
+        assert user_foo.password != old_password
+
+    def test_redirect(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+    ) -> None:
+        self.reset_password(selenium, live_server_path, user_foo, "New Password")
+        assert selenium.current_url == live_server_path(reverse("budget_index"))
+
+    def reset_password(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user: User,
+        password: str,
+    ) -> None:
+        user_id = urlsafe_base64_encode(force_bytes(user.id))
+        token = user_tokenizer.make_token(user)
+        url = live_server_path(
+            reverse(
+                "password_reset_confirm", kwargs={"uidb64": user_id, "token": token}
+            )
+        )
+        selenium.get(url)
+        new_password1_input = selenium.find_element_by_name("new_password1")
+        new_password1_input.send_keys(password)
+        new_password2_input = selenium.find_element_by_name("new_password2")
+        new_password2_input.send_keys(password)
+        selenium.find_element_by_xpath('//button[@type="submit"]').click()
+        print(selenium.page_source)
 
 
 class TestProfileUpdate:
