@@ -138,6 +138,5 @@ dmypy.json
 cython_debug/
 
 # Custom
-.vscode
-*.env
-*.pem
+.vscode/
+env/

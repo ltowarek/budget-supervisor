@@ -22,6 +22,7 @@ from users.tokens import user_tokenizer
 from budgetsupervisor import settings
 
 
+# TODO: Add message about activation email
 # TODO: Add Terms and Conditions
 # TODO: Add Privacy Policy
 # TODO: Add Cookie Policy
