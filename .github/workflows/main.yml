@@ -7,7 +7,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
       - name: Setup Python
@@ -24,9 +23,9 @@ jobs:
           CONNECTION_ID: ${{ secrets.CONNECTION_ID }}
         run: tox
 
-  push-stage:
+  deploy-stage:
+    needs: test
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
       - name: Login to Heroku Container registry
@@ -42,9 +41,9 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: heroku container:release -a ${{ secrets.HEROKU_APP_NAME_STAGE }} web 
 
-  push-live:
+  deploy-live:
+    needs: test
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
       - name: Login to Heroku Container registry
