@@ -9,6 +9,8 @@ FROM python:3.8-alpine
 RUN addgroup -S app && adduser -S app -G app
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+RUN apk update \
+    && apk add postgresql-libs
 COPY --from=build-python /wheels/ /wheels/
 RUN pip install --no-cache /wheels/*
 WORKDIR /code/
