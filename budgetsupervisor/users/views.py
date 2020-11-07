@@ -22,10 +22,6 @@ from users.tokens import user_tokenizer
 from budgetsupervisor import settings
 
 
-# TODO: Add message about activation email
-# TODO: Add Terms and Conditions
-# TODO: Add Privacy Policy
-# TODO: Add Cookie Policy
 class SignUpView(CreateView):
     template_name = "users/signup.html"
     form_class = SignUpForm
@@ -82,7 +78,6 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
 
     def delete(self, *args: Any, **kwargs: Any) -> HttpResponseRedirect:
         user = self.get_object()
-        # TODO: All bussiness logic should be removed from views and put into services
         if user.profile.external_id:
             remove_customer_from_saltedge(user.profile, customers_api())
         output = super().delete(*args, **kwargs)
@@ -90,7 +85,6 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
         return output
 
 
-# TODO: Show user name and email
 class ProfileUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Profile
     fields: List[str] = []

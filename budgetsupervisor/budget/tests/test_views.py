@@ -1244,7 +1244,6 @@ def test_report_balance_view_get_not_logged_in(client: Client) -> None:
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-# TODO: Create user_foo_logged_in fixture instead of passing login_user
 def test_report_balance_view_get_with_parameters(
     client: Client,
     user_foo: User,

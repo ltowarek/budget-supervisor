@@ -40,8 +40,6 @@ from saltedge_wrapper.factory import (
 )
 
 
-# TODO: Create home page with marketing info and use it on / url
-# TODO: Rename IndexView to BudgetView or DashboardView and use it on /budget/ url
 class IndexView(LoginRequiredMixin, TemplateView):
     template_name = "budget/index.html"
 
@@ -71,7 +69,6 @@ class ConnectionCreate(LoginRequiredMixin, FormView):
         return context
 
 
-# TODO: Replace LoginRequiredMixin and UserPassesTestMixin with object-based PermissionRequiredMixin
 class ConnectionUpdate(
     LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
 ):
@@ -148,7 +145,6 @@ class AccountCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return super().form_valid(form)
 
 
-# TODO: Show connection field, however it should be set as disabled/readonly.
 class AccountUpdate(
     LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
 ):
@@ -202,8 +198,6 @@ class ImportAccountsView(LoginRequiredMixin, FormView):
         return context
 
 
-# TODO: Add filtering to the table. At least it should be possible to filter by account.
-# Link to filtered transactions by account should be also a possible action in the account list.
 class TransactionListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
@@ -340,7 +334,6 @@ class CategoryDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return output
 
 
-# TODO: Add ReportCurrentBalanceView with info about current balance for each account + total
 class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
     template_name = "budget/report_balance.html"
     form_class = ReportBalanceForm
@@ -369,6 +362,3 @@ class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
         return self.render_to_response(
             self.get_context_data(form=form, balance=balance)
         )
-
-
-# TODO: Add TransactionSearch
