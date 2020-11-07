@@ -7,6 +7,7 @@ from budgetsupervisor import settings
 from . import views
 
 urlpatterns = [
+    # Logged in users can still open login view
     path(
         "login/",
         auth_views.LoginView.as_view(template_name="users/login.html"),
