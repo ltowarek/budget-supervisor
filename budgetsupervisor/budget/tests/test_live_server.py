@@ -170,7 +170,7 @@ class TestConnectionCreate:
         element = selenium.find_element_by_id("providers-search")
         element.send_keys("Fake Demo Bank")
         element = selenium.find_element_by_class_name("tt-dropdown-menu")
-        WebDriverWait(selenium, 5).until(EC.visibility_of(element))
+        WebDriverWait(selenium, 10).until(EC.visibility_of(element))
         element = selenium.find_element_by_class_name("tt-suggestion")
         element.click()
         element = selenium.find_element_by_name("username")
