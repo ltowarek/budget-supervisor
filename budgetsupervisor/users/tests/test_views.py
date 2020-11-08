@@ -47,6 +47,20 @@ def test_sign_up_view_post_redirect(client: Client) -> None:
     assert resolve(get_url_path(response)).url_name == "login"
 
 
+@pytest.mark.django_db
+def test_sign_up_view_post_message(client: Client) -> None:
+    url = reverse("signup")
+    data = {
+        "username": "foo",
+        "email": "foo@example.com",
+        "password1": "Foo Password",
+        "password2": "Foo Password",
+    }
+    response = client.post(url, data=data)
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Please check your inbox for activation link." in messages
+
+
 def test_activate_view_get_redirect(client: Client, user_foo_inactive: User) -> None:
     user_id = urlsafe_base64_encode(force_bytes(user_foo_inactive.id))
     token = user_tokenizer.make_token(user_foo_inactive)

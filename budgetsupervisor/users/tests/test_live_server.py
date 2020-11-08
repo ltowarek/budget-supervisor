@@ -109,6 +109,21 @@ class TestSignUp:
         self.sign_up_user(selenium, "foo", "Foo Password", "foo@example.com")
         assert selenium.current_url == live_server_path(reverse("login"))
 
+    def test_message(
+        self, selenium: WebDriver, live_server_path: Callable[[str], str]
+    ) -> None:
+        url = live_server_path(reverse("signup"))
+        selenium.get(url)
+        self.sign_up_user(selenium, "foo", "Foo Password", "foo@example.com")
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
+        ]
+        assert any(
+            "Please check your inbox for activation link." in message
+            for message in messages
+        )
+
     def test_user_with_existing_username_cant_sign_up(
         self,
         selenium: WebDriver,

@@ -47,6 +47,8 @@ class SignUpView(CreateView):
             recipient_list=[user.email],
         )
 
+        messages.success(self.request, "Please check your inbox for activation link.")
+
         return response
 
 
