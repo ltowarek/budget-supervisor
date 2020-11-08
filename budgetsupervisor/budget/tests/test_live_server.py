@@ -1383,12 +1383,11 @@ class TestCategoryList:
         assert len(elements) == len(categories)
         for element, category in zip(elements, categories):
             cells = element.find_elements_by_xpath(".//td")
-            assert len(cells) == 3
+            assert len(cells) == 2
 
-            assert cells[0].text == str(category.id)
-            assert cells[1].text == category.name
+            assert cells[0].text == category.name
 
-            actions = cells[2].find_elements_by_xpath(".//a")
+            actions = cells[1].find_elements_by_xpath(".//a")
             assert actions[0].text == "Update"
             assert actions[0].get_attribute("href") == live_server_path(
                 reverse("categories:category_update", kwargs={"pk": category.pk})
