@@ -79,6 +79,18 @@ class TestLogin:
         self.login_user(selenium, "foo", "password")
         assert selenium.current_url == live_server_path(reverse("profile"))
 
+    def test_redirect_if_already_logged_in(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        authenticate_selenium: Callable[..., WebDriver],
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        url = live_server_path(reverse("login"))
+        selenium.get(url)
+        assert selenium.current_url == live_server_path(reverse("budget_index"))
+
     def test_not_authenticated_user_accessing_page_is_redirected_to_login_page(
         self, selenium: WebDriver, live_server_path: Callable[[str], str]
     ) -> None:
