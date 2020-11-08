@@ -13,7 +13,6 @@ Transactions
 <table class="table table-bordered text-center">
     <thead class="thead-light">
         <tr>
-            <th>ID</th>
             <th>Date</th>
             <th>Amount</th>
             <th>Payee</th>
@@ -25,7 +24,6 @@ Transactions
     <tbody>
         {% for transaction in transaction_list %}
         <tr>
-            <td>{{ transaction.id }}</td>
             <td>{{ transaction.date|date:"SHORT_DATE_FORMAT"}}</td>
             <td>{{ transaction.amount }}</td>
             <td>{{ transaction.payee }}</td>

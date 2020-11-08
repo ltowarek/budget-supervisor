@@ -13,7 +13,6 @@ Accounts
 <table class="table table-bordered text-center">
     <thead class="thead-light">
         <tr>
-            <th>ID</th>
             <th>Name</th>
             <th>Type</th>
             <th>Actions</th>
@@ -22,7 +21,6 @@ Accounts
     <tbody>
         {% for account in account_list %}
         <tr>
-            <td>{{ account.id }}</td>
             <td>{{ account.name }}</td>
             <td>{{ account.get_account_type_display }}</td>
             <td>

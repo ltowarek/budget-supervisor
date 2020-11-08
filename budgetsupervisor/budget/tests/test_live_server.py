@@ -60,10 +60,9 @@ class TestConnectionList:
         selenium.get(url)
 
         elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
-        assert len(elements) == 3
-        assert elements[0].text == "ID"
-        assert elements[1].text == "Provider"
-        assert elements[2].text == "Actions"
+        assert len(elements) == 2
+        assert elements[0].text == "Provider"
+        assert elements[1].text == "Actions"
 
     def test_table_body(
         self,
@@ -472,11 +471,10 @@ class TestAccountList:
         selenium.get(url)
 
         elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
-        assert len(elements) == 4
-        assert elements[0].text == "ID"
-        assert elements[1].text == "Name"
-        assert elements[2].text == "Type"
-        assert elements[3].text == "Actions"
+        assert len(elements) == 3
+        assert elements[0].text == "Name"
+        assert elements[1].text == "Type"
+        assert elements[2].text == "Actions"
 
     def test_table_body(
         self,
@@ -857,14 +855,13 @@ class TestTransactionList:
         selenium.get(url)
 
         elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
-        assert len(elements) == 7
-        assert elements[0].text == "ID"
-        assert elements[1].text == "Date"
-        assert elements[2].text == "Amount"
-        assert elements[3].text == "Payee"
-        assert elements[4].text == "Category"
-        assert elements[5].text == "Description"
-        assert elements[6].text == "Actions"
+        assert len(elements) == 6
+        assert elements[0].text == "Date"
+        assert elements[1].text == "Amount"
+        assert elements[2].text == "Payee"
+        assert elements[3].text == "Category"
+        assert elements[4].text == "Description"
+        assert elements[5].text == "Actions"
 
     def test_table_body(
         self,
@@ -1361,10 +1358,9 @@ class TestCategoryList:
         selenium.get(url)
 
         elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
-        assert len(elements) == 3
-        assert elements[0].text == "ID"
-        assert elements[1].text == "Name"
-        assert elements[2].text == "Actions"
+        assert len(elements) == 2
+        assert elements[0].text == "Name"
+        assert elements[1].text == "Actions"
 
     def test_table_body(
         self,
