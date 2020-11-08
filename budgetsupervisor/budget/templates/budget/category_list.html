@@ -5,8 +5,8 @@ Categories
 {% endblock %}
 
 {% block content %}
-<div class="btn-toolbar my-3 justify-content-center">
-    <a class="btn btn-primary mr-3" href="{% url 'categories:category_create' %}">Create</a>
+<div class="btn-toolbar m-1 justify-content-center">
+    <a class="btn btn-primary m-1" href="{% url 'categories:category_create' %}">Create</a>
 </div>
 
 <table class="table table-bordered text-center">
@@ -23,9 +23,9 @@ Categories
             <td>{{ category.id }}</td>
             <td>{{ category.name }}</td>
             <td>
-                <a class="btn btn-outline-primary btn-sm mr-1"
+                <a class="btn btn-outline-primary btn-sm m-1"
                     href="{% url 'categories:category_update' category.id %}">Update</a>
-                <a class="btn btn-outline-primary btn-sm mr-1"
+                <a class="btn btn-outline-primary btn-sm m-1"
                     href="{% url 'categories:category_delete' category.id %}">Delete</a>
             </td>
         </tr>

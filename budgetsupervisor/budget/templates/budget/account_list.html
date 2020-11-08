@@ -5,9 +5,9 @@ Accounts
 {% endblock %}
 
 {% block content %}
-<div class="btn-toolbar my-3 justify-content-center">
-    <a class="btn btn-primary mr-3" href="{% url 'accounts:account_create' %}">Create</a>
-    <a class="btn btn-primary mr-3" href="{% url 'accounts:account_import' %}">Import</a>
+<div class="btn-toolbar m-1 justify-content-center">
+    <a class="btn btn-primary m-1" href="{% url 'accounts:account_create' %}">Create</a>
+    <a class="btn btn-primary m-1" href="{% url 'accounts:account_import' %}">Import</a>
 </div>
 
 <table class="table table-bordered text-center">
@@ -26,9 +26,9 @@ Accounts
             <td>{{ account.name }}</td>
             <td>{{ account.get_account_type_display }}</td>
             <td>
-                <a class="btn btn-outline-primary btn-sm mr-1"
+                <a class="btn btn-outline-primary btn-sm m-1"
                     href="{% url 'accounts:account_update' account.id %}">Update</a>
-                <a class="btn btn-outline-primary btn-sm mr-1"
+                <a class="btn btn-outline-primary btn-sm m-1"
                     href="{% url 'accounts:account_delete' account.id %}">Delete</a>
             </td>
         </tr>

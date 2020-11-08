@@ -5,9 +5,9 @@ Transactions
 {% endblock %}
 
 {% block content %}
-<div class="btn-toolbar my-3 justify-content-center">
-    <a class="btn btn-primary mr-3" href="{% url 'transactions:transaction_create' %}">Create</a>
-    <a class="btn btn-primary mr-3" href="{% url 'transactions:transaction_import' %}">Import</a>
+<div class="btn-toolbar m-1 justify-content-center">
+    <a class="btn btn-primary m-1" href="{% url 'transactions:transaction_create' %}">Create</a>
+    <a class="btn btn-primary m-1" href="{% url 'transactions:transaction_import' %}">Import</a>
 </div>
 
 <table class="table table-bordered text-center">
@@ -32,9 +32,9 @@ Transactions
             <td>{{ transaction.category }}</td>
             <td>{{ transaction.description }}</td>
             <td>
-                <a class="btn btn-outline-primary btn-sm mr-1"
+                <a class="btn btn-outline-primary btn-sm m-1"
                     href="{% url 'transactions:transaction_update' transaction.id %}">Update</a>
-                <a class="btn btn-outline-primary btn-sm mr-1"
+                <a class="btn btn-outline-primary btn-sm m-1"
                     href="{% url 'transactions:transaction_delete' transaction.id %}">Delete</a>
             </td>
         </tr>
