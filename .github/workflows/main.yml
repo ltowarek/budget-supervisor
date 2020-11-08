@@ -17,10 +17,10 @@ jobs:
         run: pip install tox
       - name: Run Tox
         env:
-          APP_ID: ${{ secrets.APP_ID }}
-          SECRET: ${{ secrets.SECRET }}
-          CUSTOMER_ID: ${{ secrets.CUSTOMER_ID }}
-          CONNECTION_ID: ${{ secrets.CONNECTION_ID }}
+          SALTEDGE_APP_ID: ${{ secrets.SALTEDGE_APP_ID }}
+          SALTEDGE_SECRET: ${{ secrets.SALTEDGE_SECRET }}
+          SALTEDGE_CUSTOMER_ID: ${{ secrets.SALTEDGE_CUSTOMER_ID }}
+          SALTEDGE_CONNECTION_ID: ${{ secrets.SALTEDGE_CONNECTION_ID }}
         run: tox
 
   deploy-stage:

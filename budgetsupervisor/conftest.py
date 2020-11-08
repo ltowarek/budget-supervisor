@@ -565,7 +565,7 @@ def authenticate_selenium(
 def predefined_customer() -> saltedge_client.Customer:
     return (
         saltedge_wrapper.factory.customers_api()
-        .customers_customer_id_get(os.environ["CUSTOMER_ID"])
+        .customers_customer_id_get(os.environ["SALTEDGE_CUSTOMER_ID"])
         .data
     )
 
@@ -574,7 +574,7 @@ def predefined_customer() -> saltedge_client.Customer:
 def predefined_saltedge_connection() -> saltedge_client.Connection:
     return (
         saltedge_wrapper.factory.connections_api()
-        .connections_connection_id_get(os.environ["CONNECTION_ID"])
+        .connections_connection_id_get(os.environ["SALTEDGE_CONNECTION_ID"])
         .data
     )
 

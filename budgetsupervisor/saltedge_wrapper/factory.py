@@ -5,8 +5,8 @@ import swagger_client as saltedge_client
 
 def api_configuration() -> saltedge_client.Configuration:
     configuration = saltedge_client.Configuration()
-    configuration.api_key["App-id"] = os.environ["APP_ID"]
-    configuration.api_key["Secret"] = os.environ["SECRET"]
+    configuration.api_key["App-id"] = os.environ["SALTEDGE_APP_ID"]
+    configuration.api_key["Secret"] = os.environ["SALTEDGE_SECRET"]
     return configuration
 
 
