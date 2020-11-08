@@ -85,12 +85,11 @@ class TestConnectionList:
         assert len(elements) == len(connections)
         for element, connection in zip(elements, connections):
             cells = element.find_elements_by_xpath(".//td")
-            assert len(cells) == 3
+            assert len(cells) == 2
 
-            assert cells[0].text == str(connection.id)
-            assert cells[1].text == connection.provider
+            assert cells[0].text == connection.provider
 
-            actions = cells[2].find_elements_by_xpath(".//a")
+            actions = cells[1].find_elements_by_xpath(".//a")
             assert actions[0].text == "Update"
             assert actions[0].get_attribute("href") == live_server_path(
                 reverse("connections:connection_update", kwargs={"pk": connection.pk})
@@ -169,7 +168,7 @@ class TestConnectionCreate:
         element = selenium.find_element_by_id("providers-search")
         element.send_keys("Fake Demo Bank")
         element = selenium.find_element_by_class_name("tt-dropdown-menu")
-        WebDriverWait(selenium, 10).until(EC.visibility_of(element))
+        WebDriverWait(selenium, 20).until(EC.visibility_of(element))
         element = selenium.find_element_by_class_name("tt-suggestion")
         element.click()
         element = selenium.find_element_by_name("username")
@@ -503,13 +502,12 @@ class TestAccountList:
         assert len(elements) == len(accounts)
         for element, account in zip(elements, accounts):
             cells = element.find_elements_by_xpath(".//td")
-            assert len(cells) == 4
+            assert len(cells) == 3
 
-            assert cells[0].text == str(account.id)
-            assert cells[1].text == account.name
-            assert cells[2].text == account.get_account_type_display()
+            assert cells[0].text == account.name
+            assert cells[1].text == account.get_account_type_display()
 
-            actions = cells[3].find_elements_by_xpath(".//a")
+            actions = cells[2].find_elements_by_xpath(".//a")
             assert actions[0].text == "Update"
             assert actions[0].get_attribute("href") == live_server_path(
                 reverse("accounts:account_update", kwargs={"pk": account.pk})
@@ -895,17 +893,16 @@ class TestTransactionList:
         assert len(elements) == len(transactions)
         for element, transaction in zip(elements, transactions):
             cells = element.find_elements_by_xpath(".//td")
-            assert len(cells) == 7
+            assert len(cells) == 6
 
-            assert cells[0].text == str(transaction.id)
             # parse_date does not support SHORT_DATE_FORMAT
-            assert parse_date(cells[1].text) is None
-            assert cells[2].text == str(transaction.amount)
-            assert cells[3].text == transaction.payee
-            assert cells[4].text == str(transaction.category)
-            assert cells[5].text == transaction.description
+            assert parse_date(cells[0].text) is None
+            assert cells[1].text == str(transaction.amount)
+            assert cells[2].text == transaction.payee
+            assert cells[3].text == str(transaction.category)
+            assert cells[4].text == transaction.description
 
-            actions = cells[6].find_elements_by_xpath(".//a")
+            actions = cells[5].find_elements_by_xpath(".//a")
             assert actions[0].text == "Update"
             assert actions[0].get_attribute("href") == live_server_path(
                 reverse(
