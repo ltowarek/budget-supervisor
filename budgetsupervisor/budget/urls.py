@@ -74,6 +74,17 @@ reports_patterns = (
     "reports",
 )
 
+callbacks_patterns = (
+    [
+        path("success/", views.CallbackSuccess.as_view(), name="callback_success"),
+        path("fail/", views.CallbackFail.as_view(), name="callback_fail"),
+        path("destroy/", views.CallbackDestroy.as_view(), name="callback_destroy"),
+        path("notify/", views.CallbackNotify.as_view(), name="callback_notify"),
+        path("service/", views.CallbackService.as_view(), name="callback_service"),
+    ],
+    "callbacks",
+)
+
 urlpatterns = [
     path("", views.IndexView.as_view(), name="budget_index"),
     path("accounts/", include(accounts_patterns)),
@@ -81,4 +92,5 @@ urlpatterns = [
     path("categories/", include(categories_patterns)),
     path("connections/", include(connections_patterns)),
     path("reports/", include(reports_patterns)),
+    path("callbacks/", include(callbacks_patterns)),
 ]

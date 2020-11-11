@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, List
 
 from budget.forms import (
@@ -24,7 +25,10 @@ from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, TemplateView
+from django.views.generic.base import View
 from django.views.generic.edit import (
     CreateView,
     DeleteView,
@@ -38,6 +42,8 @@ from saltedge_wrapper.factory import (
     connections_api,
     transactions_api,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class IndexView(LoginRequiredMixin, TemplateView):
@@ -362,3 +368,43 @@ class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
         return self.render_to_response(
             self.get_context_data(form=form, balance=balance)
         )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class CallbackSuccess(View):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        logger.error(request.headers)
+        logger.error(request.body)
+        return HttpResponse(status=204)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class CallbackFail(View):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        logger.error(request.headers)
+        logger.error(request.body)
+        return HttpResponse(status=204)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class CallbackDestroy(View):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        logger.error(request.headers)
+        logger.error(request.body)
+        return HttpResponse(status=204)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class CallbackNotify(View):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        logger.error(request.headers)
+        logger.error(request.body)
+        return HttpResponse(status=204)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class CallbackService(View):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        logger.error(request.headers)
+        logger.error(request.body)
+        return HttpResponse(status=204)
