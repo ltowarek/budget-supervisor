@@ -373,38 +373,43 @@ class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
 @method_decorator(csrf_exempt, name="dispatch")
 class CallbackSuccess(View):
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        logger.error(request.headers)
-        logger.error(request.body)
+        logger.error(
+            f"Success callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
+        )
         return HttpResponse(status=204)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class CallbackFail(View):
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        logger.error(request.headers)
-        logger.error(request.body)
+        logger.error(
+            f"Fail callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
+        )
         return HttpResponse(status=204)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class CallbackDestroy(View):
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        logger.error(request.headers)
-        logger.error(request.body)
+        logger.error(
+            f"Destroy callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
+        )
         return HttpResponse(status=204)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class CallbackNotify(View):
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        logger.error(request.headers)
-        logger.error(request.body)
+        logger.error(
+            f"Notify callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
+        )
         return HttpResponse(status=204)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class CallbackService(View):
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        logger.error(request.headers)
-        logger.error(request.body)
+        logger.error(
+            f"Service callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
+        )
         return HttpResponse(status=204)
