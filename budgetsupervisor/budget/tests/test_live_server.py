@@ -1,4 +1,5 @@
 import datetime
+import logging
 from typing import Callable, Iterator, List, Optional
 
 import pytest
@@ -19,6 +20,9 @@ from swagger_client.rest import ApiException
 from users.models import Profile, User
 
 pytestmark = pytest.mark.selenium
+
+
+logger = logging.getLogger(__name__)
 
 
 class TestIndex:
@@ -171,7 +175,11 @@ class TestConnectionCreate:
         WebDriverWait(selenium, 20).until(EC.visibility_of(element))
         element = selenium.find_element_by_class_name("tt-suggestion")
         element.click()
-        element = selenium.find_element_by_name("username")
+        try:
+            element = selenium.find_element_by_name("username")
+        except Exception:
+            logger.error(selenium.page_source)
+            raise
         element.send_keys("username")
         element = selenium.find_element_by_name("password")
         element.send_keys("secret")
