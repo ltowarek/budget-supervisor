@@ -1,14 +1,22 @@
 import datetime
+import json
 from typing import Callable
 
+import pytest
 import swagger_client as saltedge_client
 from budget.models import Account, Category, Connection, Transaction
 from django.contrib.messages import get_messages
 from django.test import Client
 from django.urls import resolve, reverse
 from pytest_mock import MockFixture
-from swagger_client import ConnectSessionResponse, ConnectSessionResponseData
-from users.models import User
+from swagger_client import (
+    AccountsResponse,
+    ConnectionsResponse,
+    ConnectSessionResponse,
+    ConnectSessionResponseData,
+    TransactionsResponse,
+)
+from users.models import Profile, User
 from utils import get_url_path
 
 
@@ -1259,3 +1267,230 @@ def test_report_balance_view_get_with_parameters(
     }
     response = client.get(url, data)
     assert response.status_code == 200
+
+
+def test_callback_success_new_connection(
+    client: Client,
+    profile_foo_external: Profile,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
+    accounts_api: saltedge_client.AccountsApi,
+    transactions_api: saltedge_client.TransactionsApi,
+) -> None:
+    mock_connections = [saltedge_connection_factory(id="1234")]
+    connections_api.connections_get.return_value = ConnectionsResponse(
+        data=mock_connections
+    )
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api
+    )
+    mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
+    mocker.patch(
+        "budget.views.transactions_api", autospec=True, return_value=transactions_api
+    )
+
+    url = reverse("callbacks:callback_success")
+    data = {
+        "data": {
+            "connection_id": "1234",
+            "customer_id": str(profile_foo_external.external_id),
+            "custom_fields": {"key": "value"},
+        },
+        "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
+    }
+    response = client.post(url, json.dumps(data), content_type="application/json")
+    assert response.status_code == 204
+    assert Connection.objects.filter(external_id=1234).exists()
+
+
+def test_callback_success_new_account(
+    client: Client,
+    profile_foo_external: Profile,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
+    accounts_api: saltedge_client.AccountsApi,
+    saltedge_account_factory: Callable[..., saltedge_client.Account],
+    transactions_api: saltedge_client.TransactionsApi,
+) -> None:
+    mock_connections = [saltedge_connection_factory(id="1234")]
+    connections_api.connections_get.return_value = ConnectionsResponse(
+        data=mock_connections
+    )
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api
+    )
+
+    mock_accounts = [saltedge_account_factory(id="4567", connection_id="1234")]
+    accounts_api.accounts_get.return_value = AccountsResponse(data=mock_accounts)
+    mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
+
+    mocker.patch(
+        "budget.views.transactions_api", autospec=True, return_value=transactions_api
+    )
+
+    url = reverse("callbacks:callback_success")
+    data = {
+        "data": {
+            "connection_id": "1234",
+            "customer_id": str(profile_foo_external.external_id),
+            "custom_fields": {"key": "value"},
+        },
+        "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
+    }
+    response = client.post(url, json.dumps(data), content_type="application/json")
+    assert response.status_code == 204
+    assert Account.objects.filter(external_id="4567").exists()
+
+
+def test_callback_success_new_transaction(
+    client: Client,
+    profile_foo_external: Profile,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
+    accounts_api: saltedge_client.AccountsApi,
+    saltedge_account_factory: Callable[..., saltedge_client.Account],
+    transactions_api: saltedge_client.TransactionsApi,
+    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
+) -> None:
+    mock_connections = [saltedge_connection_factory(id="1234")]
+    connections_api.connections_get.return_value = ConnectionsResponse(
+        data=mock_connections
+    )
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api
+    )
+
+    mock_accounts = [saltedge_account_factory(id="4567", connection_id="1234")]
+    accounts_api.accounts_get.return_value = AccountsResponse(data=mock_accounts)
+    mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
+
+    mock_transactions = [saltedge_transaction_factory(id="8900", account_id="4567")]
+    transactions_api.transactions_get.return_value = TransactionsResponse(
+        data=mock_transactions
+    )
+    mocker.patch(
+        "budget.views.transactions_api", autospec=True, return_value=transactions_api
+    )
+
+    url = reverse("callbacks:callback_success")
+    data = {
+        "data": {
+            "connection_id": "1234",
+            "customer_id": str(profile_foo_external.external_id),
+            "custom_fields": {"key": "value"},
+        },
+        "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
+    }
+    response = client.post(url, json.dumps(data), content_type="application/json")
+    assert response.status_code == 204
+    assert Transaction.objects.filter(external_id="8900").exists()
+
+
+@pytest.mark.django_db
+def test_callback_success_invalid_customer(client: Client) -> None:
+    url = reverse("callbacks:callback_success")
+    data = {
+        "data": {
+            "connection_id": "1234",
+            "customer_id": "5678",
+            "custom_fields": {"key": "value"},
+        },
+        "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
+    }
+    response = client.post(url, json.dumps(data), content_type="application/json")
+    assert response.status_code == 400
+
+
+def test_callback_fail(client: Client) -> None:
+    url = reverse("callbacks:callback_fail")
+    data = {
+        "data": {
+            "connection_id": "111111111111111111",
+            "customer_id": "222222222222222222",
+            "custom_fields": {"key": "value"},
+            "error_class": "InvalidCredentials",
+            "error_message": "Invalid credentials.",
+        },
+        "meta": {"version": "5", "time": "2020-11-12T12:31:01.606Z"},
+    }
+    response = client.post(url, json.dumps(data), content_type="application/json")
+    assert response.status_code == 204
+
+
+def test_callback_destroy(
+    client: Client, profile_foo_external: Profile, connection_foo: Connection
+) -> None:
+    url = reverse("callbacks:callback_destroy")
+    data = {
+        "data": {
+            "connection_id": str(connection_foo.external_id),
+            "customer_id": str(profile_foo_external.external_id),
+        },
+        "meta": {"version": "5", "time": "2020-11-11T12:31:01Z"},
+    }
+    response = client.post(url, json.dumps(data), content_type="application/json")
+    assert response.status_code == 204
+    assert not Connection.objects.filter(pk=connection_foo.pk).exists()
+
+
+def test_callback_destroy_invalid_customer(
+    client: Client, connection_foo: Connection
+) -> None:
+    url = reverse("callbacks:callback_destroy")
+    data = {
+        "data": {
+            "connection_id": str(connection_foo.external_id),
+            "customer_id": "1234",
+        },
+        "meta": {"version": "5", "time": "2020-11-11T12:31:01Z"},
+    }
+    response = client.post(url, json.dumps(data), content_type="application/json")
+    assert response.status_code == 400
+
+
+def test_callback_destroy_invalid_connection(
+    client: Client, profile_foo_external: Profile
+) -> None:
+    url = reverse("callbacks:callback_destroy")
+    data = {
+        "data": {
+            "connection_id": "1234",
+            "customer_id": str(profile_foo_external.external_id),
+        },
+        "meta": {"version": "5", "time": "2020-11-11T12:31:01Z"},
+    }
+    response = client.post(url, json.dumps(data), content_type="application/json")
+    assert response.status_code == 400
+
+
+def test_callback_notify(client: Client) -> None:
+    url = reverse("callbacks:callback_notify")
+    data = {
+        "data": {
+            "connection_id": "111111111111111111",
+            "customer_id": "222222222222222222",
+            "custom_fields": {"key": "value"},
+            "stage": "start",
+        },
+        "meta": {"version": "5", "time": "2020-11-11T12:31:01Z"},
+    }
+    response = client.post(url, json.dumps(data), content_type="application/json")
+    assert response.status_code == 204
+
+
+def test_callback_service(client: Client) -> None:
+    url = reverse("callbacks:callback_service")
+    data = {
+        "data": {
+            "connection_id": "111111111111111111",
+            "customer_id": "222222222222222222",
+            "custom_fields": {"key": "value"},
+            "reason": "updated",
+        },
+        "meta": {"version": "5", "time": "2020-11-11T12:31:01Z"},
+    }
+    response = client.post(url, json.dumps(data), content_type="application/json")
+    assert response.status_code == 204

@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Any, Dict, List
 
@@ -42,6 +43,7 @@ from saltedge_wrapper.factory import (
     connections_api,
     transactions_api,
 )
+from users.models import Profile
 
 logger = logging.getLogger(__name__)
 
@@ -376,6 +378,28 @@ class CallbackSuccess(View):
         logger.error(
             f"Success callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
         )
+
+        data = json.loads(request.body)["data"]
+        external_customer_id = int(data["customer_id"])
+        external_connection_id = int(data["connection_id"])
+
+        profile = Profile.objects.filter(external_id=external_customer_id).first()
+        if not profile:
+            return HttpResponse(status=400)
+        user = profile.user
+
+        import_connections_from_saltedge(user, external_customer_id, connections_api())
+        import_accounts_from_saltedge(user, external_connection_id, accounts_api())
+
+        connection = Connection.objects.get(
+            user=user, external_id=external_connection_id
+        )
+        accounts = Account.objects.filter(user=user, connection=connection)
+        for account in accounts:
+            import_transactions_from_saltedge(
+                user, external_connection_id, account.external_id, transactions_api()
+            )
+
         return HttpResponse(status=204)
 
 
@@ -394,6 +418,29 @@ class CallbackDestroy(View):
         logger.error(
             f"Destroy callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
         )
+
+        data = json.loads(request.body)["data"]
+        external_customer_id = int(data["customer_id"])
+        external_connection_id = int(data["connection_id"])
+
+        profile = Profile.objects.filter(external_id=external_customer_id).first()
+        if not profile:
+            return HttpResponse(status=400)
+        user = profile.user
+
+        connection = Connection.objects.filter(
+            user=user, external_id=external_connection_id
+        ).first()
+        if not connection:
+            return HttpResponse(status=400)
+
+        accounts = Account.objects.filter(connection=connection)
+        accounts.update(external_id=None)
+        for account in accounts:
+            transactions = Transaction.objects.filter(account=account)
+            transactions.update(external_id=None)
+        connection.delete()
+
         return HttpResponse(status=204)
 
 
