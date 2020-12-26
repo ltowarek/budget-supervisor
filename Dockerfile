@@ -1,6 +1,6 @@
 FROM python:3.8-alpine AS build-python
 RUN apk update \
-    && apk add gcc postgresql-dev musl-dev
+    && apk add gcc postgresql-dev musl-dev libffi-dev
 COPY ./third_party/ /third_party/
 COPY ./requirements.txt /
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels/ -r requirements.txt
