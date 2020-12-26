@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 from typing import Any, Dict, List
@@ -37,6 +38,7 @@ from django.views.generic.edit import (
     FormView,
     UpdateView,
 )
+from OpenSSL.crypto import FILETYPE_PEM, X509, load_publickey, verify
 from saltedge_wrapper.factory import (
     accounts_api,
     connect_sessions_api,
@@ -370,6 +372,14 @@ class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
         return self.render_to_response(
             self.get_context_data(form=form, balance=balance)
         )
+
+
+def verify_signature(pem: str, signature_base64: str, data: str) -> None:
+    public_key = load_publickey(FILETYPE_PEM, pem)
+    x509 = X509()
+    x509.set_pubkey(public_key)
+    signature = base64.b64decode(signature_base64)
+    verify(x509, signature, data, "sha256")
 
 
 @method_decorator(csrf_exempt, name="dispatch")

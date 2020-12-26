@@ -1,10 +1,13 @@
+import base64
 import datetime
 import json
 from typing import Callable
 
+import OpenSSL.crypto
 import pytest
 import swagger_client as saltedge_client
 from budget.models import Account, Category, Connection, Transaction
+from budget.views import verify_signature
 from django.contrib.messages import get_messages
 from django.test import Client
 from django.urls import resolve, reverse
@@ -1494,3 +1497,40 @@ def test_callback_service(client: Client) -> None:
     }
     response = client.post(url, json.dumps(data), content_type="application/json")
     assert response.status_code == 204
+
+
+def test_verify_signature_success() -> None:
+    public_key_pem = """
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvL/Xxdmj7/cpZgvDMvxr
+nTTU/vkHGM/qkJ0Q+rmfYLru0Z/rSWthPDEK3orY5BTa0sAe2wUV5Fes677X6+Ib
+roCF8nODW5hSVTrqWcrQ55I7InpFkpTxyMkiFN8XPS7qmYXl/xofbYq0olcwE/aw
+9lfHlZD7iwOpVJqTsYiXzSMRu92ZdECV895kYS/ggymSEtoMSW3405dQ6OfnK53x
+7AJPdkAp0Wa2Lk4BNBMd24uu2tasO1bTYBsHpxonwbA+o8BXffdTEloloJgW7pV+
+TWvxB/Uxil4yhZZJaFmvTCefxWFovyzLdjn2aSAEI7D1y4IYOdByMOPYQ6Mn7J9A
+9wIDAQAB
+-----END PUBLIC KEY-----
+    """
+    signature_base64 = "LhW+IftaENhUedrIsWp//ySu55XUs+e0seaJq7dFkiIGJH8XBF+z4yMYWCrr54MDIwwQV3WQ3BlJ6zq5SMiSt5cD72UFtV7dhMndfbKE51ItfpdAaGn47xXab3Nd5kAImNiOse6PUHknFh1mS/lSTF6jIePm6Gv5/BhVm8Y9O+ZBCy/A/GWXE49o6Ai+9StkTXj+6NAwNjvhyMEEBxJIB1d9MmfcrPvHhGV5F7WJxTHb3mNafapkkXO7Lp4dfa1902CzJUQUBt8kBd6dEZyk4NbUKQPOfi6I4HDpt4u+iELgI9M+vwzv8fwWzBpnvTfht1xbklKC3cYFMlaiQO54JQ=="
+    data = 'http://budget-supervisor-stage.herokuapp.com/callbacks/success/|{"data":{"connection_id":"349600516445047165","customer_id":"345935467172071692","custom_fields":{}},"meta":{"version":"5","time":"2020-11-12T21:00:19.000Z"}}'
+
+    verify_signature(public_key_pem, signature_base64, data)
+
+
+def test_verify_signature_invalid_signature() -> None:
+    public_key_pem = """
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvL/Xxdmj7/cpZgvDMvxr
+nTTU/vkHGM/qkJ0Q+rmfYLru0Z/rSWthPDEK3orY5BTa0sAe2wUV5Fes677X6+Ib
+roCF8nODW5hSVTrqWcrQ55I7InpFkpTxyMkiFN8XPS7qmYXl/xofbYq0olcwE/aw
+9lfHlZD7iwOpVJqTsYiXzSMRu92ZdECV895kYS/ggymSEtoMSW3405dQ6OfnK53x
+7AJPdkAp0Wa2Lk4BNBMd24uu2tasO1bTYBsHpxonwbA+o8BXffdTEloloJgW7pV+
+TWvxB/Uxil4yhZZJaFmvTCefxWFovyzLdjn2aSAEI7D1y4IYOdByMOPYQ6Mn7J9A
+9wIDAQAB
+-----END PUBLIC KEY-----
+    """
+    signature_base64 = base64.b64encode(b"xyz").decode("ascii")
+    data = 'http://budget-supervisor-stage.herokuapp.com/callbacks/success/|{"data":{"connection_id":"349600516445047165","customer_id":"345935467172071692","custom_fields":{}},"meta":{"version":"5","time":"2020-11-12T21:00:19.000Z"}}'
+
+    with pytest.raises(OpenSSL.crypto.Error):
+        verify_signature(public_key_pem, signature_base64, data)
