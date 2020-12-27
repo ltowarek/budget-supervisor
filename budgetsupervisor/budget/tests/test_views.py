@@ -14,7 +14,7 @@ from django.urls import resolve, reverse
 from pytest_mock import MockFixture
 from swagger_client import (
     AccountsResponse,
-    ConnectionsResponse,
+    ConnectionResponse,
     ConnectSessionResponse,
     ConnectSessionResponseData,
     TransactionsResponse,
@@ -1282,7 +1282,7 @@ def test_callback_success_new_connection(
     transactions_api: saltedge_client.TransactionsApi,
 ) -> None:
     mock_connection = saltedge_connection_factory(id="1234")
-    connections_api.connections_connection_id_get.return_value = ConnectionsResponse(
+    connections_api.connections_connection_id_get.return_value = ConnectionResponse(
         data=mock_connection
     )
     mocker.patch(
@@ -1320,9 +1320,9 @@ def test_callback_success_new_account(
     saltedge_account_factory: Callable[..., saltedge_client.Account],
     transactions_api: saltedge_client.TransactionsApi,
 ) -> None:
-    mock_connections = [saltedge_connection_factory(id="1234")]
-    connections_api.connections_get.return_value = ConnectionsResponse(
-        data=mock_connections
+    mock_connection = saltedge_connection_factory(id="1234")
+    connections_api.connections_connection_id_get.return_value = ConnectionResponse(
+        data=mock_connection
     )
     mocker.patch(
         "budget.views.connections_api", autospec=True, return_value=connections_api
@@ -1364,9 +1364,9 @@ def test_callback_success_new_transaction(
     transactions_api: saltedge_client.TransactionsApi,
     saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
 ) -> None:
-    mock_connections = [saltedge_connection_factory(id="1234")]
-    connections_api.connections_get.return_value = ConnectionsResponse(
-        data=mock_connections
+    mock_connection = saltedge_connection_factory(id="1234")
+    connections_api.connections_connection_id_get.return_value = ConnectionResponse(
+        data=mock_connection
     )
     mocker.patch(
         "budget.views.connections_api", autospec=True, return_value=connections_api
