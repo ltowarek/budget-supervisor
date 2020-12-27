@@ -288,7 +288,7 @@ class GeneralAccountExtra(object):
     def balance_type(self):
         """Gets the balance_type of this GeneralAccountExtra.  # noqa: E501
 
-        type of the imported balance as showed/returned by the bank  # noqa: E501
+        __Examples:__ `interimAvailable`, `closingBooked`, `interimBooked`, `authorised`, `expected`, `BOOKED`, `CLAV`, `CLBD`, `XPCD`, `OTHR`, etc.  __Note:__ The value is specific to the financial institution and can vary depending on the API standard, the bank's implementation, the account's type, country/region peculiarities, etc. This field holds an informative meaning. Usually, it is used to verify the balance consistency between customers of the same bank or between banks within the same country.   # noqa: E501
 
         :return: The balance_type of this GeneralAccountExtra.  # noqa: E501
         :rtype: str
@@ -299,7 +299,7 @@ class GeneralAccountExtra(object):
     def balance_type(self, balance_type):
         """Sets the balance_type of this GeneralAccountExtra.
 
-        type of the imported balance as showed/returned by the bank  # noqa: E501
+        __Examples:__ `interimAvailable`, `closingBooked`, `interimBooked`, `authorised`, `expected`, `BOOKED`, `CLAV`, `CLBD`, `XPCD`, `OTHR`, etc.  __Note:__ The value is specific to the financial institution and can vary depending on the API standard, the bank's implementation, the account's type, country/region peculiarities, etc. This field holds an informative meaning. Usually, it is used to verify the balance consistency between customers of the same bank or between banks within the same country.   # noqa: E501
 
         :param balance_type: The balance_type of this GeneralAccountExtra.  # noqa: E501
         :type: str

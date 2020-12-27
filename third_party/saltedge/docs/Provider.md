@@ -6,7 +6,7 @@ Name | Type | Description | Notes
 **id** | **str** | the &#x60;id&#x60; of the provider | 
 **code** | **str** | provider&#x27;s code | 
 **name** | **str** | provider&#x27;s name | 
-**mode** | **str** |  | 
+**mode** | **str** | possible values are:     - &#x60;oauth&#x60; -- access through the bank&#x27;s dedicated API (&#x60;regulated: true&#x60;). The user is redirected to the bank&#x27;s page for authorization. For more details, check [OAuth providers](#oauth_providers).    - &#x60;web&#x60; -- access through the bank&#x27;s WEB interface using screen scraping technology. Therefore, a user undergoes the same authorization flow as in their bank&#x27;s web interface with an identical set of credentials.    - &#x60;api&#x60; -- access through a dedicated (&#x60;regulated: true&#x60;) or non-dedicated (&#x60;regulated: false&#x60;) bank&#x27;s API. Some required credentials fields might be present which the user should complete (IBAN, username, etc.). In case of a dedicated API, an [interactive redirect](#connections-interactive) might be present, but there are required credentials fields which the user should complete (IBAN, username, etc.). Using these credentials, we authorize the user on the bank&#x27;s side.    - &#x60;file&#x60; -- access through uploading a file of certain format (XLS, CSV, etc.), which is processed to extract information of their accounts and transactions.   | 
 **status** | **str** |  | 
 **automatic_fetch** | **bool** | whether the provider&#x27;s connections can be automatically fetched | 
 **customer_notified_on_sign_in** | **bool** | whether the provider will notify the customer on log in attempt | 
@@ -33,6 +33,7 @@ Name | Type | Description | Notes
 **supported_account_natures** | **list[str]** | array of possible [account natures](#accounts-attributes) to be fetched | 
 **supported_account_types** | **list[str]** |  | 
 **identification_codes** | **list[str]** | List of codes identifying supported branches of a specific provider. It may include BLZ(Germany), ABI+CAB(Italy), Branch Codes(France) etc. | 
+**bic_codes** | **list[str]** | List of BIC codes identifying supported branches of a specific provider. | 
 **supported_iframe_embedding** | **bool** |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

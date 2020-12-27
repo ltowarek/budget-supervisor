@@ -127,7 +127,7 @@ class Account(object):
     def nature(self):
         """Gets the nature of this Account.  # noqa: E501
 
-        the type of the account.  <strong>Note:</strong> for `credit_card` nature, the balance represents the sum of all negative transactions, the positive ones do not count.   # noqa: E501
+        the type of the account  <strong>Note:</strong> for `credit_card` nature, the balance represents the sum of all negative transactions, the positive ones do not count.   # noqa: E501
 
         :return: The nature of this Account.  # noqa: E501
         :rtype: str
@@ -138,7 +138,7 @@ class Account(object):
     def nature(self, nature):
         """Sets the nature of this Account.
 
-        the type of the account.  <strong>Note:</strong> for `credit_card` nature, the balance represents the sum of all negative transactions, the positive ones do not count.   # noqa: E501
+        the type of the account  <strong>Note:</strong> for `credit_card` nature, the balance represents the sum of all negative transactions, the positive ones do not count.   # noqa: E501
 
         :param nature: The nature of this Account.  # noqa: E501
         :type: str
@@ -183,7 +183,7 @@ class Account(object):
     def currency_code(self):
         """Gets the currency_code of this Account.  # noqa: E501
 
-        \"one of the possible values for [currency codes](#currencies). Maximum 3 letters.\"  <strong>Note:</strong> The currency directly identifies the account. In case the account’s currency code has changed (in the bank’s WEB/API interface, through code changes, etc.) a new account will be created.   # noqa: E501
+        one of the possible values for [currency codes](#currencies). Maximum 3 letters.  <strong>Note:</strong> The currency directly identifies the account. In case the account’s currency code has changed (in the bank’s WEB/API interface, through code changes, etc.) a new account will be created.   # noqa: E501
 
         :return: The currency_code of this Account.  # noqa: E501
         :rtype: str
@@ -194,7 +194,7 @@ class Account(object):
     def currency_code(self, currency_code):
         """Sets the currency_code of this Account.
 
-        \"one of the possible values for [currency codes](#currencies). Maximum 3 letters.\"  <strong>Note:</strong> The currency directly identifies the account. In case the account’s currency code has changed (in the bank’s WEB/API interface, through code changes, etc.) a new account will be created.   # noqa: E501
+        one of the possible values for [currency codes](#currencies). Maximum 3 letters.  <strong>Note:</strong> The currency directly identifies the account. In case the account’s currency code has changed (in the bank’s WEB/API interface, through code changes, etc.) a new account will be created.   # noqa: E501
 
         :param currency_code: The currency_code of this Account.  # noqa: E501
         :type: str

@@ -197,7 +197,7 @@ class ReconnectConnectionRequestBodyData(object):
     def include_fake_providers(self):
         """Gets the include_fake_providers of this ReconnectConnectionRequestBodyData.  # noqa: E501
 
-        being [live](/general/#live), the customer will not be able to create [fake](#providers-fake) providers. This flag allows it, if sent as `true` the customer will have the possibility to create any fake provider available.  # noqa: E501
+        if sent as `true`, the customers of [live](/general/#live) clients will be able to connect [fake providers](#providers-fake).  # noqa: E501
 
         :return: The include_fake_providers of this ReconnectConnectionRequestBodyData.  # noqa: E501
         :rtype: bool
@@ -208,7 +208,7 @@ class ReconnectConnectionRequestBodyData(object):
     def include_fake_providers(self, include_fake_providers):
         """Sets the include_fake_providers of this ReconnectConnectionRequestBodyData.
 
-        being [live](/general/#live), the customer will not be able to create [fake](#providers-fake) providers. This flag allows it, if sent as `true` the customer will have the possibility to create any fake provider available.  # noqa: E501
+        if sent as `true`, the customers of [live](/general/#live) clients will be able to connect [fake providers](#providers-fake).  # noqa: E501
 
         :param include_fake_providers: The include_fake_providers of this ReconnectConnectionRequestBodyData.  # noqa: E501
         :type: bool

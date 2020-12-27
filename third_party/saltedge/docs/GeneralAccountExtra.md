@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 **account_number** | **str** | internal bank account number | [optional] 
 **assets** | **list[str]** | array of crypto codes and their amounts assigned to investment account | [optional] 
 **available_amount** | **float** | available amount in the account&#x27;s currency | [optional] 
-**balance_type** | **str** | type of the imported balance as showed/returned by the bank | [optional] 
+**balance_type** | **str** | __Examples:__ &#x60;interimAvailable&#x60;, &#x60;closingBooked&#x60;, &#x60;interimBooked&#x60;, &#x60;authorised&#x60;, &#x60;expected&#x60;, &#x60;BOOKED&#x60;, &#x60;CLAV&#x60;, &#x60;CLBD&#x60;, &#x60;XPCD&#x60;, &#x60;OTHR&#x60;, etc.  __Note:__ The value is specific to the financial institution and can vary depending on the API standard, the bank&#x27;s implementation, the account&#x27;s type, country/region peculiarities, etc. This field holds an informative meaning. Usually, it is used to verify the balance consistency between customers of the same bank or between banks within the same country.  | [optional] 
 **blocked_amount** | **float** | the amount currently blocked in account&#x27;s currency | [optional] 
 **card_type** | **str** | type of the &#x60;card&#x60; account. | [optional] 
 **cards** | **list[str]** | list of masked card numbers linked to the account | [optional] 

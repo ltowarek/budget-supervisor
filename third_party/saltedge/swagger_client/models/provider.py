@@ -58,6 +58,7 @@ class Provider(object):
         'supported_account_natures': 'list[str]',
         'supported_account_types': 'list[str]',
         'identification_codes': 'list[str]',
+        'bic_codes': 'list[str]',
         'supported_iframe_embedding': 'bool'
     }
 
@@ -92,10 +93,11 @@ class Provider(object):
         'supported_account_natures': 'supported_account_natures',
         'supported_account_types': 'supported_account_types',
         'identification_codes': 'identification_codes',
+        'bic_codes': 'bic_codes',
         'supported_iframe_embedding': 'supported_iframe_embedding'
     }
 
-    def __init__(self, id=None, code=None, name=None, mode=None, status=None, automatic_fetch=None, customer_notified_on_sign_in=None, interactive=None, identification_mode=None, instruction=None, home_url=None, login_url=None, logo_url=None, country_code=None, refresh_timeout=None, holder_info=None, max_consent_days=None, created_at=None, updated_at=None, timezone=None, max_interactive_delay=None, optional_interactivity=None, regulated=None, max_fetch_interval=None, supported_fetch_scopes=None, supported_account_extra_fields=None, supported_transaction_extra_fields=None, supported_account_natures=None, supported_account_types=None, identification_codes=None, supported_iframe_embedding=None):  # noqa: E501
+    def __init__(self, id=None, code=None, name=None, mode=None, status=None, automatic_fetch=None, customer_notified_on_sign_in=None, interactive=None, identification_mode=None, instruction=None, home_url=None, login_url=None, logo_url=None, country_code=None, refresh_timeout=None, holder_info=None, max_consent_days=None, created_at=None, updated_at=None, timezone=None, max_interactive_delay=None, optional_interactivity=None, regulated=None, max_fetch_interval=None, supported_fetch_scopes=None, supported_account_extra_fields=None, supported_transaction_extra_fields=None, supported_account_natures=None, supported_account_types=None, identification_codes=None, bic_codes=None, supported_iframe_embedding=None):  # noqa: E501
         """Provider - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._code = None
@@ -127,6 +129,7 @@ class Provider(object):
         self._supported_account_natures = None
         self._supported_account_types = None
         self._identification_codes = None
+        self._bic_codes = None
         self._supported_iframe_embedding = None
         self.discriminator = None
         self.id = id
@@ -159,6 +162,7 @@ class Provider(object):
         self.supported_account_natures = supported_account_natures
         self.supported_account_types = supported_account_types
         self.identification_codes = identification_codes
+        self.bic_codes = bic_codes
         self.supported_iframe_embedding = supported_iframe_embedding
 
     @property
@@ -240,6 +244,7 @@ class Provider(object):
     def mode(self):
         """Gets the mode of this Provider.  # noqa: E501
 
+        possible values are:     - `oauth` -- access through the bank's dedicated API (`regulated: true`). The user is redirected to the bank's page for authorization. For more details, check [OAuth providers](#oauth_providers).    - `web` -- access through the bank's WEB interface using screen scraping technology. Therefore, a user undergoes the same authorization flow as in their bank's web interface with an identical set of credentials.    - `api` -- access through a dedicated (`regulated: true`) or non-dedicated (`regulated: false`) bank's API. Some required credentials fields might be present which the user should complete (IBAN, username, etc.). In case of a dedicated API, an [interactive redirect](#connections-interactive) might be present, but there are required credentials fields which the user should complete (IBAN, username, etc.). Using these credentials, we authorize the user on the bank's side.    - `file` -- access through uploading a file of certain format (XLS, CSV, etc.), which is processed to extract information of their accounts and transactions.    # noqa: E501
 
         :return: The mode of this Provider.  # noqa: E501
         :rtype: str
@@ -250,18 +255,13 @@ class Provider(object):
     def mode(self, mode):
         """Sets the mode of this Provider.
 
+        possible values are:     - `oauth` -- access through the bank's dedicated API (`regulated: true`). The user is redirected to the bank's page for authorization. For more details, check [OAuth providers](#oauth_providers).    - `web` -- access through the bank's WEB interface using screen scraping technology. Therefore, a user undergoes the same authorization flow as in their bank's web interface with an identical set of credentials.    - `api` -- access through a dedicated (`regulated: true`) or non-dedicated (`regulated: false`) bank's API. Some required credentials fields might be present which the user should complete (IBAN, username, etc.). In case of a dedicated API, an [interactive redirect](#connections-interactive) might be present, but there are required credentials fields which the user should complete (IBAN, username, etc.). Using these credentials, we authorize the user on the bank's side.    - `file` -- access through uploading a file of certain format (XLS, CSV, etc.), which is processed to extract information of their accounts and transactions.    # noqa: E501
 
         :param mode: The mode of this Provider.  # noqa: E501
         :type: str
         """
         if mode is None:
             raise ValueError("Invalid value for `mode`, must not be `None`")  # noqa: E501
-        allowed_values = ["oauth", "web", "api", "file"]  # noqa: E501
-        if mode not in allowed_values:
-            raise ValueError(
-                "Invalid value for `mode` ({0}), must be one of {1}"  # noqa: E501
-                .format(mode, allowed_values)
-            )
 
         self._mode = mode
 
@@ -929,6 +929,31 @@ class Provider(object):
             raise ValueError("Invalid value for `identification_codes`, must not be `None`")  # noqa: E501
 
         self._identification_codes = identification_codes
+
+    @property
+    def bic_codes(self):
+        """Gets the bic_codes of this Provider.  # noqa: E501
+
+        List of BIC codes identifying supported branches of a specific provider.  # noqa: E501
+
+        :return: The bic_codes of this Provider.  # noqa: E501
+        :rtype: list[str]
+        """
+        return self._bic_codes
+
+    @bic_codes.setter
+    def bic_codes(self, bic_codes):
+        """Sets the bic_codes of this Provider.
+
+        List of BIC codes identifying supported branches of a specific provider.  # noqa: E501
+
+        :param bic_codes: The bic_codes of this Provider.  # noqa: E501
+        :type: list[str]
+        """
+        if bic_codes is None:
+            raise ValueError("Invalid value for `bic_codes`, must not be `None`")  # noqa: E501
+
+        self._bic_codes = bic_codes
 
     @property
     def supported_iframe_embedding(self):

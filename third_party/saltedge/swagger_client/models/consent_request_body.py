@@ -92,7 +92,7 @@ class ConsentRequestBody(object):
     def from_date(self):
         """Gets the from_date of this ConsentRequestBody.  # noqa: E501
 
-        date to be allowed for fetching the data from. Defaults to `90 days ago`. This parameter is used when `scopes` parameter contains `transactions_details`. The allowed values for this parameter must be within exactly 365 days ago.  # noqa: E501
+        date to be allowed for fetching the data from. Defaults to `90 days ago` (only for the providers with `regulated:true`). This parameter is used when `scopes` parameter contains `transactions_details`. The allowed values for this parameter must be within exactly 365 days ago.  # noqa: E501
 
         :return: The from_date of this ConsentRequestBody.  # noqa: E501
         :rtype: date
@@ -103,7 +103,7 @@ class ConsentRequestBody(object):
     def from_date(self, from_date):
         """Sets the from_date of this ConsentRequestBody.
 
-        date to be allowed for fetching the data from. Defaults to `90 days ago`. This parameter is used when `scopes` parameter contains `transactions_details`. The allowed values for this parameter must be within exactly 365 days ago.  # noqa: E501
+        date to be allowed for fetching the data from. Defaults to `90 days ago` (only for the providers with `regulated:true`). This parameter is used when `scopes` parameter contains `transactions_details`. The allowed values for this parameter must be within exactly 365 days ago.  # noqa: E501
 
         :param from_date: The from_date of this ConsentRequestBody.  # noqa: E501
         :type: date

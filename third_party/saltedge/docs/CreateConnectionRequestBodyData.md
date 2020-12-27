@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 **credentials** | **object** | the credentials required to access the data | [optional] 
 **encrypted_credentials** | **object** | the [encrypted credentials](#encrypted_credentials) required to access the data | [optional] 
 **daily_refresh** | **bool** | whether the connection should be automatically refreshed by Salt Edge. | [optional] 
-**include_fake_providers** | **bool** | being [live](/general/#live), the customer will not be able to create [fake](#providers-fake) providers. This flag allows it, if sent as &#x60;true&#x60; the customer will have the possibility to create any fake provider available. | [optional] 
+**include_fake_providers** | **bool** | if sent as &#x60;true&#x60;, the customers of [live](/general/#live) clients will be able to connect [fake providers](#providers-fake). | [optional] 
 **categorization** | **str** | the type of categorization applied. | [optional] [default to 'personal']
 **file_url** | **bool** | URL of a file. Is used when creating a connection for a provider with &#x60;file&#x60; mode | [optional] 
 
