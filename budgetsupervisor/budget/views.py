@@ -1,8 +1,10 @@
 import base64
 import json
 import logging
+import os
 from typing import Any, Dict, List
 
+import OpenSSL.crypto
 from budget.forms import (
     CreateConnectionForm,
     ImportAccountsForm,
@@ -374,6 +376,15 @@ class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
         )
 
 
+def verify_saltedge_signature(request: HttpRequest) -> None:
+    uri = request.build_absolute_uri(request.path)
+    body = request.body.decode()
+    data = f"{uri}|{body}"
+    pem = os.environ["SALTEDGE_PUBLIC_KEY"]
+    signature = request.headers["Signature"]
+    verify_signature(pem, signature, data)
+
+
 def verify_signature(pem: str, signature_base64: str, data: str) -> None:
     public_key = load_publickey(FILETYPE_PEM, pem)
     x509 = X509()
@@ -388,6 +399,11 @@ class CallbackSuccess(View):
         logger.error(
             f"Success callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
         )
+
+        try:
+            verify_saltedge_signature(request)
+        except OpenSSL.crypto.Error:
+            return HttpResponse(status=401)
 
         data = json.loads(request.body)["data"]
         external_customer_id = int(data["customer_id"])
@@ -419,6 +435,12 @@ class CallbackFail(View):
         logger.error(
             f"Fail callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
         )
+
+        try:
+            verify_saltedge_signature(request)
+        except OpenSSL.crypto.Error:
+            return HttpResponse(status=401)
+
         return HttpResponse(status=204)
 
 
@@ -428,6 +450,11 @@ class CallbackDestroy(View):
         logger.error(
             f"Destroy callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
         )
+
+        try:
+            verify_saltedge_signature(request)
+        except OpenSSL.crypto.Error:
+            return HttpResponse(status=401)
 
         data = json.loads(request.body)["data"]
         external_customer_id = int(data["customer_id"])
@@ -460,6 +487,12 @@ class CallbackNotify(View):
         logger.error(
             f"Notify callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
         )
+
+        try:
+            verify_saltedge_signature(request)
+        except OpenSSL.crypto.Error:
+            return HttpResponse(status=401)
+
         return HttpResponse(status=204)
 
 
@@ -469,4 +502,10 @@ class CallbackService(View):
         logger.error(
             f"Service callback\nHeaders:\n{request.headers}\nBody:\n{request.body}"
         )
+
+        try:
+            verify_saltedge_signature(request)
+        except OpenSSL.crypto.Error:
+            return HttpResponse(status=401)
+
         return HttpResponse(status=204)
