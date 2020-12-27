@@ -1281,9 +1281,9 @@ def test_callback_success_new_connection(
     accounts_api: saltedge_client.AccountsApi,
     transactions_api: saltedge_client.TransactionsApi,
 ) -> None:
-    mock_connections = [saltedge_connection_factory(id="1234")]
-    connections_api.connections_get.return_value = ConnectionsResponse(
-        data=mock_connections
+    mock_connection = saltedge_connection_factory(id="1234")
+    connections_api.connections_connection_id_get.return_value = ConnectionsResponse(
+        data=mock_connection
     )
     mocker.patch(
         "budget.views.connections_api", autospec=True, return_value=connections_api
