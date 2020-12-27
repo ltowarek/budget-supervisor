@@ -1302,7 +1302,10 @@ def test_callback_success_new_connection(
         },
         "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
     }
-    response = client.post(url, json.dumps(data), content_type="application/json")
+    mocker.patch("budget.views.verify_signature", autospec=True)
+    response = client.post(
+        url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
+    )
     assert response.status_code == 204
     assert Connection.objects.filter(external_id=1234).exists()
 
@@ -1342,7 +1345,10 @@ def test_callback_success_new_account(
         },
         "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
     }
-    response = client.post(url, json.dumps(data), content_type="application/json")
+    mocker.patch("budget.views.verify_signature", autospec=True)
+    response = client.post(
+        url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
+    )
     assert response.status_code == 204
     assert Account.objects.filter(external_id="4567").exists()
 
@@ -1387,13 +1393,16 @@ def test_callback_success_new_transaction(
         },
         "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
     }
-    response = client.post(url, json.dumps(data), content_type="application/json")
+    mocker.patch("budget.views.verify_signature", autospec=True)
+    response = client.post(
+        url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
+    )
     assert response.status_code == 204
     assert Transaction.objects.filter(external_id="8900").exists()
 
 
 @pytest.mark.django_db
-def test_callback_success_invalid_customer(client: Client) -> None:
+def test_callback_success_invalid_customer(client: Client, mocker: MockFixture) -> None:
     url = reverse("callbacks:callback_success")
     data = {
         "data": {
@@ -1403,11 +1412,14 @@ def test_callback_success_invalid_customer(client: Client) -> None:
         },
         "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
     }
-    response = client.post(url, json.dumps(data), content_type="application/json")
+    mocker.patch("budget.views.verify_signature", autospec=True)
+    response = client.post(
+        url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
+    )
     assert response.status_code == 400
 
 
-def test_callback_fail(client: Client) -> None:
+def test_callback_fail(client: Client, mocker: MockFixture) -> None:
     url = reverse("callbacks:callback_fail")
     data = {
         "data": {
@@ -1419,12 +1431,18 @@ def test_callback_fail(client: Client) -> None:
         },
         "meta": {"version": "5", "time": "2020-11-12T12:31:01.606Z"},
     }
-    response = client.post(url, json.dumps(data), content_type="application/json")
+    mocker.patch("budget.views.verify_signature", autospec=True)
+    response = client.post(
+        url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
+    )
     assert response.status_code == 204
 
 
 def test_callback_destroy(
-    client: Client, profile_foo_external: Profile, connection_foo: Connection
+    client: Client,
+    profile_foo_external: Profile,
+    connection_foo: Connection,
+    mocker: MockFixture,
 ) -> None:
     url = reverse("callbacks:callback_destroy")
     data = {
@@ -1434,13 +1452,16 @@ def test_callback_destroy(
         },
         "meta": {"version": "5", "time": "2020-11-11T12:31:01Z"},
     }
-    response = client.post(url, json.dumps(data), content_type="application/json")
+    mocker.patch("budget.views.verify_signature", autospec=True)
+    response = client.post(
+        url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
+    )
     assert response.status_code == 204
     assert not Connection.objects.filter(pk=connection_foo.pk).exists()
 
 
 def test_callback_destroy_invalid_customer(
-    client: Client, connection_foo: Connection
+    client: Client, connection_foo: Connection, mocker: MockFixture
 ) -> None:
     url = reverse("callbacks:callback_destroy")
     data = {
@@ -1450,12 +1471,15 @@ def test_callback_destroy_invalid_customer(
         },
         "meta": {"version": "5", "time": "2020-11-11T12:31:01Z"},
     }
-    response = client.post(url, json.dumps(data), content_type="application/json")
+    mocker.patch("budget.views.verify_signature", autospec=True)
+    response = client.post(
+        url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
+    )
     assert response.status_code == 400
 
 
 def test_callback_destroy_invalid_connection(
-    client: Client, profile_foo_external: Profile
+    client: Client, profile_foo_external: Profile, mocker: MockFixture
 ) -> None:
     url = reverse("callbacks:callback_destroy")
     data = {
@@ -1465,11 +1489,14 @@ def test_callback_destroy_invalid_connection(
         },
         "meta": {"version": "5", "time": "2020-11-11T12:31:01Z"},
     }
-    response = client.post(url, json.dumps(data), content_type="application/json")
+    mocker.patch("budget.views.verify_signature", autospec=True)
+    response = client.post(
+        url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
+    )
     assert response.status_code == 400
 
 
-def test_callback_notify(client: Client) -> None:
+def test_callback_notify(client: Client, mocker: MockFixture) -> None:
     url = reverse("callbacks:callback_notify")
     data = {
         "data": {
@@ -1480,11 +1507,14 @@ def test_callback_notify(client: Client) -> None:
         },
         "meta": {"version": "5", "time": "2020-11-11T12:31:01Z"},
     }
-    response = client.post(url, json.dumps(data), content_type="application/json")
+    mocker.patch("budget.views.verify_signature", autospec=True)
+    response = client.post(
+        url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
+    )
     assert response.status_code == 204
 
 
-def test_callback_service(client: Client) -> None:
+def test_callback_service(client: Client, mocker: MockFixture) -> None:
     url = reverse("callbacks:callback_service")
     data = {
         "data": {
@@ -1495,7 +1525,10 @@ def test_callback_service(client: Client) -> None:
         },
         "meta": {"version": "5", "time": "2020-11-11T12:31:01Z"},
     }
-    response = client.post(url, json.dumps(data), content_type="application/json")
+    mocker.patch("budget.views.verify_signature", autospec=True)
+    response = client.post(
+        url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
+    )
     assert response.status_code == 204
 
 
