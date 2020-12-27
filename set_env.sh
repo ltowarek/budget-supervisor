@@ -1,2 +1,4 @@
 #!/bin/bash
-export $(cat $1 | xargs)
+set -a
+source $1
+set +a
