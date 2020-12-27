@@ -26,6 +26,19 @@ def create_connection_in_saltedge(
     return response.data.connect_url
 
 
+def import_connection_from_saltedge(
+    user: User, connection_id: int, connections_api: saltedge_client.ConnectionsApi,
+) -> Connection:
+    response = connections_api.connections_connection_id_get(str(connection_id))
+    imported_connection = response.data
+    imported_id = int(imported_connection.id)
+    c, _ = Connection.objects.update_or_create(
+        external_id=imported_id,
+        defaults={"provider": imported_connection.provider_name, "user": user},
+    )
+    return c
+
+
 def import_connections_from_saltedge(
     user: User, customer_id: int, connections_api: saltedge_client.ConnectionsApi,
 ) -> List[Connection]:

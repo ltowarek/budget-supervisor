@@ -17,6 +17,7 @@ from budget.services import (
     create_connection_in_saltedge,
     get_category_balance,
     import_accounts_from_saltedge,
+    import_connection_from_saltedge,
     import_connections_from_saltedge,
     import_transactions_from_saltedge,
     remove_connection_from_saltedge,
@@ -414,7 +415,7 @@ class CallbackSuccess(View):
             return HttpResponse(status=400)
         user = profile.user
 
-        import_connections_from_saltedge(user, external_customer_id, connections_api())
+        import_connection_from_saltedge(user, external_connection_id, connections_api())
         import_accounts_from_saltedge(user, external_connection_id, accounts_api())
 
         connection = Connection.objects.get(
