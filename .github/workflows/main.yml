@@ -21,6 +21,7 @@ jobs:
           SALTEDGE_SECRET: ${{ secrets.SALTEDGE_SECRET }}
           SALTEDGE_CUSTOMER_ID: ${{ secrets.SALTEDGE_CUSTOMER_ID }}
           SALTEDGE_CONNECTION_ID: ${{ secrets.SALTEDGE_CONNECTION_ID }}
+          SALTEDGE_PUBLIC_KEY: ${{ secrets.SALTEDGE_PUBLIC_KEY }}
         run: tox
 
   deploy-stage:
