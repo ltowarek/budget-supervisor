@@ -17,6 +17,7 @@ Transactions
             <th>Payee</th>
             <th>Category</th>
             <th>Description</th>
+            <th>Account</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -28,6 +29,7 @@ Transactions
             <td>{{ transaction.payee }}</td>
             <td>{{ transaction.category }}</td>
             <td>{{ transaction.description }}</td>
+            <td>{{ transaction.account }}</td>
             <td>
                 <a class="btn btn-outline-primary btn-sm m-1"
                     href="{% url 'transactions:transaction_update' transaction.id %}">Update</a>

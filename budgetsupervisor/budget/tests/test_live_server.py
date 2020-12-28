@@ -693,13 +693,14 @@ class TestTransactionList:
         selenium.get(url)
 
         elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
-        assert len(elements) == 6
+        assert len(elements) == 7
         assert elements[0].text == "Date"
         assert elements[1].text == "Amount"
         assert elements[2].text == "Payee"
         assert elements[3].text == "Category"
         assert elements[4].text == "Description"
-        assert elements[5].text == "Actions"
+        assert elements[5].text == "Account"
+        assert elements[6].text == "Actions"
 
     def test_table_body(
         self,
@@ -733,7 +734,7 @@ class TestTransactionList:
         assert len(elements) == len(transactions)
         for element, transaction in zip(elements, transactions):
             cells = element.find_elements_by_xpath(".//td")
-            assert len(cells) == 6
+            assert len(cells) == 7
 
             # parse_date does not support SHORT_DATE_FORMAT
             assert parse_date(cells[0].text) is None
@@ -741,8 +742,9 @@ class TestTransactionList:
             assert cells[2].text == transaction.payee
             assert cells[3].text == str(transaction.category)
             assert cells[4].text == transaction.description
+            assert cells[5].text == str(transaction.account)
 
-            actions = cells[5].find_elements_by_xpath(".//a")
+            actions = cells[6].find_elements_by_xpath(".//a")
             assert actions[0].text == "Update"
             assert actions[0].get_attribute("href") == live_server_path(
                 reverse(
