@@ -640,15 +640,15 @@ def test_get_category_balance_filter_by_to_date(
 
 def test_refresh_connection_in_saltedge(
     connection_foo: Connection,
-    connections_api: saltedge_client.ConnectionsApi,
+    connect_sessions_api: saltedge_client.ConnectSessionsApi,
     saltedge_connection_factory: Callable[..., saltedge_client.Connection],
 ) -> None:
-    data = saltedge_connection_factory(id=str(connection_foo.external_id))
-    connections_api.connections_connection_id_refresh_put.return_value = saltedge_client.ConnectionResponse(
+    data = saltedge_client.ConnectSessionResponseData(connect_url="example.com")
+    connect_sessions_api.connect_sessions_refresh_post.return_value = saltedge_client.ConnectSessionResponse(
         data=data
     )
 
-    refresh_connection_in_saltedge(connection_foo.external_id, connections_api)
-    connections_api.connections_connection_id_refresh_put.assert_called_with(
-        str(connection_foo.external_id)
+    connect_url = refresh_connection_in_saltedge(
+        "redirect_url", connection_foo.external_id, connect_sessions_api
     )
+    assert connect_url == data.connect_url

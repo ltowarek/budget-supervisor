@@ -43,7 +43,6 @@ from saltedge_wrapper.factory import (
     connections_api,
     transactions_api,
 )
-from swagger_client.rest import ApiException
 from users.models import Profile
 
 logger = logging.getLogger(__name__)
@@ -98,7 +97,6 @@ class ConnectionRefresh(
     template_name = "budget/connection_refresh.html"
     form_class = RefreshConnectionForm
     success_url = reverse_lazy("connections:connection_list")
-    success_message = "Connection was refreshed successfully"
 
     def get(
         self, request: HttpRequest, *args: str, **kwargs: Any
@@ -118,17 +116,11 @@ class ConnectionRefresh(
 
     def form_valid(self, form: RefreshConnectionForm) -> HttpResponseRedirect:
         connection = self.get_object()
-        try:
-            refresh_connection_in_saltedge(connection.external_id, connections_api())
-        except ApiException as e:
-            message = (
-                f'Failed to refresh connection "{connection.provider}": {e.reason}'
-            )
-            logger.error(message)
-            messages.error(self.request, message)
-        else:
-            messages.success(self.request, self.success_message)
-        return super().form_valid(form)
+        redirect_url = self.request.build_absolute_uri(str(self.success_url))
+        connect_url = refresh_connection_in_saltedge(
+            redirect_url, connection.external_id, connect_sessions_api()
+        )
+        return redirect(connect_url)
 
 
 class ConnectionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):

@@ -163,6 +163,16 @@ def get_category_balance(
 
 
 def refresh_connection_in_saltedge(
-    connection_id: int, connections_api: saltedge_client.ConnectionsApi,
-) -> None:
-    connections_api.connections_connection_id_refresh_put(str(connection_id))
+    redirect_url: str,
+    connection_id: int,
+    connect_sessions_api: saltedge_client.ConnectSessionsApi,
+) -> str:
+    attempt = saltedge_client.AttemptRequestBody(
+        return_to=redirect_url, store_credentials=False
+    )
+    data = saltedge_client.RefreshSessionRequestBodyData(
+        connection_id=str(connection_id), attempt=attempt, categorization="none",
+    )
+    body = saltedge_client.RefreshSessionRequestBody(data)
+    response = connect_sessions_api.connect_sessions_refresh_post(body=body)
+    return response.data.connect_url

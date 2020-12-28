@@ -239,7 +239,7 @@ class TestConnectionUpdate:
     reason="next_refresh_possible_at prevents running multiple tests using the same saltedge connection"
 )
 class TestConnectionRefresh:
-    def test_dummy(
+    def test_saltedge_connect_session_refresh(
         self,
         authenticate_selenium: Callable[..., WebDriver],
         live_server_path: Callable[[str], str],
@@ -248,24 +248,8 @@ class TestConnectionRefresh:
     ) -> None:
         selenium = authenticate_selenium(user=predefined_user)
         self.refresh_connection(selenium, live_server_path, predefined_connection)
-        # There is no field to check
-        assert True
-
-    def test_message(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_user: User,
-        predefined_connection: Connection,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_user)
-        self.refresh_connection(selenium, live_server_path, predefined_connection)
-        messages = [
-            m.text
-            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
-        ]
-        assert any(
-            "Connection was refreshed successfully" in message for message in messages
+        assert selenium.current_url == live_server_path(
+            reverse("connections:connection_list")
         )
 
     def refresh_connection(
@@ -280,6 +264,8 @@ class TestConnectionRefresh:
         selenium.get(url)
         element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
+        redirect_url = live_server_path(reverse("connections:connection_list"))
+        WebDriverWait(selenium, 30).until(EC.url_to_be(redirect_url))
 
 
 @pytest.fixture

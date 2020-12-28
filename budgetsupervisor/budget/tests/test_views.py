@@ -240,60 +240,21 @@ def test_connection_refresh_view_post_redirect(
     login_user: Callable[[User], None],
     connection_foo: Connection,
     mocker: MockFixture,
-    connections_api: saltedge_client.ConnectionsApi,
+    connect_sessions_api: saltedge_client.ConnectSessionsApi,
 ) -> None:
     login_user(user_foo)
     url = reverse("connections:connection_refresh", kwargs={"pk": connection_foo.pk})
+    connect_sessions_api.connect_sessions_refresh_post.return_value = ConnectSessionResponse(
+        data=ConnectSessionResponseData(connect_url="example.com")
+    )
     mocker.patch(
-        "budget.views.connections_api", autospec=True, return_value=connections_api,
+        "budget.views.connect_sessions_api",
+        autospec=True,
+        return_value=connect_sessions_api,
     )
     response = client.post(url, data={})
     assert response.status_code == 302
-    assert resolve(get_url_path(response)).url_name == "connection_list"
-
-
-def test_connection_refresh_view_post_message_success(
-    client: Client,
-    user_foo: User,
-    login_user: Callable[[User], None],
-    connection_foo: Connection,
-    mocker: MockFixture,
-    connections_api: saltedge_client.ConnectionsApi,
-) -> None:
-    login_user(user_foo)
-    url = reverse("connections:connection_refresh", kwargs={"pk": connection_foo.pk})
-    data: Dict = {}
-    mocker.patch(
-        "budget.views.connections_api", autospec=True, return_value=connections_api,
-    )
-    response = client.post(url, data=data)
-    messages = [m.message for m in get_messages(response.wsgi_request)]
-    assert "Connection was refreshed successfully" in messages
-
-
-def test_connection_refresh_view_post_message_api_exception(
-    client: Client,
-    user_foo: User,
-    login_user: Callable[[User], None],
-    connection_foo: Connection,
-    mocker: MockFixture,
-    connections_api: saltedge_client.ConnectionsApi,
-) -> None:
-    login_user(user_foo)
-    url = reverse("connections:connection_refresh", kwargs={"pk": connection_foo.pk})
-    data: Dict = {}
-    connections_api.connections_connection_id_refresh_put.side_effect = saltedge_client.rest.ApiException(
-        reason="My reason"
-    )
-    mocker.patch(
-        "budget.views.connections_api", autospec=True, return_value=connections_api,
-    )
-    response = client.post(url, data=data)
-    messages = [m.message for m in get_messages(response.wsgi_request)]
-    assert (
-        f'Failed to refresh connection "{connection_foo.provider}": My reason'
-        in messages
-    )
+    assert response.url == "example.com"
 
 
 def test_connection_refresh_view_post_different_user(
@@ -302,7 +263,7 @@ def test_connection_refresh_view_post_different_user(
     login_user: Callable[[User], None],
     connection_factory: Callable[..., Connection],
     mocker: MockFixture,
-    connections_api: saltedge_client.ConnectionsApi,
+    connect_sessions_api: saltedge_client.ConnectSessionsApi,
 ) -> None:
     user_a = user_factory("a")
     user_b = user_factory("b")
@@ -311,8 +272,13 @@ def test_connection_refresh_view_post_different_user(
     connection_b = connection_factory("b", user=user_b)
     url = reverse("connections:connection_refresh", kwargs={"pk": connection_b.pk})
     data: Dict = {}
+    connect_sessions_api.connect_sessions_refresh_post.return_value = ConnectSessionResponse(
+        data=ConnectSessionResponseData(connect_url="example.com")
+    )
     mocker.patch(
-        "budget.views.connections_api", autospec=True, return_value=connections_api,
+        "budget.views.connect_sessions_api",
+        autospec=True,
+        return_value=connect_sessions_api,
     )
     response = client.post(url, data=data)
     assert response.status_code == 403
