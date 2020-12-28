@@ -5,7 +5,7 @@ import os
 from typing import Any, Dict, List
 
 import OpenSSL.crypto
-from budget.forms import CreateConnectionForm, ReportBalanceForm
+from budget.forms import CreateConnectionForm, RefreshConnectionForm, ReportBalanceForm
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
     create_connection_in_saltedge,
@@ -13,6 +13,7 @@ from budget.services import (
     import_accounts_from_saltedge,
     import_connection_from_saltedge,
     import_transactions_from_saltedge,
+    refresh_connection_in_saltedge,
     remove_connection_from_saltedge,
 )
 from django.contrib import messages
@@ -27,6 +28,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, TemplateView
 from django.views.generic.base import View
+from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import (
     CreateView,
     DeleteView,
@@ -41,6 +43,7 @@ from saltedge_wrapper.factory import (
     connections_api,
     transactions_api,
 )
+from swagger_client.rest import ApiException
 from users.models import Profile
 
 logger = logging.getLogger(__name__)
@@ -86,6 +89,46 @@ class ConnectionUpdate(
     def test_func(self) -> bool:
         obj = self.get_object()
         return obj.user == self.request.user
+
+
+class ConnectionRefresh(
+    LoginRequiredMixin, UserPassesTestMixin, SingleObjectMixin, FormView,
+):
+    model = Connection
+    template_name = "budget/connection_refresh.html"
+    form_class = RefreshConnectionForm
+    success_url = reverse_lazy("connections:connection_list")
+    success_message = "Connection was refreshed successfully"
+
+    def get(
+        self, request: HttpRequest, *args: str, **kwargs: Any
+    ) -> HttpResponseRedirect:
+        self.object = self.get_object()
+        return super().get(request, *args, **kwargs)
+
+    def post(
+        self, request: HttpRequest, *args: str, **kwargs: Any
+    ) -> HttpResponseRedirect:
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
+
+    def test_func(self) -> bool:
+        obj = self.get_object()
+        return obj.user == self.request.user
+
+    def form_valid(self, form: RefreshConnectionForm) -> HttpResponseRedirect:
+        connection = self.get_object()
+        try:
+            refresh_connection_in_saltedge(connection.external_id, connections_api())
+        except ApiException as e:
+            message = (
+                f'Failed to refresh connection "{connection.provider}": {e.reason}'
+            )
+            logger.error(message)
+            messages.error(self.request, message)
+        else:
+            messages.success(self.request, self.success_message)
+        return super().form_valid(form)
 
 
 class ConnectionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):

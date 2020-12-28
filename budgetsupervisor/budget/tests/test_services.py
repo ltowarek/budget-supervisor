@@ -9,6 +9,7 @@ from budget.services import (
     import_accounts_from_saltedge,
     import_connections_from_saltedge,
     import_transactions_from_saltedge,
+    refresh_connection_in_saltedge,
     remove_connection_from_saltedge,
 )
 from django.utils.dateparse import parse_date
@@ -635,3 +636,19 @@ def test_get_category_balance_filter_by_to_date(
     )
 
     assert output == {"abc": 4.00 + 5.00, "Total": 4.00 + 5.00}
+
+
+def test_refresh_connection_in_saltedge(
+    connection_foo: Connection,
+    connections_api: saltedge_client.ConnectionsApi,
+    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
+) -> None:
+    data = saltedge_connection_factory(id=str(connection_foo.external_id))
+    connections_api.connections_connection_id_refresh_put.return_value = saltedge_client.ConnectionResponse(
+        data=data
+    )
+
+    refresh_connection_in_saltedge(connection_foo.external_id, connections_api)
+    connections_api.connections_connection_id_refresh_put.assert_called_with(
+        str(connection_foo.external_id)
+    )

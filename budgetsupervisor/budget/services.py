@@ -160,3 +160,9 @@ def get_category_balance(
     balance = {d["category__name"]: d["amount__sum"] for d in queryset}
     balance["Total"] = sum(balance.values())
     return balance
+
+
+def refresh_connection_in_saltedge(
+    connection_id: int, connections_api: saltedge_client.ConnectionsApi,
+) -> None:
+    connections_api.connections_connection_id_refresh_put(str(connection_id))

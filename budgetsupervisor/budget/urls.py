@@ -58,6 +58,11 @@ connections_patterns = (
             views.ConnectionDelete.as_view(),
             name="connection_delete",
         ),
+        path(
+            "<int:pk>/refresh",
+            views.ConnectionRefresh.as_view(),
+            name="connection_refresh",
+        ),
     ],
     "connections",
 )

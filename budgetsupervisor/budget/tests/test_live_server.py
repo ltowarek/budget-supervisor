@@ -98,6 +98,10 @@ class TestConnectionList:
             assert actions[1].get_attribute("href") == live_server_path(
                 reverse("connections:connection_delete", kwargs={"pk": connection.pk})
             )
+            assert actions[2].text == "Refresh"
+            assert actions[2].get_attribute("href") == live_server_path(
+                reverse("connections:connection_refresh", kwargs={"pk": connection.pk})
+            )
 
     def test_pagination(
         self,
@@ -196,7 +200,7 @@ class TestConnectionUpdate:
         connection_foo: Connection,
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
-        self.update_category(selenium, live_server_path, connection_foo)
+        self.update_connection(selenium, live_server_path, connection_foo)
         # There is no field to check
         assert True
 
@@ -208,7 +212,7 @@ class TestConnectionUpdate:
         connection_foo: Connection,
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
-        self.update_category(selenium, live_server_path, connection_foo)
+        self.update_connection(selenium, live_server_path, connection_foo)
         messages = [
             m.text
             for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
@@ -217,7 +221,7 @@ class TestConnectionUpdate:
             "Connection was updated successfully" in message for message in messages
         )
 
-    def update_category(
+    def update_connection(
         self,
         selenium: WebDriver,
         live_server_path: Callable[[str], str],
@@ -225,6 +229,53 @@ class TestConnectionUpdate:
     ) -> None:
         url = live_server_path(
             reverse("connections:connection_update", kwargs={"pk": connection.pk})
+        )
+        selenium.get(url)
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
+        element.click()
+
+
+@pytest.mark.skip(
+    reason="next_refresh_possible_at prevents running multiple tests using the same saltedge connection"
+)
+class TestConnectionRefresh:
+    def test_dummy(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_user: User,
+        predefined_connection: Connection,
+    ) -> None:
+        selenium = authenticate_selenium(user=predefined_user)
+        self.refresh_connection(selenium, live_server_path, predefined_connection)
+        # There is no field to check
+        assert True
+
+    def test_message(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_user: User,
+        predefined_connection: Connection,
+    ) -> None:
+        selenium = authenticate_selenium(user=predefined_user)
+        self.refresh_connection(selenium, live_server_path, predefined_connection)
+        messages = [
+            m.text
+            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
+        ]
+        assert any(
+            "Connection was refreshed successfully" in message for message in messages
+        )
+
+    def refresh_connection(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        connection: Connection,
+    ) -> None:
+        url = live_server_path(
+            reverse("connections:connection_refresh", kwargs={"pk": connection.pk})
         )
         selenium.get(url)
         element = selenium.find_element_by_xpath('//button[@type="submit"]')

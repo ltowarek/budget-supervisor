@@ -1,11 +1,12 @@
 import base64
 import datetime
 import json
-from typing import Callable
+from typing import Callable, Dict
 
 import OpenSSL.crypto
 import pytest
 import swagger_client as saltedge_client
+import swagger_client.rest
 from budget.models import Account, Category, Connection, Transaction
 from budget.views import verify_signature
 from django.contrib.messages import get_messages
@@ -208,6 +209,111 @@ def test_connection_update_view_post_different_user(
     connection_b = connection_factory("b", user=user_b)
     url = reverse("connections:connection_update", kwargs={"pk": connection_b.pk})
     data = {"name": "bx", "connection_type": Account.AccountType.ACCOUNT}
+    response = client.post(url, data=data)
+    assert response.status_code == 403
+
+
+def test_connection_refresh_view_get(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+) -> None:
+    login_user(user_foo)
+    url = reverse("connections:connection_refresh", kwargs={"pk": connection_foo.pk})
+    response = client.get(url)
+    assert response.status_code == 200
+
+
+def test_connection_refresh_view_get_not_logged_in(
+    client: Client, connection_foo: Connection
+) -> None:
+    url = reverse("connections:connection_refresh", kwargs={"pk": connection_foo.pk})
+    response = client.get(url)
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "login"
+
+
+def test_connection_refresh_view_post_redirect(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+) -> None:
+    login_user(user_foo)
+    url = reverse("connections:connection_refresh", kwargs={"pk": connection_foo.pk})
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api,
+    )
+    response = client.post(url, data={})
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "connection_list"
+
+
+def test_connection_refresh_view_post_message_success(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+) -> None:
+    login_user(user_foo)
+    url = reverse("connections:connection_refresh", kwargs={"pk": connection_foo.pk})
+    data: Dict = {}
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api,
+    )
+    response = client.post(url, data=data)
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert "Connection was refreshed successfully" in messages
+
+
+def test_connection_refresh_view_post_message_api_exception(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    connection_foo: Connection,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+) -> None:
+    login_user(user_foo)
+    url = reverse("connections:connection_refresh", kwargs={"pk": connection_foo.pk})
+    data: Dict = {}
+    connections_api.connections_connection_id_refresh_put.side_effect = saltedge_client.rest.ApiException(
+        reason="My reason"
+    )
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api,
+    )
+    response = client.post(url, data=data)
+    messages = [m.message for m in get_messages(response.wsgi_request)]
+    assert (
+        f'Failed to refresh connection "{connection_foo.provider}": My reason'
+        in messages
+    )
+
+
+def test_connection_refresh_view_post_different_user(
+    client: Client,
+    user_factory: Callable[..., User],
+    login_user: Callable[[User], None],
+    connection_factory: Callable[..., Connection],
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+) -> None:
+    user_a = user_factory("a")
+    user_b = user_factory("b")
+    login_user(user_a)
+    connection_factory("a", user=user_a)
+    connection_b = connection_factory("b", user=user_b)
+    url = reverse("connections:connection_refresh", kwargs={"pk": connection_b.pk})
+    data: Dict = {}
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api,
+    )
     response = client.post(url, data=data)
     assert response.status_code == 403
 

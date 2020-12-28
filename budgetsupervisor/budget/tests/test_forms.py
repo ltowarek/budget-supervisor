@@ -1,12 +1,17 @@
 from typing import Dict
 
-from budget.forms import CreateConnectionForm, ReportBalanceForm
+from budget.forms import CreateConnectionForm, RefreshConnectionForm, ReportBalanceForm
 from budget.models import Account
 from users.models import User
 
 
 def test_create_connection_form_valid() -> None:
     form = CreateConnectionForm(data={})
+    assert form.is_valid() is True
+
+
+def test_refresh_connection_form_valid() -> None:
+    form = RefreshConnectionForm(data={})
     assert form.is_valid() is True
 
 

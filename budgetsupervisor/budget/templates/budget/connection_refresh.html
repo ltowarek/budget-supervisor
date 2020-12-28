@@ -1,0 +1,13 @@
+{% extends "budget/base.html" %}
+
+{% block title %}
+Refresh Connection
+{% endblock %}
+
+{% block content %}
+<form action="" method="post">
+  {% csrf_token %}
+  {% include "budget/form_snippet.html" %}
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}

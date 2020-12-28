@@ -9,6 +9,10 @@ class CreateConnectionForm(forms.Form):
     pass
 
 
+class RefreshConnectionForm(forms.Form):
+    pass
+
+
 class ReportBalanceForm(forms.Form):
     accounts = forms.ModelMultipleChoiceField(queryset=None)
     from_date = forms.DateField(required=False)
