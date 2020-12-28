@@ -401,10 +401,11 @@ class TestAccountList:
         selenium.get(url)
 
         elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
-        assert len(elements) == 3
+        assert len(elements) == 4
         assert elements[0].text == "Name"
         assert elements[1].text == "Type"
-        assert elements[2].text == "Actions"
+        assert elements[2].text == "Connection"
+        assert elements[3].text == "Actions"
 
     def test_table_body(
         self,
@@ -433,12 +434,13 @@ class TestAccountList:
         assert len(elements) == len(accounts)
         for element, account in zip(elements, accounts):
             cells = element.find_elements_by_xpath(".//td")
-            assert len(cells) == 3
+            assert len(cells) == 4
 
             assert cells[0].text == account.name
             assert cells[1].text == account.get_account_type_display()
+            assert cells[2].text == str(account.connection)
 
-            actions = cells[2].find_elements_by_xpath(".//a")
+            actions = cells[3].find_elements_by_xpath(".//a")
             assert actions[0].text == "Update"
             assert actions[0].get_attribute("href") == live_server_path(
                 reverse("accounts:account_update", kwargs={"pk": account.pk})

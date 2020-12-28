@@ -14,6 +14,7 @@ Accounts
         <tr>
             <th>Name</th>
             <th>Type</th>
+            <th>Connection</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -22,6 +23,7 @@ Accounts
         <tr>
             <td>{{ account.name }}</td>
             <td>{{ account.get_account_type_display }}</td>
+            <td>{{ account.connection }}</td>
             <td>
                 <a class="btn btn-outline-primary btn-sm m-1"
                     href="{% url 'accounts:account_update' account.id %}">Update</a>
