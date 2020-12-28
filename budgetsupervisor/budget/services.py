@@ -42,9 +42,17 @@ def import_connection_from_saltedge(
 def import_connections_from_saltedge(
     user: User, customer_id: int, connections_api: saltedge_client.ConnectionsApi,
 ) -> List[Connection]:
+    connections = []
     response = connections_api.connections_get(str(customer_id))
+    connections.extend(response.data)
+    while response.meta and response.meta.next_id:
+        response = connections_api.connections_get(
+            str(customer_id), from_id=response.meta.next_id
+        )
+        connections.extend(response.data)
+
     new_connections = []
-    for imported_connection in response.data:
+    for imported_connection in connections:
         imported_id = int(imported_connection.id)
 
         c, created = Connection.objects.update_or_create(
@@ -65,9 +73,17 @@ def remove_connection_from_saltedge(
 def import_accounts_from_saltedge(
     user: User, connection_id: int, accounts_api: saltedge_client.AccountsApi
 ) -> List["Account"]:
+    accounts = []
     response = accounts_api.accounts_get(str(connection_id))
+    accounts.extend(response.data)
+    while response.meta and response.meta.next_id:
+        response = accounts_api.accounts_get(
+            str(connection_id), from_id=response.meta.next_id
+        )
+        accounts.extend(response.data)
+
     new_accounts = []
-    for imported_account in response.data:
+    for imported_account in accounts:
         imported_id = int(imported_account.id)
 
         a, created = Account.objects.update_or_create(
@@ -90,11 +106,21 @@ def import_transactions_from_saltedge(
     account_id: int,
     transactions_api: saltedge_client.TransactionsApi,
 ) -> List[Transaction]:
+    transactions = []
     response = transactions_api.transactions_get(
         str(connection_id), account_id=str(account_id)
     )
-    new_transactions = []
-    for imported_transaction in response.data:
+    transactions.extend(response.data)
+    while response.meta and response.meta.next_id:
+        response = transactions_api.transactions_get(
+            str(connection_id),
+            account_id=str(account_id),
+            from_id=response.meta.next_id,
+        )
+        transactions.extend(response.data)
+
+    response = new_transactions = []
+    for imported_transaction in transactions:
         imported_id = int(imported_transaction.id)
 
         t, created = Transaction.objects.update_or_create(

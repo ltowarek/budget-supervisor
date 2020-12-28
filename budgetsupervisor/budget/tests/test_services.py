@@ -118,6 +118,39 @@ def test_import_connections_from_saltedge_no_new_objects(
     assert len(imported_connections) == 0
 
 
+def test_import_connections_from_saltedge_with_paging(
+    profile_foo_external: Profile,
+    connections_api: saltedge_client.ConnectionsApi,
+    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
+) -> None:
+    mock_connections = [
+        saltedge_connection_factory(id="1", provider_name="foo"),
+        saltedge_connection_factory(id="2", provider_name="bar"),
+        saltedge_connection_factory(id="3", provider_name="baz"),
+    ]
+    data = [
+        [mock_connections[0], mock_connections[1]],
+        [mock_connections[2]],
+    ]
+    meta = saltedge_client.MetaObject(
+        next_id=data[1][0].id,
+        next_page="/api/v5/connections?customer_id={}&from_id={}".format(
+            profile_foo_external.external_id, data[1][0].id
+        ),
+    )
+    connections_api.connections_get.side_effect = [
+        saltedge_client.ConnectionsResponse(data=data[0], meta=meta),
+        saltedge_client.ConnectionsResponse(data=data[1]),
+    ]
+
+    assert Connection.objects.all().count() == 0
+    imported_connections = import_connections_from_saltedge(
+        profile_foo_external.user, profile_foo_external.external_id, connections_api
+    )
+    assert Connection.objects.all().count() == len(mock_connections)
+    assert len(imported_connections) == len(mock_connections)
+
+
 def test_remove_connection_saltedge(
     connection_foo: Connection, connections_api: saltedge_client.ConnectionsApi
 ) -> None:
@@ -222,6 +255,39 @@ def test_import_accounts_from_saltedge_no_new_objects(
     )
     assert Account.objects.all().count() == len(mock_accounts)
     assert len(imported_accounts) == 0
+
+
+def test_import_accounts_from_saltedge_with_paging(
+    connection_foo: Connection,
+    accounts_api: saltedge_client.AccountsApi,
+    saltedge_account_factory: Callable[..., saltedge_client.Account],
+) -> None:
+    mock_accounts = [
+        saltedge_account_factory(id="1", name="foo"),
+        saltedge_account_factory(id="2", name="bar"),
+        saltedge_account_factory(id="3", name="baz"),
+    ]
+    data = [
+        [mock_accounts[0], mock_accounts[1]],
+        [mock_accounts[2]],
+    ]
+    meta = saltedge_client.MetaObject(
+        next_id=data[1][0].id,
+        next_page="/api/v5/accounts?connection_id={}&from_id={}".format(
+            connection_foo.external_id, data[1][0].id
+        ),
+    )
+    accounts_api.accounts_get.side_effect = [
+        saltedge_client.AccountsResponse(data=data[0], meta=meta),
+        saltedge_client.AccountsResponse(data=data[1]),
+    ]
+
+    assert Account.objects.all().count() == 0
+    imported_accounts = import_accounts_from_saltedge(
+        connection_foo.user, connection_foo.external_id, accounts_api
+    )
+    assert Account.objects.all().count() == len(mock_accounts)
+    assert len(imported_accounts) == len(mock_accounts)
 
 
 def test_transaction_category_is_set_to_null_when_category_is_deleted(
@@ -366,6 +432,50 @@ def test_import_transactions_from_saltedge_no_new_objects(
     )
     assert Transaction.objects.all().count() == len(mock_transactions)
     assert len(imported_transactions) == 0
+
+
+def test_import_transactions_from_saltedge_with_paging(
+    account_foo_external: Account,
+    transactions_api: saltedge_client.TransactionsApi,
+    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
+) -> None:
+    mock_transactions = [
+        saltedge_transaction_factory(
+            id="1", description="foo", account_id=account_foo_external.external_id,
+        ),
+        saltedge_transaction_factory(
+            id="2", description="bar", account_id=account_foo_external.external_id,
+        ),
+        saltedge_transaction_factory(
+            id="3", description="baz", account_id=account_foo_external.external_id,
+        ),
+    ]
+    data = [
+        [mock_transactions[0], mock_transactions[1]],
+        [mock_transactions[2]],
+    ]
+    meta = saltedge_client.MetaObject(
+        next_id=data[1][0].id,
+        next_page="/api/v5/transactions?connection_id={}&account_id={}&from_id={}".format(
+            account_foo_external.connection.external_id,
+            account_foo_external.external_id,
+            data[1][0].id,
+        ),
+    )
+    transactions_api.transactions_get.side_effect = [
+        saltedge_client.TransactionsResponse(data=data[0], meta=meta),
+        saltedge_client.TransactionsResponse(data=data[1]),
+    ]
+
+    assert Transaction.objects.all().count() == 0
+    imported_transactions = import_transactions_from_saltedge(
+        account_foo_external.user,
+        account_foo_external.connection.external_id,
+        account_foo_external.external_id,
+        transactions_api,
+    )
+    assert Transaction.objects.all().count() == len(mock_transactions)
+    assert len(imported_transactions) == len(mock_transactions)
 
 
 def test_get_category_balance_filter_by_user(
