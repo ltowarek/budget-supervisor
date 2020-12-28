@@ -442,6 +442,16 @@ class CallbackFail(View):
         except OpenSSL.crypto.Error:
             return HttpResponse(status=401)
 
+        data = json.loads(request.body)["data"]
+        connection_id = data["connection_id"]
+        error_class = data["error_class"]
+
+        if error_class == "InvalidCredentials":
+            response = accounts_api().accounts_get(connection_id)
+            accounts = response.data
+            if not accounts:
+                connections_api().connections_connection_id_delete(connection_id)
+
         return HttpResponse(status=204)
 
 
