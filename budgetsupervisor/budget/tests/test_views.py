@@ -1121,10 +1121,14 @@ def test_callback_success_new_connection(
     connections_api.connections_connection_id_get.return_value = ConnectionResponse(
         data=mock_connection
     )
+
+    accounts_api.accounts_get.return_value = AccountsResponse(data=[])
     mocker.patch(
         "budget.views.connections_api", autospec=True, return_value=connections_api
     )
     mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
+
+    transactions_api.transactions_get.return_value = TransactionsResponse(data=[])
     mocker.patch(
         "budget.views.transactions_api", autospec=True, return_value=transactions_api
     )
@@ -1168,6 +1172,7 @@ def test_callback_success_new_account(
     accounts_api.accounts_get.return_value = AccountsResponse(data=mock_accounts)
     mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
 
+    transactions_api.transactions_get.return_value = TransactionsResponse(data=[])
     mocker.patch(
         "budget.views.transactions_api", autospec=True, return_value=transactions_api
     )
