@@ -43,14 +43,10 @@ class TestConnectionList:
         elements = selenium.find_elements_by_xpath(
             '//div[contains(@class, "btn-toolbar")]/a'
         )
-        assert len(elements) == 2
+        assert len(elements) == 1
         assert elements[0].text == "Create"
         assert elements[0].get_attribute("href") == live_server_path(
             reverse("connections:connection_create")
-        )
-        assert elements[1].text == "Import"
-        assert elements[1].get_attribute("href") == live_server_path(
-            reverse("connections:connection_import")
         )
 
     def test_table_header(
@@ -143,7 +139,7 @@ class TestConnectionCreate:
         selenium = authenticate_selenium(user=predefined_profile.user)
         self.create_saltedge_connection(selenium, live_server_path)
         assert selenium.current_url == live_server_path(
-            reverse("connections:connection_import")
+            reverse("connections:connection_list")
         )
 
     def test_cant_create_connection_if_external_synchronization_is_disabled(
@@ -187,7 +183,7 @@ class TestConnectionCreate:
         element.click()
         element = selenium.find_element_by_xpath('//input[@value="Confirm"]')
         element.click()
-        redirect_url = live_server_path(reverse("connections:connection_import"))
+        redirect_url = live_server_path(reverse("connections:connection_list"))
         WebDriverWait(selenium, 30).until(EC.url_to_be(redirect_url))
 
 
@@ -374,75 +370,6 @@ class TestConnectionDelete:
         element.click()
 
 
-class TestConnectionImport:
-    def test_connection_is_imported(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_profile: Profile,
-        predefined_saltedge_connection: saltedge_client.Connection,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_profile.user)
-        self.import_connections(selenium, live_server_path)
-        connections = Connection.objects.filter(user=predefined_profile.user)
-        assert connections.count() == 1
-        assert str(connections[0].external_id) == predefined_saltedge_connection.id
-
-    def test_redirect(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_profile: Profile,
-        predefined_saltedge_connection: saltedge_client.Connection,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_profile.user)
-        self.import_connections(selenium, live_server_path)
-        assert selenium.current_url == live_server_path(
-            reverse("connections:connection_list")
-        )
-
-    def test_message(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_profile: Profile,
-        predefined_saltedge_connection: saltedge_client.Connection,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_profile.user)
-        self.import_connections(selenium, live_server_path)
-        messages = [
-            m.text
-            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
-        ]
-        assert any(
-            "Connections were imported successfully: 1" in message
-            for message in messages
-        )
-
-    def test_cant_import_connections_if_external_synchronization_is_disabled(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        user_foo: User,
-    ) -> None:
-        selenium = authenticate_selenium(user=user_foo)
-        url = live_server_path(reverse("connections:connection_import"))
-        selenium.get(url)
-        element = selenium.find_element_by_id("synchronization")
-        assert (
-            element.text
-            == "Enable external synchronization before importing connections"
-        )
-
-    def import_connections(
-        self, selenium: WebDriver, live_server_path: Callable[[str], str]
-    ) -> None:
-        url = live_server_path(reverse("connections:connection_import"))
-        selenium.get(url)
-        element = selenium.find_element_by_xpath('//button[@type="submit"]')
-        element.click()
-
-
 class TestAccountList:
     def test_menu(
         self,
@@ -457,14 +384,10 @@ class TestAccountList:
         elements = selenium.find_elements_by_xpath(
             '//div[contains(@class, "btn-toolbar")]/a'
         )
-        assert len(elements) == 2
+        assert len(elements) == 1
         assert elements[0].text == "Create"
         assert elements[0].get_attribute("href") == live_server_path(
             reverse("accounts:account_create")
-        )
-        assert elements[1].text == "Import"
-        assert elements[1].get_attribute("href") == live_server_path(
-            reverse("accounts:account_import")
         )
 
     def test_table_header(
@@ -739,93 +662,6 @@ class TestAccountDelete:
         element.click()
 
 
-class TestAccountImport:
-    def test_accounts_are_imported(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_profile: Profile,
-        predefined_connection: Connection,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_profile.user)
-        self.import_accounts(selenium, live_server_path, predefined_connection)
-        accounts = Account.objects.filter(user=predefined_profile.user)
-        assert accounts.count() == 5
-        for account in accounts:
-            assert account.external_id is not None
-
-    def test_accounts_are_not_duplicated(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_profile: Profile,
-        predefined_connection: Connection,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_profile.user)
-        self.import_accounts(selenium, live_server_path, predefined_connection)
-        count_pre = Account.objects.filter(user=predefined_profile.user).count()
-        self.import_accounts(selenium, live_server_path, predefined_connection)
-        count_post = Account.objects.filter(user=predefined_profile.user).count()
-        assert count_pre == count_post
-
-    def test_redirect(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_profile: Profile,
-        predefined_connection: Connection,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_profile.user)
-        self.import_accounts(selenium, live_server_path, predefined_connection)
-        assert selenium.current_url == live_server_path(
-            reverse("accounts:account_list")
-        )
-
-    def test_message(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_profile: Profile,
-        predefined_connection: Connection,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_profile.user)
-        self.import_accounts(selenium, live_server_path, predefined_connection)
-        messages = [
-            m.text
-            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
-        ]
-        assert any(
-            "Accounts were imported successfully: 5" in message for message in messages
-        )
-
-    def test_cant_import_accounts_if_external_synchronization_is_disabled(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        user_foo: User,
-    ) -> None:
-        selenium = authenticate_selenium(user=user_foo)
-        url = live_server_path(reverse("accounts:account_import"))
-        selenium.get(url)
-        element = selenium.find_element_by_id("synchronization")
-        assert (
-            element.text == "Enable external synchronization before importing accounts"
-        )
-
-    def import_accounts(
-        self,
-        selenium: WebDriver,
-        live_server_path: Callable[[str], str],
-        connection: Connection,
-    ) -> None:
-        url = live_server_path(reverse("accounts:account_import"))
-        selenium.get(url)
-        select = Select(selenium.find_element_by_name("connection"))
-        select.select_by_visible_text(connection.provider)
-        element = selenium.find_element_by_xpath('//button[@type="submit"]')
-        element.click()
-
-
 class TestTransactionList:
     def test_menu(
         self,
@@ -840,14 +676,10 @@ class TestTransactionList:
         elements = selenium.find_elements_by_xpath(
             '//div[contains(@class, "btn-toolbar")]/a'
         )
-        assert len(elements) == 2
+        assert len(elements) == 1
         assert elements[0].text == "Create"
         assert elements[0].get_attribute("href") == live_server_path(
             reverse("transactions:transaction_create")
-        )
-        assert elements[1].text == "Import"
-        assert elements[1].get_attribute("href") == live_server_path(
-            reverse("transactions:transaction_import")
         )
 
     def test_table_header(
@@ -1239,95 +1071,6 @@ class TestTransactionDelete:
             reverse("transactions:transaction_delete", kwargs={"pk": transaction.pk})
         )
         selenium.get(url)
-        element = selenium.find_element_by_xpath('//button[@type="submit"]')
-        element.click()
-
-
-class TestTransactionImport:
-    def test_transactions_are_imported(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_profile: Profile,
-        predefined_account: Account,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_profile.user)
-        self.import_transactions(selenium, live_server_path, predefined_account)
-        transactions = Transaction.objects.filter(user=predefined_profile.user)
-        assert transactions.count() == 17
-        for transaction in transactions:
-            assert transaction.external_id is not None
-
-    def test_transactions_are_not_duplicated(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_profile: Profile,
-        predefined_account: Account,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_profile.user)
-        self.import_transactions(selenium, live_server_path, predefined_account)
-        count_pre = Transaction.objects.filter(user=predefined_profile.user).count()
-        self.import_transactions(selenium, live_server_path, predefined_account)
-        count_post = Transaction.objects.filter(user=predefined_profile.user).count()
-        assert count_pre == count_post
-
-    def test_redirect(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_profile: Profile,
-        predefined_account: Account,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_profile.user)
-        self.import_transactions(selenium, live_server_path, predefined_account)
-        assert selenium.current_url == live_server_path(
-            reverse("transactions:transaction_list")
-        )
-
-    def test_message(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        predefined_profile: Profile,
-        predefined_account: Account,
-    ) -> None:
-        selenium = authenticate_selenium(user=predefined_profile.user)
-        self.import_transactions(selenium, live_server_path, predefined_account)
-        messages = [
-            m.text
-            for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
-        ]
-        assert any(
-            "Transactions were imported successfully: 17" in message
-            for message in messages
-        )
-
-    def test_cant_import_transactions_if_external_synchronization_is_disabled(
-        self,
-        authenticate_selenium: Callable[..., WebDriver],
-        live_server_path: Callable[[str], str],
-        user_foo: User,
-    ) -> None:
-        selenium = authenticate_selenium(user=user_foo)
-        url = live_server_path(reverse("transactions:transaction_import"))
-        selenium.get(url)
-        element = selenium.find_element_by_id("synchronization")
-        assert (
-            element.text
-            == "Enable external synchronization before importing transactions"
-        )
-
-    def import_transactions(
-        self,
-        selenium: WebDriver,
-        live_server_path: Callable[[str], str],
-        account: Account,
-    ) -> None:
-        url = live_server_path(reverse("transactions:transaction_import"))
-        selenium.get(url)
-        select = Select(selenium.find_element_by_name("account"))
-        select.select_by_visible_text(account.name)
         element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 

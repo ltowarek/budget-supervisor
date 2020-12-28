@@ -8,7 +8,6 @@ accounts_patterns = (
         path("create/", views.AccountCreate.as_view(), name="account_create"),
         path("<int:pk>/update", views.AccountUpdate.as_view(), name="account_update"),
         path("<int:pk>/delete", views.AccountDelete.as_view(), name="account_delete"),
-        path("import", views.ImportAccountsView.as_view(), name="account_import"),
     ],
     "accounts",
 )
@@ -26,9 +25,6 @@ transactions_patterns = (
             "<int:pk>/delete",
             views.TransactionDelete.as_view(),
             name="transaction_delete",
-        ),
-        path(
-            "import", views.ImportTransactionsView.as_view(), name="transaction_import",
         ),
     ],
     "transactions",
@@ -61,9 +57,6 @@ connections_patterns = (
             "<int:pk>/delete",
             views.ConnectionDelete.as_view(),
             name="connection_delete",
-        ),
-        path(
-            "import", views.ImportConnectionsView.as_view(), name="connection_import",
         ),
     ],
     "connections",

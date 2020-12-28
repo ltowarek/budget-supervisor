@@ -5,20 +5,13 @@ import os
 from typing import Any, Dict, List
 
 import OpenSSL.crypto
-from budget.forms import (
-    CreateConnectionForm,
-    ImportAccountsForm,
-    ImportConnectionsForm,
-    ImportTransactionsForm,
-    ReportBalanceForm,
-)
+from budget.forms import CreateConnectionForm, ReportBalanceForm
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
     create_connection_in_saltedge,
     get_category_balance,
     import_accounts_from_saltedge,
     import_connection_from_saltedge,
-    import_connections_from_saltedge,
     import_transactions_from_saltedge,
     remove_connection_from_saltedge,
 )
@@ -67,7 +60,7 @@ class ConnectionsListView(LoginRequiredMixin, ListView):
 class ConnectionCreate(LoginRequiredMixin, FormView):
     template_name = "budget/connection_create.html"
     form_class = CreateConnectionForm
-    success_url = reverse_lazy("connections:connection_import")
+    success_url = reverse_lazy("connections:connection_list")
 
     def form_valid(self, form: CreateConnectionForm) -> HttpResponseRedirect:
         redirect_url = self.request.build_absolute_uri(str(self.success_url))
@@ -118,25 +111,6 @@ class ConnectionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return output
 
 
-class ImportConnectionsView(LoginRequiredMixin, FormView):
-    template_name = "budget/connection_import.html"
-    form_class = ImportConnectionsForm
-    success_url = reverse_lazy("connections:connection_list")
-    success_message = "Connections were imported successfully: {}"
-
-    def form_valid(self, form: ImportConnectionsForm) -> HttpResponseRedirect:
-        imported = import_connections_from_saltedge(
-            self.request.user, self.request.user.profile.external_id, connections_api()
-        )
-        messages.success(self.request, self.success_message.format(len(imported)))
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs: Any) -> Dict:
-        context = super().get_context_data(**kwargs)
-        context["profile"] = self.request.user.profile
-        return context
-
-
 class AccountListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
@@ -184,31 +158,6 @@ class AccountDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         output = super().delete(*args, **kwargs)
         messages.success(self.request, self.success_message)
         return output
-
-
-class ImportAccountsView(LoginRequiredMixin, FormView):
-    template_name = "budget/account_import.html"
-    form_class = ImportAccountsForm
-    success_url = reverse_lazy("accounts:account_list")
-    success_message = "Accounts were imported successfully: {}"
-
-    def form_valid(self, form: ImportAccountsForm) -> HttpResponseRedirect:
-        connection = form.cleaned_data["connection"]
-        imported = import_accounts_from_saltedge(
-            self.request.user, connection.external_id, accounts_api()
-        )
-        messages.success(self.request, self.success_message.format(len(imported)))
-        return super().form_valid(form)
-
-    def get_form_kwargs(self) -> Dict:
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
-
-    def get_context_data(self, **kwargs: Any) -> Dict:
-        context = super().get_context_data(**kwargs)
-        context["profile"] = self.request.user.profile
-        return context
 
 
 class TransactionListView(LoginRequiredMixin, ListView):
@@ -271,34 +220,6 @@ class TransactionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         output = super().delete(*args, **kwargs)
         messages.success(self.request, self.success_message)
         return output
-
-
-class ImportTransactionsView(LoginRequiredMixin, FormView):
-    template_name = "budget/transaction_import.html"
-    form_class = ImportTransactionsForm
-    success_url = reverse_lazy("transactions:transaction_list")
-    success_message = "Transactions were imported successfully: {}"
-
-    def form_valid(self, form: ImportTransactionsForm) -> HttpResponseRedirect:
-        account = form.cleaned_data["account"]
-        imported = import_transactions_from_saltedge(
-            self.request.user,
-            account.connection.external_id,
-            account.external_id,
-            transactions_api(),
-        )
-        messages.success(self.request, self.success_message.format(len(imported)))
-        return super().form_valid(form)
-
-    def get_form_kwargs(self) -> Dict:
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
-
-    def get_context_data(self, **kwargs: Any) -> Dict:
-        context = super().get_context_data(**kwargs)
-        context["profile"] = self.request.user.profile
-        return context
 
 
 class CategoryListView(LoginRequiredMixin, ListView):

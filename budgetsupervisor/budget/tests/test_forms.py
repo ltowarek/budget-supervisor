@@ -1,64 +1,12 @@
 from typing import Dict
 
-from budget.forms import (
-    CreateConnectionForm,
-    ImportAccountsForm,
-    ImportConnectionsForm,
-    ImportTransactionsForm,
-    ReportBalanceForm,
-)
-from budget.models import Account, Connection
+from budget.forms import CreateConnectionForm, ReportBalanceForm
+from budget.models import Account
 from users.models import User
-
-
-def test_import_accounts_form_valid(user_foo: User, connection_foo: Connection) -> None:
-    data = {
-        "connection": connection_foo,
-    }
-    form = ImportAccountsForm(data=data, user=user_foo)
-    assert form.is_valid() is True
-
-
-def test_import_accounts_form_empty_connection(user_foo: User) -> None:
-    form = ImportAccountsForm(data={}, user=user_foo)
-    form.is_valid()
-    assert "connection" in form.errors
-
-
-def test_import_transactions_form_valid(
-    user_foo: User, account_foo_external: Account
-) -> None:
-    data = {
-        "account": account_foo_external,
-    }
-    form = ImportTransactionsForm(data=data, user=user_foo)
-    assert form.is_valid() is True
-
-
-def test_import_transactions_form_empty_account(user_foo: User) -> None:
-    form = ImportTransactionsForm(data={}, user=user_foo)
-    form.is_valid()
-    assert "account" in form.errors
-
-
-def test_import_transactions_form_internal_account(
-    user_foo: User, account_foo: Account
-) -> None:
-    data = {
-        "account": account_foo,
-    }
-    form = ImportTransactionsForm(data=data, user=user_foo)
-    form.is_valid()
-    assert "account" in form.errors
 
 
 def test_create_connection_form_valid() -> None:
     form = CreateConnectionForm(data={})
-    assert form.is_valid() is True
-
-
-def test_import_connections_form_valid() -> None:
-    form = ImportConnectionsForm(data={})
     assert form.is_valid() is True
 
 

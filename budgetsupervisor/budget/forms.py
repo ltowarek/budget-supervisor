@@ -2,34 +2,10 @@ from typing import Any
 
 from django import forms
 
-from .models import Account, Connection
-
-
-class ImportAccountsForm(forms.Form):
-    connection = forms.ModelChoiceField(queryset=None)
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        user = kwargs.pop("user")
-        super().__init__(*args, **kwargs)
-        self.fields["connection"].queryset = Connection.objects.filter(user=user)
-
-
-class ImportTransactionsForm(forms.Form):
-    account = forms.ModelChoiceField(queryset=None)
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        user = kwargs.pop("user")
-        super().__init__(*args, **kwargs)
-        self.fields["account"].queryset = Account.objects.filter(
-            user=user, external_id__isnull=False
-        )
+from .models import Account
 
 
 class CreateConnectionForm(forms.Form):
-    pass
-
-
-class ImportConnectionsForm(forms.Form):
     pass
 
 

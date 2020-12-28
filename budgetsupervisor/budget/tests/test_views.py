@@ -326,62 +326,6 @@ def test_connection_delete_view_post_different_user(
     assert response.status_code == 403
 
 
-def test_connection_import_view_get(
-    client: Client, user_foo: User, login_user: Callable[[User], None]
-) -> None:
-    login_user(user_foo)
-    url = reverse("connections:connection_import")
-    response = client.get(url)
-    assert response.status_code == 200
-    assert response.context["profile"] == user_foo.profile
-
-
-def test_connection_import_view_get_not_logged_in(client: Client) -> None:
-    url = reverse("connections:connection_import")
-    response = client.get(url)
-    assert response.status_code == 302
-    assert resolve(get_url_path(response)).url_name == "login"
-
-
-def test_connection_import_view_post_redirect(
-    client: Client,
-    user_foo: User,
-    login_user: Callable[[User], None],
-    connection_foo: Connection,
-    mocker: MockFixture,
-    connections_api: saltedge_client.ConnectionsApi,
-) -> None:
-    login_user(user_foo)
-    url = reverse("connections:connection_import")
-    data = {"connection": connection_foo.id}
-    mocker.patch(
-        "budget.views.connections_api", autospec=True, return_value=connections_api
-    )
-    response = client.post(url, data=data)
-    assert response.status_code == 302
-    assert resolve(get_url_path(response)).url_name == "connection_list"
-
-
-def test_connection_import_view_post_message(
-    client: Client,
-    user_foo: User,
-    login_user: Callable[[User], None],
-    connection_foo: Connection,
-    mocker: MockFixture,
-    connections_api: saltedge_client.ConnectionsApi,
-) -> None:
-    login_user(user_foo)
-    url = reverse("connections:connection_import")
-    data = {"connection": connection_foo.id}
-    mocker.patch(
-        "budget.views.connections_api", autospec=True, return_value=connections_api
-    )
-    response = client.post(url, data=data)
-    assert response.status_code == 302
-    messages = [m.message for m in get_messages(response.wsgi_request)]
-    assert "Connections were imported successfully: 0" in messages
-
-
 def test_account_list_view_get_single_account(
     client: Client,
     user_foo: User,
@@ -617,58 +561,6 @@ def test_account_delete_view_post_different_user(
     url = reverse("accounts:account_delete", kwargs={"pk": account_b.pk})
     response = client.post(url)
     assert response.status_code == 403
-
-
-def test_account_import_view_get(
-    client: Client, user_foo: User, login_user: Callable[[User], None]
-) -> None:
-    login_user(user_foo)
-    url = reverse("accounts:account_import")
-    response = client.get(url)
-    assert response.status_code == 200
-    assert response.context["profile"] == user_foo.profile
-
-
-def test_account_import_view_get_not_logged_in(client: Client) -> None:
-    url = reverse("accounts:account_import")
-    response = client.get(url)
-    assert response.status_code == 302
-    assert resolve(get_url_path(response)).url_name == "login"
-
-
-def test_account_import_view_post_redirect(
-    client: Client,
-    user_foo: User,
-    login_user: Callable[[User], None],
-    connection_foo: Connection,
-    mocker: MockFixture,
-    accounts_api: saltedge_client.AccountsApi,
-) -> None:
-    login_user(user_foo)
-    url = reverse("accounts:account_import")
-    data = {"connection": connection_foo.id}
-    mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
-    response = client.post(url, data=data)
-    assert response.status_code == 302
-    assert resolve(get_url_path(response)).url_name == "account_list"
-
-
-def test_account_import_view_post_message(
-    client: Client,
-    user_foo: User,
-    login_user: Callable[[User], None],
-    connection_foo: Connection,
-    mocker: MockFixture,
-    accounts_api: saltedge_client.AccountsApi,
-) -> None:
-    login_user(user_foo)
-    url = reverse("accounts:account_import")
-    data = {"connection": connection_foo.id}
-    mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
-    response = client.post(url, data=data)
-    assert response.status_code == 302
-    messages = [m.message for m in get_messages(response.wsgi_request)]
-    assert "Accounts were imported successfully: 0" in messages
 
 
 def test_transaction_list_view_get_single_transaction(
@@ -942,62 +834,6 @@ def test_transaction_delete_view_post_different_user(
     url = reverse("transactions:transaction_delete", kwargs={"pk": transaction_b.pk})
     response = client.post(url)
     assert response.status_code == 403
-
-
-def test_transaction_import_view_get(
-    client: Client, user_foo: User, login_user: Callable[[User], None]
-) -> None:
-    login_user(user_foo)
-    url = reverse("transactions:transaction_import")
-    response = client.get(url)
-    assert response.status_code == 200
-    assert response.context["profile"] == user_foo.profile
-
-
-def test_transaction_import_view_get_not_logged_in(client: Client) -> None:
-    url = reverse("transactions:transaction_import")
-    response = client.get(url)
-    assert response.status_code == 302
-    assert resolve(get_url_path(response)).url_name == "login"
-
-
-def test_transaction_import_view_post_redirect(
-    client: Client,
-    user_foo: User,
-    login_user: Callable[[User], None],
-    account_foo_external: Account,
-    mocker: MockFixture,
-    transactions_api: saltedge_client.TransactionsApi,
-) -> None:
-    login_user(user_foo)
-    url = reverse("transactions:transaction_import")
-    data = {"account": account_foo_external.id}
-    mocker.patch(
-        "budget.views.transactions_api", autospec=True, return_value=transactions_api
-    )
-    response = client.post(url, data=data)
-    assert response.status_code == 302
-    assert resolve(get_url_path(response)).url_name == "transaction_list"
-
-
-def test_transaction_import_view_post_message(
-    client: Client,
-    user_foo: User,
-    login_user: Callable[[User], None],
-    account_foo_external: Account,
-    mocker: MockFixture,
-    transactions_api: saltedge_client.TransactionsApi,
-) -> None:
-    login_user(user_foo)
-    url = reverse("transactions:transaction_import")
-    data = {"account": account_foo_external.id}
-    mocker.patch(
-        "budget.views.transactions_api", autospec=True, return_value=transactions_api
-    )
-    response = client.post(url, data=data)
-    assert response.status_code == 302
-    messages = [m.message for m in get_messages(response.wsgi_request)]
-    assert "Transactions were imported successfully: 0" in messages
 
 
 def test_category_list_view_get(
