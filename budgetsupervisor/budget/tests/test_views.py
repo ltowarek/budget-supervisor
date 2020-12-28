@@ -1419,7 +1419,12 @@ def test_callback_success_invalid_customer(client: Client, mocker: MockFixture) 
     assert response.status_code == 400
 
 
-def test_callback_fail(client: Client, mocker: MockFixture) -> None:
+def test_callback_fail(
+    client: Client,
+    mocker: MockFixture,
+    connections_api: saltedge_client.ConnectionsApi,
+    accounts_api: saltedge_client.AccountsApi,
+) -> None:
     url = reverse("callbacks:callback_fail")
     data = {
         "data": {
@@ -1432,6 +1437,10 @@ def test_callback_fail(client: Client, mocker: MockFixture) -> None:
         "meta": {"version": "5", "time": "2020-11-12T12:31:01.606Z"},
     }
     mocker.patch("budget.views.verify_signature", autospec=True)
+    mocker.patch(
+        "budget.views.connections_api", autospec=True, return_value=connections_api
+    )
+    mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
     response = client.post(
         url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
     )
