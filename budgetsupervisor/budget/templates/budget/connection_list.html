@@ -25,6 +25,8 @@ Connections
                     href="{% url 'connections:connection_update' connection.id %}">Update</a>
                 <a class="btn btn-outline-primary btn-sm m-1"
                     href="{% url 'connections:connection_delete' connection.id %}">Delete</a>
+                <a class="btn btn-outline-primary btn-sm m-1"
+                    href="{% url 'connections:connection_refresh' connection.id %}">Refresh</a>
             </td>
         </tr>
         {% endfor %}
