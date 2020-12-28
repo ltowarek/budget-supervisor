@@ -19,7 +19,7 @@ def create_connection_in_saltedge(
         scopes=["account_details", "transactions_details"]
     )
     data = saltedge_client.ConnectSessionRequestBodyData(
-        str(customer_id), consent, attempt=attempt
+        str(customer_id), consent, attempt=attempt, categorization="none",
     )
     body = saltedge_client.ConnectSessionRequestBody(data)
     response = connect_sessions_api.connect_sessions_create_post(body=body)
