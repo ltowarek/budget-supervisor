@@ -85,14 +85,12 @@ def login_user(client: Client) -> Callable[..., None]:
 
 @pytest.fixture
 @pytest.mark.django_db
-def account_factory(
-    connection_foo: Connection, user_foo: User
-) -> Callable[..., Account]:
+def account_factory(user_foo: User) -> Callable[..., Account]:
     def create_account(
         name: str,
         account_type: Tuple[str, str] = Account.AccountType.ACCOUNT,
         external_id: int = None,
-        connection: Connection = connection_foo,
+        connection: Connection = None,
         user: User = user_foo,
     ) -> Account:
         return Account.objects.create(

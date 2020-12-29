@@ -1,6 +1,11 @@
 from typing import Dict
 
-from budget.forms import CreateConnectionForm, RefreshConnectionForm, ReportBalanceForm
+from budget.forms import (
+    CreateConnectionForm,
+    RefreshConnectionForm,
+    ReportBalanceForm,
+    UpdateAccountForm,
+)
 from budget.models import Account
 from users.models import User
 
@@ -8,6 +13,33 @@ from users.models import User
 def test_create_connection_form_valid() -> None:
     form = CreateConnectionForm(data={})
     assert form.is_valid() is True
+
+
+def test_update_account_form_valid(account_foo: Account) -> None:
+    form = UpdateAccountForm(data={}, instance=account_foo)
+    assert form.is_valid() is True
+
+
+def test_update_account_name_field_enabled(account_foo: Account) -> None:
+    account_foo.connection = None
+    form = UpdateAccountForm(data={}, instance=account_foo)
+    assert form.fields["name"].disabled is False
+
+
+def test_update_account_name_field_disabled(account_foo: Account) -> None:
+    form = UpdateAccountForm(data={}, instance=account_foo)
+    assert form.fields["name"].disabled is True
+
+
+def test_update_account_account_type_field_enabled(account_foo: Account) -> None:
+    account_foo.connection = None
+    form = UpdateAccountForm(data={}, instance=account_foo)
+    assert form.fields["account_type"].disabled is False
+
+
+def test_update_account_account_type_field_disabled(account_foo: Account) -> None:
+    form = UpdateAccountForm(data={}, instance=account_foo)
+    assert form.fields["account_type"].disabled is True
 
 
 def test_refresh_connection_form_valid() -> None:

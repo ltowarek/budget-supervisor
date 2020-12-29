@@ -5,7 +5,12 @@ import os
 from typing import Any, Dict, List
 
 import OpenSSL.crypto
-from budget.forms import CreateConnectionForm, RefreshConnectionForm, ReportBalanceForm
+from budget.forms import (
+    CreateConnectionForm,
+    RefreshConnectionForm,
+    ReportBalanceForm,
+    UpdateAccountForm,
+)
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
     create_connection_in_saltedge,
@@ -171,7 +176,7 @@ class AccountUpdate(
     LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
 ):
     model = Account
-    fields = ["name", "account_type"]
+    form_class = UpdateAccountForm
     success_url = reverse_lazy("accounts:account_list")
     success_message = "Account was updated successfully"
 
