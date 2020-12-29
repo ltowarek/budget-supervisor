@@ -2,7 +2,7 @@ from typing import Any
 
 from django import forms
 
-from .models import Account
+from .models import Account, Transaction
 
 
 class CreateConnectionForm(forms.Form):
@@ -23,6 +23,20 @@ class UpdateAccountForm(forms.ModelForm):
         if self.instance.connection:
             self.fields["name"].disabled = True
             self.fields["account_type"].disabled = True
+
+
+class UpdateTransactionForm(forms.ModelForm):
+    class Meta:
+        model = Transaction
+        fields = ["date", "amount", "payee", "category", "description", "account"]
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        if self.instance.account.connection:
+            self.fields["date"].disabled = True
+            self.fields["amount"].disabled = True
+            self.fields["description"].disabled = True
+            self.fields["account"].disabled = True
 
 
 class ReportBalanceForm(forms.Form):

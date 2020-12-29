@@ -5,8 +5,9 @@ from budget.forms import (
     RefreshConnectionForm,
     ReportBalanceForm,
     UpdateAccountForm,
+    UpdateTransactionForm,
 )
-from budget.models import Account
+from budget.models import Account, Transaction
 from users.models import User
 
 
@@ -24,7 +25,6 @@ def test_update_account_form_valid(account_foo: Account) -> None:
 
 
 def test_update_account_name_field_enabled(account_foo: Account) -> None:
-    account_foo.connection = None
     form = UpdateAccountForm(data={}, instance=account_foo)
     assert form.fields["name"].disabled is False
 
@@ -35,7 +35,6 @@ def test_update_account_name_field_disabled(account_foo_external: Account) -> No
 
 
 def test_update_account_account_type_field_enabled(account_foo: Account) -> None:
-    account_foo.connection = None
     form = UpdateAccountForm(data={}, instance=account_foo)
     assert form.fields["account_type"].disabled is False
 
@@ -45,6 +44,73 @@ def test_update_account_account_type_field_disabled(
 ) -> None:
     form = UpdateAccountForm(data={}, instance=account_foo_external)
     assert form.fields["account_type"].disabled is True
+
+
+def test_update_transaction_form_valid(transaction_foo: Transaction) -> None:
+    form = UpdateTransactionForm(
+        data={
+            "date": transaction_foo.date,
+            "amount": transaction_foo.amount,
+            "payee": transaction_foo.payee,
+            "category": transaction_foo.category,
+            "description": transaction_foo.description,
+            "account": transaction_foo.account,
+        },
+        instance=transaction_foo,
+    )
+    assert form.is_valid() is True
+
+
+def test_update_transaction_date_field_enabled(transaction_foo: Transaction) -> None:
+    form = UpdateTransactionForm(data={}, instance=transaction_foo)
+    assert form.fields["date"].disabled is False
+
+
+def test_update_transaction_date_field_disabled(
+    transaction_foo_external: Transaction,
+) -> None:
+    form = UpdateTransactionForm(data={}, instance=transaction_foo_external)
+    assert form.fields["date"].disabled is True
+
+
+def test_update_transaction_amount_field_enabled(transaction_foo: Transaction,) -> None:
+    form = UpdateTransactionForm(data={}, instance=transaction_foo)
+    assert form.fields["amount"].disabled is False
+
+
+def test_update_transaction_amount_field_disabled(
+    transaction_foo_external: Transaction,
+) -> None:
+    form = UpdateTransactionForm(data={}, instance=transaction_foo_external)
+    assert form.fields["amount"].disabled is True
+
+
+def test_update_transaction_description_field_enabled(
+    transaction_foo: Transaction,
+) -> None:
+    form = UpdateTransactionForm(data={}, instance=transaction_foo)
+    assert form.fields["description"].disabled is False
+
+
+def test_update_transaction_description_field_disabled(
+    transaction_foo_external: Transaction,
+) -> None:
+    form = UpdateTransactionForm(data={}, instance=transaction_foo_external)
+    assert form.fields["description"].disabled is True
+
+
+def test_update_transaction_account_field_enabled(
+    transaction_foo: Transaction,
+) -> None:
+    form = UpdateTransactionForm(data={}, instance=transaction_foo)
+    assert form.fields["account"].disabled is False
+
+
+def test_upaccount_transaction_account_field_disabled(
+    transaction_foo_external: Transaction,
+) -> None:
+    form = UpdateTransactionForm(data={}, instance=transaction_foo_external)
+    assert form.fields["account"].disabled is True
 
 
 def test_refresh_connection_form_valid() -> None:

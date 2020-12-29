@@ -10,6 +10,7 @@ from budget.forms import (
     RefreshConnectionForm,
     ReportBalanceForm,
     UpdateAccountForm,
+    UpdateTransactionForm,
 )
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
@@ -230,7 +231,7 @@ class TransactionUpdate(
     LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
 ):
     model = Transaction
-    fields = ["date", "amount", "payee", "category", "description", "account"]
+    form_class = UpdateTransactionForm
     success_url = reverse_lazy("transactions:transaction_list")
     success_message = "Transaction was updated successfully"
 
