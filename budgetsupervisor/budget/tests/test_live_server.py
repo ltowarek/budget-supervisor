@@ -13,6 +13,7 @@ from django.shortcuts import reverse
 from django.utils.dateparse import parse_date
 from django.utils.formats import date_format
 from saltedge_wrapper.factory import connections_api
+from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -175,11 +176,10 @@ class TestConnectionCreate:
         WebDriverWait(selenium, 20).until(EC.visibility_of(element))
         element = selenium.find_element_by_class_name("tt-suggestion")
         element.click()
-        try:
-            element = selenium.find_element_by_name("username")
-        except Exception:
-            logger.error(selenium.page_source)
-            raise
+        WebDriverWait(selenium, 20).until(
+            EC.visibility_of_element_located((By.NAME, "username"))
+        )
+        element = selenium.find_element_by_name("username")
         element.send_keys("username")
         element = selenium.find_element_by_name("password")
         element.send_keys("secret")
