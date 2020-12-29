@@ -16,7 +16,10 @@ def test_create_connection_form_valid() -> None:
 
 
 def test_update_account_form_valid(account_foo: Account) -> None:
-    form = UpdateAccountForm(data={}, instance=account_foo)
+    form = UpdateAccountForm(
+        data={"name": "xyz", "account_type": Account.AccountType.ACCOUNT},
+        instance=account_foo,
+    )
     assert form.is_valid() is True
 
 
@@ -26,8 +29,8 @@ def test_update_account_name_field_enabled(account_foo: Account) -> None:
     assert form.fields["name"].disabled is False
 
 
-def test_update_account_name_field_disabled(account_foo: Account) -> None:
-    form = UpdateAccountForm(data={}, instance=account_foo)
+def test_update_account_name_field_disabled(account_foo_external: Account) -> None:
+    form = UpdateAccountForm(data={}, instance=account_foo_external)
     assert form.fields["name"].disabled is True
 
 
@@ -37,8 +40,10 @@ def test_update_account_account_type_field_enabled(account_foo: Account) -> None
     assert form.fields["account_type"].disabled is False
 
 
-def test_update_account_account_type_field_disabled(account_foo: Account) -> None:
-    form = UpdateAccountForm(data={}, instance=account_foo)
+def test_update_account_account_type_field_disabled(
+    account_foo_external: Account,
+) -> None:
+    form = UpdateAccountForm(data={}, instance=account_foo_external)
     assert form.fields["account_type"].disabled is True
 
 

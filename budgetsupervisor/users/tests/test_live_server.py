@@ -683,7 +683,7 @@ class TestUserDelete:
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_user(selenium, live_server_path, user_foo)
-        assert not Account.objects.filter(user=user_foo).count() == 0
+        assert Account.objects.filter(user=user_foo).count() == 0
 
     def test_transactions_are_deleted(
         self,
@@ -694,7 +694,7 @@ class TestUserDelete:
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.delete_user(selenium, live_server_path, user_foo)
-        assert not Transaction.objects.filter(user=user_foo).count() == 0
+        assert Transaction.objects.filter(user=user_foo).count() == 0
 
     def test_customer_is_deleted(
         self,
