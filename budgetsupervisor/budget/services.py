@@ -90,7 +90,6 @@ def import_accounts_from_saltedge(
             external_id=imported_id,
             defaults={
                 "name": imported_account.name,
-                "account_type": Account.AccountType.ACCOUNT,
                 "connection": Connection.objects.get(external_id=connection_id),
                 "user": user,
             },
@@ -119,7 +118,7 @@ def import_transactions_from_saltedge(
         )
         transactions.extend(response.data)
 
-    response = new_transactions = []
+    new_transactions = []
     for imported_transaction in transactions:
         imported_id = int(imported_transaction.id)
 
@@ -128,8 +127,6 @@ def import_transactions_from_saltedge(
             defaults={
                 "date": imported_transaction.made_on,
                 "amount": imported_transaction.amount,
-                "payee": "",
-                "category": None,
                 "description": imported_transaction.description,
                 "account_id": Account.objects.get(
                     external_id=imported_transaction.account_id

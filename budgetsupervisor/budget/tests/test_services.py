@@ -291,6 +291,32 @@ def test_import_accounts_from_saltedge_with_paging(
     assert len(imported_accounts) == len(mock_accounts)
 
 
+def test_import_accounts_from_saltedge_account_type_is_not_overriden(
+    connection_foo: Connection,
+    account_foo_external: Account,
+    accounts_api: saltedge_client.AccountsApi,
+    saltedge_account_factory: Callable[..., saltedge_client.Account],
+) -> None:
+    mock_accounts = [
+        saltedge_account_factory(
+            id=str(account_foo_external.external_id), name=account_foo_external.name
+        )
+    ]
+    accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(
+        data=mock_accounts
+    )
+
+    account_foo_external.account_type = Account.AccountType.CASH
+    account_foo_external.save()
+
+    original_account_type = account_foo_external.account_type
+    import_accounts_from_saltedge(
+        connection_foo.user, connection_foo.external_id, accounts_api
+    )
+    account_foo_external.refresh_from_db()
+    assert account_foo_external.account_type == original_account_type
+
+
 def test_transaction_category_is_set_to_null_when_category_is_deleted(
     transaction_factory: Callable[..., Transaction], category_foo: Category
 ) -> None:
@@ -477,6 +503,71 @@ def test_import_transactions_from_saltedge_with_paging(
     )
     assert Transaction.objects.all().count() == len(mock_transactions)
     assert len(imported_transactions) == len(mock_transactions)
+
+
+def test_import_transactions_from_saltedge_payee_is_not_overriden(
+    transaction_foo_external: Transaction,
+    transactions_api: saltedge_client.TransactionsApi,
+    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
+) -> None:
+    mock_transactions = [
+        saltedge_transaction_factory(
+            id=transaction_foo_external.external_id,
+            description=transaction_foo_external.description,
+            amount=transaction_foo_external.amount,
+            made_on=transaction_foo_external.date,
+            account_id=transaction_foo_external.account.external_id,
+        ),
+    ]
+    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
+        data=mock_transactions
+    )
+
+    transaction_foo_external.payee = "foo"
+    transaction_foo_external.save()
+
+    original_payee = transaction_foo_external.payee
+    import_transactions_from_saltedge(
+        transaction_foo_external.user,
+        transaction_foo_external.account.connection.external_id,
+        transaction_foo_external.account.external_id,
+        transactions_api,
+    )
+    transaction_foo_external.refresh_from_db()
+    assert transaction_foo_external.payee == original_payee
+
+
+def test_import_transactions_from_saltedge_category_is_not_overriden(
+    transaction_foo_external: Transaction,
+    category_foo: Category,
+    transactions_api: saltedge_client.TransactionsApi,
+    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
+) -> None:
+    mock_transactions = [
+        saltedge_transaction_factory(
+            id=transaction_foo_external.external_id,
+            description=transaction_foo_external.description,
+            amount=transaction_foo_external.amount,
+            made_on=transaction_foo_external.date,
+            account_id=transaction_foo_external.account.external_id,
+        ),
+    ]
+    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
+        data=mock_transactions
+    )
+
+    transaction_foo_external.category = category_foo
+    transaction_foo_external.save()
+
+    original_category = transaction_foo_external.category
+    import_transactions_from_saltedge(
+        transaction_foo_external.user,
+        transaction_foo_external.account.connection.external_id,
+        transaction_foo_external.account.external_id,
+        transactions_api,
+    )
+    transaction_foo_external.refresh_from_db()
+    assert transaction_foo_external.category == original_category
 
 
 def test_get_category_balance_filter_by_user(
