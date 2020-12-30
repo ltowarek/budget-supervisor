@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 import OpenSSL.crypto
 from budget.forms import (
     CreateConnectionForm,
+    CreateTransactionForm,
     RefreshConnectionForm,
     ReportBalanceForm,
     UpdateAccountForm,
@@ -210,7 +211,7 @@ class TransactionListView(LoginRequiredMixin, ListView):
 
 class TransactionCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Transaction
-    fields = ["date", "amount", "payee", "category", "description", "account"]
+    form_class = CreateTransactionForm
     success_url = reverse_lazy("transactions:transaction_list")
     success_message = "Transaction was created successfully"
 

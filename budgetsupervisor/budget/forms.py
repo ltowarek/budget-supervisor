@@ -1,8 +1,13 @@
 from typing import Any
 
 from django import forms
+from django.conf import settings
 
 from .models import Account, Transaction
+
+date_input_with_placeholder = forms.DateInput(
+    attrs={"placeholder": settings.DATE_INPUT_FORMATS[0].replace("%", "")}
+)
 
 
 class CreateConnectionForm(forms.Form):
@@ -25,10 +30,18 @@ class UpdateAccountForm(forms.ModelForm):
             self.fields["account_type"].disabled = True
 
 
+class CreateTransactionForm(forms.ModelForm):
+    class Meta:
+        model = Transaction
+        fields = ["date", "amount", "payee", "category", "description", "account"]
+        widgets = {"date": date_input_with_placeholder}
+
+
 class UpdateTransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction
         fields = ["date", "amount", "payee", "category", "description", "account"]
+        widgets = {"date": date_input_with_placeholder}
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -41,8 +54,8 @@ class UpdateTransactionForm(forms.ModelForm):
 
 class ReportBalanceForm(forms.Form):
     accounts = forms.ModelMultipleChoiceField(queryset=None)
-    from_date = forms.DateField(required=False)
-    to_date = forms.DateField(required=False)
+    from_date = forms.DateField(required=False, widget=date_input_with_placeholder)
+    to_date = forms.DateField(required=False, widget=date_input_with_placeholder)
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         user = kwargs.pop("user")
