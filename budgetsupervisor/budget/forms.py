@@ -34,6 +34,7 @@ class CreateTransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction
         fields = ["date", "amount", "payee", "category", "description", "account"]
+        localized_fields = "__all__"
         widgets = {"date": date_input_with_placeholder}
 
 
@@ -41,6 +42,7 @@ class UpdateTransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction
         fields = ["date", "amount", "payee", "category", "description", "account"]
+        localized_fields = "__all__"
         widgets = {"date": date_input_with_placeholder}
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -54,8 +56,12 @@ class UpdateTransactionForm(forms.ModelForm):
 
 class ReportBalanceForm(forms.Form):
     accounts = forms.ModelMultipleChoiceField(queryset=None)
-    from_date = forms.DateField(required=False, widget=date_input_with_placeholder)
-    to_date = forms.DateField(required=False, widget=date_input_with_placeholder)
+    from_date = forms.DateField(
+        required=False, widget=date_input_with_placeholder, localize=True
+    )
+    to_date = forms.DateField(
+        required=False, widget=date_input_with_placeholder, localize=True
+    )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         user = kwargs.pop("user")
