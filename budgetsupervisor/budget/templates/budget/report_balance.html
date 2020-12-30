@@ -21,7 +21,7 @@ Category Balance
     {% for key, value in balance.items %}
     <tr>
       <td>{{ key }}</td>
-      <td>{{ value }}</td>
+      <td>{{ value|floatformat:2 }}</td>
     </tr>
     {% endfor %}
   </tbody>
