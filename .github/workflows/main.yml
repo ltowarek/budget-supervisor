@@ -41,6 +41,10 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: heroku container:release -a ${{ secrets.HEROKU_APP_NAME_STAGE }} web 
+      - name: Run database migrations
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku run python manage.py migrate -a ${{ secrets.HEROKU_APP_NAME_STAGE }}
 
   deploy-live:
     needs: test
@@ -59,3 +63,7 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: heroku container:release -a ${{ secrets.HEROKU_APP_NAME_LIVE }} web 
+      - name: Run database migrations
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku run python manage.py migrate -a ${{ secrets.HEROKU_APP_NAME_LIVE }}
