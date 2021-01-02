@@ -21,6 +21,9 @@ class Account(models.Model):
     account_type = models.CharField(
         max_length=1, choices=AccountType.choices, default=AccountType.ACCOUNT
     )
+    initial_balance = models.DecimalField(
+        max_digits=8, decimal_places=2, blank=True, default=0
+    )
     external_id = models.BigIntegerField(blank=True, null=True, editable=False)
     connection = models.ForeignKey(
         Connection, on_delete=models.SET_NULL, blank=True, null=True, editable=False

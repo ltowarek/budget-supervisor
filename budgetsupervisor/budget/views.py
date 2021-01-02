@@ -162,10 +162,7 @@ class AccountListView(LoginRequiredMixin, ListView):
 
 class AccountCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Account
-    fields = [
-        "name",
-        "account_type",
-    ]
+    fields = ["name", "account_type", "initial_balance"]
     success_url = reverse_lazy("accounts:account_list")
     success_message = "Account was created successfully"
 

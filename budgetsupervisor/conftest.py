@@ -89,6 +89,7 @@ def account_factory(user_foo: User) -> Callable[..., Account]:
     def create_account(
         name: str,
         account_type: Tuple[str, str] = Account.AccountType.ACCOUNT,
+        initial_balance: float = 0.0,
         external_id: int = None,
         connection: Connection = None,
         user: User = user_foo,

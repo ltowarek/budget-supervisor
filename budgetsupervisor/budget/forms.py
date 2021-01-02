@@ -21,7 +21,7 @@ class RefreshConnectionForm(forms.Form):
 class UpdateAccountForm(forms.ModelForm):
     class Meta:
         model = Account
-        fields = ["name", "account_type"]
+        fields = ["name", "account_type", "initial_balance"]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
