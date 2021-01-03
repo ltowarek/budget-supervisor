@@ -1245,6 +1245,9 @@ def test_callback_success_new_account(
     mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
 
     transactions_api.transactions_get.return_value = TransactionsResponse(data=[])
+    transactions_api.transactions_pending_get.return_value = TransactionsResponse(
+        data=[]
+    )
     mocker.patch(
         "budget.views.transactions_api", autospec=True, return_value=transactions_api
     )
@@ -1292,6 +1295,9 @@ def test_callback_success_new_transaction(
     mock_transactions = [saltedge_transaction_factory(id="8900", account_id="4567")]
     transactions_api.transactions_get.return_value = TransactionsResponse(
         data=mock_transactions
+    )
+    transactions_api.transactions_pending_get.return_value = TransactionsResponse(
+        data=[]
     )
     mocker.patch(
         "budget.views.transactions_api", autospec=True, return_value=transactions_api

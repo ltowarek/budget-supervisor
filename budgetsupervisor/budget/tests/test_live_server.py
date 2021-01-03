@@ -5,14 +5,12 @@ from typing import Callable, Iterator, List, Optional
 import pytest
 import swagger_client as saltedge_client
 from budget.models import Account, Category, Connection, Transaction
-from budget.services import (
-    import_connections_from_saltedge,
-    remove_connection_from_saltedge,
-)
+from budget.services import import_saltedge_connections
 from django.shortcuts import reverse
 from django.utils.dateparse import parse_date
 from django.utils.formats import date_format
 from saltedge_wrapper.factory import connections_api
+from saltedge_wrapper.utils import get_connections, remove_connection_from_saltedge
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
@@ -120,17 +118,14 @@ class TestConnectionList:
 
 @pytest.fixture
 def remove_temporary_connections(
-    predefined_saltedge_connection: saltedge_client.Connection, predefined_user: User
+    predefined_saltedge_connection: saltedge_client.Connection,
+    predefined_customer: saltedge_client.Customer,
 ) -> Iterator[None]:
-    import_connections_from_saltedge(
-        predefined_user, predefined_user.profile.external_id, connections_api()
-    )
     yield
-    new_connections = import_connections_from_saltedge(
-        predefined_user, predefined_user.profile.external_id, connections_api()
-    )
-    for connection in new_connections:
-        remove_connection_from_saltedge(connection, connections_api())
+    connections = get_connections(predefined_customer.id, connections_api())
+    for connection in connections:
+        if connection.id != predefined_saltedge_connection.id:
+            remove_connection_from_saltedge(connection.id, connections_api())
 
 
 class TestConnectionCreate:
@@ -271,19 +266,16 @@ class TestConnectionRefresh:
 @pytest.fixture
 def connection_external_factory(
     remove_temporary_connections: Callable[..., None],
+    predefined_saltedge_connection: saltedge_client.Connection,
 ) -> Callable[..., Connection]:
     def f(
         selenium: WebDriver, live_server_path: Callable[[str], str], profile: Profile
     ) -> Connection:
-        import_connections_from_saltedge(
-            profile.user, profile.external_id, connections_api()
-        )
         # There is no other way to create connection than using Selenium
         TestConnectionCreate.create_saltedge_connection(selenium, live_server_path)
-        new_connections = import_connections_from_saltedge(
-            profile.user, profile.external_id, connections_api()
-        )
-        return new_connections[0]
+        saltedge_connections = get_connections(profile.external_id, connections_api())
+        connections = import_saltedge_connections(saltedge_connections, profile.user)
+        return connections[1][0]
 
     return f
 

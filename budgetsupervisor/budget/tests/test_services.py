@@ -1,745 +1,516 @@
 import datetime
-from typing import Callable
+from typing import Callable, List
 
+import pytest
 import swagger_client as saltedge_client
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
-    create_connection_in_saltedge,
+    create_initial_balance,
     get_category_balance,
-    import_accounts_from_saltedge,
-    import_connections_from_saltedge,
-    import_transactions_from_saltedge,
-    refresh_connection_in_saltedge,
-    remove_connection_from_saltedge,
+    import_saltedge_accounts,
+    import_saltedge_connection,
+    import_saltedge_connections,
+    import_saltedge_transactions,
 )
-from django.utils.dateparse import parse_date
-from users.models import Profile, User
+from users.models import User
 
 
-def test_create_connection_in_saltedge(
-    profile_foo_external: Profile,
-    connect_sessions_api: saltedge_client.ConnectSessionsApi,
-) -> None:
-    data = saltedge_client.ConnectSessionResponseData(connect_url="example.com")
-    connect_sessions_api.connect_sessions_create_post.return_value = saltedge_client.ConnectSessionResponse(
-        data=data
-    )
-
-    connect_url = create_connection_in_saltedge(
-        "redirect_url", profile_foo_external.external_id, connect_sessions_api
-    )
-    assert connect_url == data.connect_url
-
-
-def test_import_connections_from_saltedge_no_objects(
-    profile_foo_external: Profile, connections_api: saltedge_client.ConnectionsApi
-) -> None:
-    connections_api.connections_get.return_value = saltedge_client.ConnectionsResponse(
-        data=[]
-    )
-
-    assert Connection.objects.all().count() == 0
-    imported_connections = import_connections_from_saltedge(
-        profile_foo_external.user, profile_foo_external.external_id, connections_api
-    )
-    assert Connection.objects.all().count() == 0
-    assert len(imported_connections) == 0
-
-
-def test_import_connections_from_saltedge_one_new_object(
-    profile_foo_external: Profile,
-    connections_api: saltedge_client.ConnectionsApi,
-    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
-) -> None:
-    mock_connections = [saltedge_connection_factory(id="1", provider_name="foo")]
-    connections_api.connections_get.return_value = saltedge_client.ConnectionsResponse(
-        data=mock_connections
-    )
-
-    assert Connection.objects.all().count() == 0
-    imported_connections = import_connections_from_saltedge(
-        profile_foo_external.user, profile_foo_external.external_id, connections_api
-    )
-    assert Connection.objects.all().count() == len(mock_connections)
-    assert len(imported_connections) == len(mock_connections)
-
-    for imported, mock in zip(imported_connections, mock_connections):
-        assert imported.external_id == int(mock.id)
-        assert imported.provider == mock.provider_name
-        assert imported.user == profile_foo_external.user
-
-
-def test_import_connections_from_saltedge_two_new_objects(
-    profile_foo_external: Profile,
-    connections_api: saltedge_client.ConnectionsApi,
-    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
-) -> None:
-    mock_connections = [
-        saltedge_connection_factory(id="1", provider_name="foo"),
-        saltedge_connection_factory(id="2", provider_name="bar"),
-    ]
-    connections_api.connections_get.return_value = saltedge_client.ConnectionsResponse(
-        data=mock_connections
-    )
-
-    assert Connection.objects.all().count() == 0
-    imported_connections = import_connections_from_saltedge(
-        profile_foo_external.user, profile_foo_external.external_id, connections_api
-    )
-    assert Connection.objects.all().count() == len(mock_connections)
-    assert len(imported_connections) == len(mock_connections)
-
-    for imported, mock in zip(imported_connections, mock_connections):
-        assert imported.external_id == int(mock.id)
-        assert imported.provider == mock.provider_name
-        assert imported.user == profile_foo_external.user
-
-
-def test_import_connections_from_saltedge_no_new_objects(
-    profile_foo_external: Profile,
-    connections_api: saltedge_client.ConnectionsApi,
-    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
-) -> None:
-    mock_connections = [
-        saltedge_connection_factory(id="1"),
-        saltedge_connection_factory(id="2"),
-    ]
-    connections_api.connections_get.return_value = saltedge_client.ConnectionsResponse(
-        data=mock_connections
-    )
-    imported_connections = import_connections_from_saltedge(
-        profile_foo_external.user, profile_foo_external.external_id, connections_api
-    )
-
-    assert Connection.objects.all().count() == len(mock_connections)
-    imported_connections = import_connections_from_saltedge(
-        profile_foo_external.user, profile_foo_external.external_id, connections_api
-    )
-    assert Connection.objects.all().count() == len(mock_connections)
-    assert len(imported_connections) == 0
-
-
-def test_import_connections_from_saltedge_with_paging(
-    profile_foo_external: Profile,
-    connections_api: saltedge_client.ConnectionsApi,
-    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
-) -> None:
-    mock_connections = [
-        saltedge_connection_factory(id="1", provider_name="foo"),
-        saltedge_connection_factory(id="2", provider_name="bar"),
-        saltedge_connection_factory(id="3", provider_name="baz"),
-    ]
-    data = [
-        [mock_connections[0], mock_connections[1]],
-        [mock_connections[2]],
-    ]
-    meta = saltedge_client.MetaObject(
-        next_id=data[1][0].id,
-        next_page="/api/v5/connections?customer_id={}&from_id={}".format(
-            profile_foo_external.external_id, data[1][0].id
-        ),
-    )
-    connections_api.connections_get.side_effect = [
-        saltedge_client.ConnectionsResponse(data=data[0], meta=meta),
-        saltedge_client.ConnectionsResponse(data=data[1]),
-    ]
-
-    assert Connection.objects.all().count() == 0
-    imported_connections = import_connections_from_saltedge(
-        profile_foo_external.user, profile_foo_external.external_id, connections_api
-    )
-    assert Connection.objects.all().count() == len(mock_connections)
-    assert len(imported_connections) == len(mock_connections)
-
-
-def test_remove_connection_saltedge(
-    connection_foo: Connection, connections_api: saltedge_client.ConnectionsApi
-) -> None:
-    data = saltedge_client.RemovedConnectionResponseData(
-        removed=True, id=str(connection_foo.external_id)
-    )
-    connections_api.connections_connection_id_delete.return_value = saltedge_client.RemovedConnectionResponse(
-        data=data
-    )
-
-    remove_connection_from_saltedge(connection_foo, connections_api)
-    connections_api.connections_connection_id_delete.assert_called_with(
-        str(connection_foo.external_id)
-    )
-
-
-def test_import_accounts_from_saltedge_no_objects(
-    connection_foo: Connection, accounts_api: saltedge_client.AccountsApi
-) -> None:
-    accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(data=[])
-
-    assert Account.objects.all().count() == 0
-    imported_accounts = import_accounts_from_saltedge(
-        connection_foo.user, connection_foo.external_id, accounts_api
-    )
-    assert Account.objects.all().count() == 0
-    assert len(imported_accounts) == 0
-
-
-def test_import_accounts_from_saltedge_one_new_object(
-    connection_foo: Connection,
-    accounts_api: saltedge_client.AccountsApi,
-    saltedge_account_factory: Callable[..., saltedge_client.Account],
-) -> None:
-    mock_accounts = [saltedge_account_factory(id="1", name="foo")]
-    accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(
-        data=mock_accounts
-    )
-
-    assert Account.objects.all().count() == 0
-    imported_accounts = import_accounts_from_saltedge(
-        connection_foo.user, connection_foo.external_id, accounts_api
-    )
-    assert Account.objects.all().count() == len(mock_accounts)
-    assert len(imported_accounts) == len(mock_accounts)
-
-    for imported, mock in zip(imported_accounts, mock_accounts):
-        assert imported.external_id == int(mock.id)
-        assert imported.name == mock.name
-        assert imported.account_type == Account.AccountType.ACCOUNT
-        assert imported.connection == connection_foo
-        assert imported.user == connection_foo.user
-
-
-def test_import_accounts_from_saltedge_two_new_objects(
-    connection_foo: Connection,
-    accounts_api: saltedge_client.AccountsApi,
-    saltedge_account_factory: Callable[..., saltedge_client.Account],
-) -> None:
-    mock_accounts = [
-        saltedge_account_factory(id="1", name="foo"),
-        saltedge_account_factory(id="2", name="bar"),
-    ]
-    accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(
-        data=mock_accounts
-    )
-
-    assert Account.objects.all().count() == 0
-    imported_accounts = import_accounts_from_saltedge(
-        connection_foo.user, connection_foo.external_id, accounts_api
-    )
-    assert Account.objects.all().count() == len(mock_accounts)
-    assert len(imported_accounts) == len(mock_accounts)
-
-    for imported, mock in zip(imported_accounts, mock_accounts):
-        assert imported.external_id == int(mock.id)
-        assert imported.name == mock.name
-        assert imported.account_type == Account.AccountType.ACCOUNT
-        assert imported.connection == connection_foo
-        assert imported.user == connection_foo.user
-
-
-def test_import_accounts_from_saltedge_no_new_objects(
-    connection_foo: Connection,
-    accounts_api: saltedge_client.AccountsApi,
-    saltedge_account_factory: Callable[..., saltedge_client.Account],
-) -> None:
-    mock_accounts = [
-        saltedge_account_factory(id="1"),
-        saltedge_account_factory(id="2"),
-    ]
-    accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(
-        data=mock_accounts
-    )
-    imported_accounts = import_accounts_from_saltedge(
-        connection_foo.user, connection_foo.external_id, accounts_api
-    )
-
-    assert Account.objects.all().count() == len(mock_accounts)
-    imported_accounts = import_accounts_from_saltedge(
-        connection_foo.user, connection_foo.external_id, accounts_api
-    )
-    assert Account.objects.all().count() == len(mock_accounts)
-    assert len(imported_accounts) == 0
-
-
-def test_import_accounts_from_saltedge_with_paging(
-    connection_foo: Connection,
-    accounts_api: saltedge_client.AccountsApi,
-    saltedge_account_factory: Callable[..., saltedge_client.Account],
-) -> None:
-    mock_accounts = [
-        saltedge_account_factory(id="1", name="foo"),
-        saltedge_account_factory(id="2", name="bar"),
-        saltedge_account_factory(id="3", name="baz"),
-    ]
-    data = [
-        [mock_accounts[0], mock_accounts[1]],
-        [mock_accounts[2]],
-    ]
-    meta = saltedge_client.MetaObject(
-        next_id=data[1][0].id,
-        next_page="/api/v5/accounts?connection_id={}&from_id={}".format(
-            connection_foo.external_id, data[1][0].id
-        ),
-    )
-    accounts_api.accounts_get.side_effect = [
-        saltedge_client.AccountsResponse(data=data[0], meta=meta),
-        saltedge_client.AccountsResponse(data=data[1]),
-    ]
-
-    assert Account.objects.all().count() == 0
-    imported_accounts = import_accounts_from_saltedge(
-        connection_foo.user, connection_foo.external_id, accounts_api
-    )
-    assert Account.objects.all().count() == len(mock_accounts)
-    assert len(imported_accounts) == len(mock_accounts)
-
-
-def test_import_accounts_from_saltedge_account_type_is_not_overriden(
-    connection_foo: Connection,
-    account_foo_external: Account,
-    accounts_api: saltedge_client.AccountsApi,
-    saltedge_account_factory: Callable[..., saltedge_client.Account],
-) -> None:
-    mock_accounts = [
-        saltedge_account_factory(
-            id=str(account_foo_external.external_id), name=account_foo_external.name
+class TestImportSaltedgeConnection:
+    def test_connection_is_created(
+        self, saltedge_connection: saltedge_client.Connection, user_foo: User
+    ) -> None:
+        new_connection, is_created = import_saltedge_connection(
+            saltedge_connection, user_foo
         )
-    ]
-    accounts_api.accounts_get.return_value = saltedge_client.AccountsResponse(
-        data=mock_accounts
-    )
+        assert new_connection.provider == saltedge_connection.provider_name
+        assert new_connection.user == user_foo
+        assert new_connection.external_id == int(saltedge_connection.id)
+        assert is_created is True
 
-    account_foo_external.account_type = Account.AccountType.CASH
-    account_foo_external.save()
-
-    original_account_type = account_foo_external.account_type
-    import_accounts_from_saltedge(
-        connection_foo.user, connection_foo.external_id, accounts_api
-    )
-    account_foo_external.refresh_from_db()
-    assert account_foo_external.account_type == original_account_type
-
-
-def test_transaction_category_is_set_to_null_when_category_is_deleted(
-    transaction_factory: Callable[..., Transaction], category_foo: Category
-) -> None:
-    transaction = transaction_factory(category=category_foo)
-    category_foo.delete()
-    transaction.refresh_from_db()
-    assert transaction.category is None
+    def test_connection_is_updated(
+        self,
+        connection_foo: Connection,
+        saltedge_connection: saltedge_client.Connection,
+        user_foo: User,
+    ) -> None:
+        connection_foo.external_id = int(saltedge_connection.id)
+        connection_foo.save()
+        updated_connection, is_created = import_saltedge_connection(
+            saltedge_connection, user_foo
+        )
+        assert updated_connection.id == connection_foo.id
+        assert updated_connection.provider == saltedge_connection.provider_name
+        assert updated_connection.user == user_foo
+        assert updated_connection.external_id == int(saltedge_connection.id)
+        assert is_created is False
 
 
-def test_import_transactions_from_saltedge_no_objects(
-    account_foo_external: Account, transactions_api: saltedge_client.TransactionsApi
-) -> None:
-    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
-        data=[]
-    )
+class TestImportSaltedgeConnections:
+    @pytest.fixture
+    def saltedge_connections(
+        self, saltedge_connection_factory: Callable[..., saltedge_client.Connection]
+    ) -> List[saltedge_client.Connection]:
+        return [
+            saltedge_connection_factory(id="1", provider_name="a"),
+            saltedge_connection_factory(id="2", provider_name="b"),
+            saltedge_connection_factory(id="3", provider_name="c"),
+        ]
 
-    assert Transaction.objects.all().count() == 0
-    imported_transactions = import_transactions_from_saltedge(
-        account_foo_external.user,
-        account_foo_external.connection.external_id,
-        account_foo_external.external_id,
-        transactions_api,
-    )
-    assert Transaction.objects.all().count() == 0
-    assert len(imported_transactions) == 0
+    @pytest.fixture
+    def connections(
+        self,
+        connection_factory: Callable[..., Connection],
+        saltedge_connections: List[saltedge_client.Connection],
+    ) -> List[Connection]:
+        connections = []
+        for saltedge_connection in saltedge_connections:
+            connections.append(
+                connection_factory(
+                    provider=saltedge_connection.provider_name + "_tmp",
+                    external_id=int(saltedge_connection.id),
+                )
+            )
+        return connections
 
+    def test_connections_are_created(
+        self, saltedge_connections: List[saltedge_client.Connection], user_foo: User
+    ) -> None:
+        output_tuples = import_saltedge_connections(saltedge_connections, user_foo)
+        for output_tuple, saltedge_connection in zip(
+            output_tuples, saltedge_connections
+        ):
+            new_connection, is_created = output_tuple
+            assert new_connection.provider == saltedge_connection.provider_name
+            assert new_connection.user == user_foo
+            assert new_connection.external_id == int(saltedge_connection.id)
+            assert is_created is True
 
-def test_import_transactions_from_saltedge_one_new_object(
-    account_foo_external: Account,
-    transactions_api: saltedge_client.TransactionsApi,
-    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
-) -> None:
-    mock_transactions = [
-        saltedge_transaction_factory(
-            id="1",
-            description="foo",
-            amount=20.2,
-            made_on=parse_date("2020-05-03"),
-            account_id=account_foo_external.external_id,
-        ),
-    ]
-    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
-        data=mock_transactions
-    )
-
-    assert Transaction.objects.all().count() == 0
-    imported_transactions = import_transactions_from_saltedge(
-        account_foo_external.user,
-        account_foo_external.connection.external_id,
-        account_foo_external.external_id,
-        transactions_api,
-    )
-    assert Transaction.objects.all().count() == len(mock_transactions)
-    assert len(imported_transactions) == len(mock_transactions)
-
-    for imported, mock in zip(imported_transactions, mock_transactions):
-        assert imported.external_id == int(mock.id)
-        assert imported.date == mock.made_on
-        assert imported.payee == ""
-        assert imported.category is None
-        assert imported.description == mock.description
-        assert imported.account == account_foo_external
-        assert imported.user == account_foo_external.user
-
-
-def test_import_transactions_from_saltedge_two_new_objects(
-    account_foo_external: Account,
-    transactions_api: saltedge_client.TransactionsApi,
-    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
-) -> None:
-    mock_transactions = [
-        saltedge_transaction_factory(
-            id="1",
-            description="foo",
-            amount=20.2,
-            made_on=parse_date("2020-05-03"),
-            account_id=account_foo_external.external_id,
-        ),
-        saltedge_transaction_factory(
-            id="2",
-            description="bar",
-            amount=-30.5,
-            made_on=parse_date("2020-05-04"),
-            account_id=account_foo_external.external_id,
-        ),
-    ]
-    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
-        data=mock_transactions
-    )
-
-    assert Transaction.objects.all().count() == 0
-    imported_transactions = import_transactions_from_saltedge(
-        account_foo_external.user,
-        account_foo_external.connection.external_id,
-        account_foo_external.external_id,
-        transactions_api,
-    )
-    assert Transaction.objects.all().count() == len(mock_transactions)
-    assert len(imported_transactions) == len(mock_transactions)
-
-    for imported, mock in zip(imported_transactions, mock_transactions):
-        assert imported.external_id == int(mock.id)
-        assert imported.date == mock.made_on
-        assert imported.payee == ""
-        assert imported.category is None
-        assert imported.description == mock.description
-        assert imported.account == account_foo_external
-        assert imported.user == account_foo_external.user
+    def test_connections_are_updated(
+        self,
+        connections: List[Connection],
+        saltedge_connections: List[saltedge_client.Connection],
+        user_foo: User,
+    ) -> None:
+        output_tuples = import_saltedge_connections(saltedge_connections, user_foo)
+        for output_tuple, saltedge_connection in zip(
+            output_tuples, saltedge_connections
+        ):
+            updated_connection, is_created = output_tuple
+            assert updated_connection.provider == saltedge_connection.provider_name
+            assert updated_connection.user == user_foo
+            assert updated_connection.external_id == int(saltedge_connection.id)
+            assert is_created is False
 
 
-def test_import_transactions_from_saltedge_no_new_objects(
-    account_foo_external: Account,
-    transactions_api: saltedge_client.TransactionsApi,
-    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
-) -> None:
-    mock_transactions = [
-        saltedge_transaction_factory(
-            id="1", account_id=account_foo_external.external_id
-        ),
-        saltedge_transaction_factory(
-            id="2", account_id=account_foo_external.external_id
-        ),
-    ]
-    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
-        data=mock_transactions
-    )
-    imported_transactions = import_transactions_from_saltedge(
-        account_foo_external.user,
-        account_foo_external.connection.external_id,
-        account_foo_external.external_id,
-        transactions_api,
-    )
+class TestImportSaltedgeAccounts:
+    @pytest.fixture
+    def saltedge_accounts(
+        self,
+        saltedge_account_factory: Callable[..., saltedge_client.Account],
+        saltedge_connection: saltedge_client.Connection,
+        connection_foo: Connection,
+    ) -> List[saltedge_client.Account]:
+        connection_foo.external_id = saltedge_connection.id
+        connection_foo.save()
+        return [
+            saltedge_account_factory(
+                id="1", name="a", connection_id=saltedge_connection.id
+            ),
+            saltedge_account_factory(
+                id="2", name="b", connection_id=saltedge_connection.id
+            ),
+            saltedge_account_factory(
+                id="3", name="c", connection_id=saltedge_connection.id
+            ),
+        ]
 
-    assert Transaction.objects.all().count() == len(mock_transactions)
-    imported_transactions = import_transactions_from_saltedge(
-        account_foo_external.user,
-        account_foo_external.connection.external_id,
-        account_foo_external.external_id,
-        transactions_api,
-    )
-    assert Transaction.objects.all().count() == len(mock_transactions)
-    assert len(imported_transactions) == 0
+    @pytest.fixture
+    def accounts(
+        self,
+        account_factory: Callable[..., Account],
+        saltedge_accounts: List[saltedge_client.Account],
+    ) -> List[Account]:
+        accounts = []
+        for saltedge_account in saltedge_accounts:
+            accounts.append(
+                account_factory(
+                    name=saltedge_account.name + "_tmp",
+                    external_id=int(saltedge_account.id),
+                )
+            )
+        return accounts
 
+    def test_accounts_are_created(
+        self,
+        saltedge_accounts: List[saltedge_client.Account],
+        user_foo: User,
+        connection_foo: Connection,
+    ) -> None:
+        output_tuples = import_saltedge_accounts(saltedge_accounts, user_foo)
+        for output_tuple, saltedge_account in zip(output_tuples, saltedge_accounts):
+            new_account, is_created = output_tuple
+            assert new_account.name == saltedge_account.name
+            assert new_account.user == user_foo
+            assert new_account.external_id == int(saltedge_account.id)
+            assert new_account.connection == connection_foo
+            assert is_created is True
 
-def test_import_transactions_from_saltedge_with_paging(
-    account_foo_external: Account,
-    transactions_api: saltedge_client.TransactionsApi,
-    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
-) -> None:
-    mock_transactions = [
-        saltedge_transaction_factory(
-            id="1", description="foo", account_id=account_foo_external.external_id,
-        ),
-        saltedge_transaction_factory(
-            id="2", description="bar", account_id=account_foo_external.external_id,
-        ),
-        saltedge_transaction_factory(
-            id="3", description="baz", account_id=account_foo_external.external_id,
-        ),
-    ]
-    data = [
-        [mock_transactions[0], mock_transactions[1]],
-        [mock_transactions[2]],
-    ]
-    meta = saltedge_client.MetaObject(
-        next_id=data[1][0].id,
-        next_page="/api/v5/transactions?connection_id={}&account_id={}&from_id={}".format(
-            account_foo_external.connection.external_id,
-            account_foo_external.external_id,
-            data[1][0].id,
-        ),
-    )
-    transactions_api.transactions_get.side_effect = [
-        saltedge_client.TransactionsResponse(data=data[0], meta=meta),
-        saltedge_client.TransactionsResponse(data=data[1]),
-    ]
+    def test_accounts_are_updated(
+        self,
+        accounts: List[Account],
+        saltedge_accounts: List[saltedge_client.Account],
+        user_foo: User,
+        connection_foo: Connection,
+    ) -> None:
+        output_tuples = import_saltedge_accounts(saltedge_accounts, user_foo)
+        for output_tuple, saltedge_account in zip(output_tuples, saltedge_accounts):
+            updated_account, is_created = output_tuple
+            assert updated_account.name == saltedge_account.name
+            assert updated_account.user == user_foo
+            assert updated_account.external_id == int(saltedge_account.id)
+            assert updated_account.connection == connection_foo
+            assert is_created is False
 
-    assert Transaction.objects.all().count() == 0
-    imported_transactions = import_transactions_from_saltedge(
-        account_foo_external.user,
-        account_foo_external.connection.external_id,
-        account_foo_external.external_id,
-        transactions_api,
-    )
-    assert Transaction.objects.all().count() == len(mock_transactions)
-    assert len(imported_transactions) == len(mock_transactions)
-
-
-def test_import_transactions_from_saltedge_payee_is_not_overriden(
-    transaction_foo_external: Transaction,
-    transactions_api: saltedge_client.TransactionsApi,
-    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
-) -> None:
-    mock_transactions = [
-        saltedge_transaction_factory(
-            id=transaction_foo_external.external_id,
-            description=transaction_foo_external.description,
-            amount=transaction_foo_external.amount,
-            made_on=transaction_foo_external.date,
-            account_id=transaction_foo_external.account.external_id,
-        ),
-    ]
-    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
-        data=mock_transactions
-    )
-
-    transaction_foo_external.payee = "foo"
-    transaction_foo_external.save()
-
-    original_payee = transaction_foo_external.payee
-    import_transactions_from_saltedge(
-        transaction_foo_external.user,
-        transaction_foo_external.account.connection.external_id,
-        transaction_foo_external.account.external_id,
-        transactions_api,
-    )
-    transaction_foo_external.refresh_from_db()
-    assert transaction_foo_external.payee == original_payee
+    def test_account_type_is_not_overriden(
+        self,
+        accounts: List[Account],
+        saltedge_accounts: List[saltedge_client.Account],
+        user_foo: User,
+    ) -> None:
+        original_account_types = [a.account_type for a in accounts]
+        output_tuples = import_saltedge_accounts(saltedge_accounts, user_foo)
+        for output_tuple, account_type in zip(output_tuples, original_account_types):
+            updated_account, _ = output_tuple
+            assert updated_account.account_type == account_type
 
 
-def test_import_transactions_from_saltedge_category_is_not_overriden(
-    transaction_foo_external: Transaction,
-    category_foo: Category,
-    transactions_api: saltedge_client.TransactionsApi,
-    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
-) -> None:
-    mock_transactions = [
-        saltedge_transaction_factory(
-            id=transaction_foo_external.external_id,
-            description=transaction_foo_external.description,
-            amount=transaction_foo_external.amount,
-            made_on=transaction_foo_external.date,
-            account_id=transaction_foo_external.account.external_id,
-        ),
-    ]
-    transactions_api.transactions_get.return_value = saltedge_client.TransactionsResponse(
-        data=mock_transactions
-    )
+class TestImportSaltedgeTransactions:
+    @pytest.fixture
+    def saltedge_transactions(
+        self,
+        saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
+        saltedge_account: saltedge_client.Account,
+        account_foo: Account,
+    ) -> List[saltedge_client.Transaction]:
+        account_foo.external_id = saltedge_account.id
+        account_foo.save()
+        return [
+            saltedge_transaction_factory(
+                id="1",
+                made_on=datetime.datetime.strptime("2020-01-01", "%Y-%m-%d").date(),
+                amount=1.0,
+                description="a",
+                account_id=saltedge_account.id,
+            ),
+            saltedge_transaction_factory(
+                id="2",
+                made_on=datetime.datetime.strptime("2020-01-02", "%Y-%m-%d").date(),
+                amount=2.0,
+                description="b",
+                account_id=saltedge_account.id,
+            ),
+            saltedge_transaction_factory(
+                id="3",
+                made_on=datetime.datetime.strptime("2020-01-03", "%Y-%m-%d").date(),
+                amount=3.0,
+                description="c",
+                account_id=saltedge_account.id,
+            ),
+        ]
 
-    transaction_foo_external.category = category_foo
-    transaction_foo_external.save()
+    @pytest.fixture
+    def transactions(
+        self,
+        transaction_factory: Callable[..., Transaction],
+        saltedge_transactions: List[saltedge_client.Transaction],
+    ) -> List[Transaction]:
+        transactions = []
+        for saltedge_transaction in saltedge_transactions:
+            transactions.append(
+                transaction_factory(
+                    date=saltedge_transaction.made_on + datetime.timedelta(days=10),
+                    amount=saltedge_transaction.amount + 10,
+                    description=saltedge_transaction.description + "_ tmp",
+                    external_id=int(saltedge_transaction.id),
+                )
+            )
+        return transactions
 
-    original_category = transaction_foo_external.category
-    import_transactions_from_saltedge(
-        transaction_foo_external.user,
-        transaction_foo_external.account.connection.external_id,
-        transaction_foo_external.account.external_id,
-        transactions_api,
-    )
-    transaction_foo_external.refresh_from_db()
-    assert transaction_foo_external.category == original_category
+    def test_transactions_are_created(
+        self,
+        saltedge_transactions: List[saltedge_client.Transaction],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
+        output_tuples = import_saltedge_transactions(saltedge_transactions, user_foo)
+        for output_tuple, saltedge_transaction in zip(
+            output_tuples, saltedge_transactions
+        ):
+            new_transaction, is_created = output_tuple
+            assert new_transaction.date == saltedge_transaction.made_on
+            assert new_transaction.amount == saltedge_transaction.amount
+            assert new_transaction.description == saltedge_transaction.description
+            assert new_transaction.user == user_foo
+            assert new_transaction.external_id == int(saltedge_transaction.id)
+            assert new_transaction.account == account_foo
+            assert is_created is True
 
+    def test_transactions_are_updated(
+        self,
+        transactions: List[Transaction],
+        saltedge_transactions: List[saltedge_client.Transaction],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
+        output_tuples = import_saltedge_transactions(saltedge_transactions, user_foo)
+        for output_tuple, saltedge_transaction in zip(
+            output_tuples, saltedge_transactions
+        ):
+            updated_transaction, is_created = output_tuple
+            assert updated_transaction.date == saltedge_transaction.made_on
+            assert updated_transaction.amount == saltedge_transaction.amount
+            assert updated_transaction.description == saltedge_transaction.description
+            assert updated_transaction.user == user_foo
+            assert updated_transaction.external_id == int(saltedge_transaction.id)
+            assert updated_transaction.account == account_foo
+            assert is_created is False
 
-def test_get_category_balance_filter_by_user(
-    user_factory: Callable[..., User],
-    account_factory: Callable[..., Account],
-    category_factory: Callable[..., Category],
-    transaction_factory: Callable[..., Transaction],
-) -> None:
-    user_abc = user_factory("abc")
-    user_xyz = user_factory("xyz")
+    def test_payee_is_not_overriden(
+        self,
+        transactions: List[Transaction],
+        saltedge_transactions: List[saltedge_client.Transaction],
+        user_foo: User,
+    ) -> None:
+        original_peyees = [t.payee for t in transactions]
+        output_tuples = import_saltedge_transactions(saltedge_transactions, user_foo)
+        for output_tuple, payee in zip(output_tuples, original_peyees):
+            updated_transaction, _ = output_tuple
+            assert updated_transaction.payee == payee
 
-    account_abc = account_factory("abc", user=user_abc)
-    account_xyz = account_factory("xyz", user=user_xyz)
-
-    category_abc = category_factory("abc", user_abc)
-    category_xyz = category_factory("xyz", user_xyz)
-
-    transaction_factory(
-        amount=123.00, account=account_abc, user=user_abc, category=category_abc
-    )
-    transaction_factory(
-        amount=256.00, account=account_xyz, user=user_xyz, category=category_xyz
-    )
-
-    output = get_category_balance(accounts=[account_abc, account_xyz], user=user_abc,)
-
-    assert output == {"abc": 123.00, "Total": 123.00}
-
-
-def test_get_category_balance_filter_by_account(
-    user_factory: Callable[..., User],
-    account_factory: Callable[..., Account],
-    category_factory: Callable[..., Category],
-    transaction_factory: Callable[..., Transaction],
-) -> None:
-    user_abc = user_factory("abc")
-
-    account_abc_1 = account_factory("abc_1", user=user_abc)
-    account_abc_2 = account_factory("abc_2", user=user_abc)
-    account_abc_3 = account_factory("abc_3", user=user_abc)
-
-    category_abc = category_factory("abc", user_abc)
-
-    transaction_factory(
-        amount=4.00, account=account_abc_1, user=user_abc, category=category_abc
-    )
-    transaction_factory(
-        amount=5.00, account=account_abc_2, user=user_abc, category=category_abc
-    )
-    transaction_factory(
-        amount=6.00, account=account_abc_3, user=user_abc, category=category_abc
-    )
-
-    output = get_category_balance(
-        accounts=[account_abc_1, account_abc_2], user=user_abc,
-    )
-
-    assert output == {"abc": 4.00 + 5.00, "Total": 4.00 + 5.00}
-
-
-def test_get_category_balance_per_category(
-    user_factory: Callable[..., User],
-    account_factory: Callable[..., Account],
-    category_factory: Callable[..., Category],
-    transaction_factory: Callable[..., Transaction],
-) -> None:
-    user_abc = user_factory("abc")
-    account_abc = account_factory("abc", user=user_abc)
-    category_abc_1 = category_factory("abc_1", user_abc)
-    category_abc_2 = category_factory("abc_2", user_abc)
-
-    transaction_factory(
-        amount=4.00, account=account_abc, user=user_abc, category=category_abc_1
-    )
-    transaction_factory(
-        amount=5.00, account=account_abc, user=user_abc, category=category_abc_2
-    )
-
-    output = get_category_balance(accounts=[account_abc], user=user_abc,)
-
-    assert output == {"abc_1": 4.00, "abc_2": 5.00, "Total": 4.00 + 5.00}
-
-
-def test_get_category_balance_filter_by_from_date(
-    user_factory: Callable[..., User],
-    account_factory: Callable[..., Account],
-    category_factory: Callable[..., Category],
-    transaction_factory: Callable[..., Transaction],
-) -> None:
-    user_abc = user_factory("abc")
-    account_abc = account_factory("abc", user=user_abc)
-    category_abc = category_factory("abc", user_abc)
-
-    transaction_factory(
-        amount=4.00,
-        account=account_abc,
-        date=datetime.date(2020, 2, 1),
-        user=user_abc,
-        category=category_abc,
-    )
-    transaction_factory(
-        amount=5.00,
-        account=account_abc,
-        date=datetime.date(2020, 3, 1),
-        user=user_abc,
-        category=category_abc,
-    )
-    transaction_factory(
-        amount=6.00,
-        account=account_abc,
-        date=datetime.date(2020, 4, 1),
-        user=user_abc,
-        category=category_abc,
-    )
-
-    output = get_category_balance(
-        accounts=[account_abc], user=user_abc, from_date=datetime.date(2020, 3, 1)
-    )
-
-    assert output == {"abc": 5.00 + 6.00, "Total": 5.00 + 6.00}
+    def test_category_is_not_overriden(
+        self,
+        transactions: List[Transaction],
+        saltedge_transactions: List[saltedge_client.Transaction],
+        user_foo: User,
+    ) -> None:
+        original_categories = [t.category for t in transactions]
+        output_tuples = import_saltedge_transactions(saltedge_transactions, user_foo)
+        for output_tuple, category in zip(output_tuples, original_categories):
+            updated_transaction, _ = output_tuple
+            assert updated_transaction.category == category
 
 
-def test_get_category_balance_filter_by_to_date(
-    user_factory: Callable[..., User],
-    account_factory: Callable[..., Account],
-    category_factory: Callable[..., Category],
-    transaction_factory: Callable[..., Transaction],
-) -> None:
-    user_abc = user_factory("abc")
-    account_abc = account_factory("abc", user=user_abc)
-    category_abc = category_factory("abc", user_abc)
+class TestCreateInitialBalance:
+    def test_no_transactions(
+        self, account_foo: Account, saltedge_account: saltedge_client.Account
+    ) -> None:
+        transaction = create_initial_balance(account_foo, saltedge_account, [])
+        assert transaction.date == datetime.date.today()
+        assert transaction.amount == saltedge_account.balance
+        assert transaction.description == "Initial balance"
+        assert transaction.account == account_foo
+        assert transaction.user == account_foo.user
 
-    transaction_factory(
-        amount=4.00,
-        account=account_abc,
-        date=datetime.date(2020, 2, 1),
-        user=user_abc,
-        category=category_abc,
-    )
-    transaction_factory(
-        amount=5.00,
-        account=account_abc,
-        date=datetime.date(2020, 3, 1),
-        user=user_abc,
-        category=category_abc,
-    )
-    transaction_factory(
-        amount=6.00,
-        account=account_abc,
-        date=datetime.date(2020, 4, 1),
-        user=user_abc,
-        category=category_abc,
-    )
+    def test_single_transaction(
+        self,
+        account_foo: Account,
+        saltedge_account: saltedge_client.Account,
+        saltedge_transaction: saltedge_client.Transaction,
+    ) -> None:
+        transaction = create_initial_balance(
+            account_foo, saltedge_account, [saltedge_transaction]
+        )
+        assert transaction.date == saltedge_transaction.made_on
+        assert (
+            transaction.amount == saltedge_account.balance - saltedge_transaction.amount
+        )
+        assert transaction.description == "Initial balance"
+        assert transaction.account == account_foo
+        assert transaction.user == account_foo.user
 
-    output = get_category_balance(
-        accounts=[account_abc], user=user_abc, to_date=datetime.date(2020, 3, 1)
-    )
+    def test_multiple_transactions(
+        self,
+        account_foo: Account,
+        saltedge_account: saltedge_client.Account,
+        saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
+    ) -> None:
+        today = datetime.date.today()
+        yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        transactions = [
+            saltedge_transaction_factory(amount=1.0, made_on=today),
+            saltedge_transaction_factory(amount=2.0, made_on=yesterday),
+        ]
 
-    assert output == {"abc": 4.00 + 5.00, "Total": 4.00 + 5.00}
+        transaction = create_initial_balance(
+            account_foo, saltedge_account, transactions
+        )
+        assert transaction.date == yesterday
+        assert transaction.amount == saltedge_account.balance - sum(
+            t.amount for t in transactions
+        )
+        assert transaction.description == "Initial balance"
+        assert transaction.account == account_foo
+        assert transaction.user == account_foo.user
 
 
-def test_refresh_connection_in_saltedge(
-    connection_foo: Connection,
-    connect_sessions_api: saltedge_client.ConnectSessionsApi,
-    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
-) -> None:
-    data = saltedge_client.ConnectSessionResponseData(connect_url="example.com")
-    connect_sessions_api.connect_sessions_refresh_post.return_value = saltedge_client.ConnectSessionResponse(
-        data=data
-    )
+class TestGetCategoryBalance:
+    def test_filter_by_user(
+        self,
+        user_factory: Callable[..., User],
+        account_factory: Callable[..., Account],
+        category_factory: Callable[..., Category],
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        user_abc = user_factory("abc")
+        user_xyz = user_factory("xyz")
 
-    connect_url = refresh_connection_in_saltedge(
-        "redirect_url", connection_foo.external_id, connect_sessions_api
-    )
-    assert connect_url == data.connect_url
+        account_abc = account_factory("abc", user=user_abc)
+        account_xyz = account_factory("xyz", user=user_xyz)
+
+        category_abc = category_factory("abc", user_abc)
+        category_xyz = category_factory("xyz", user_xyz)
+
+        transaction_factory(
+            amount=123.00, account=account_abc, user=user_abc, category=category_abc
+        )
+        transaction_factory(
+            amount=256.00, account=account_xyz, user=user_xyz, category=category_xyz
+        )
+
+        output = get_category_balance(
+            accounts=[account_abc, account_xyz], user=user_abc,
+        )
+
+        assert output == {"abc": 123.00, "Total": 123.00}
+
+    def test_filter_by_account(
+        self,
+        user_factory: Callable[..., User],
+        account_factory: Callable[..., Account],
+        category_factory: Callable[..., Category],
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        user_abc = user_factory("abc")
+
+        account_abc_1 = account_factory("abc_1", user=user_abc)
+        account_abc_2 = account_factory("abc_2", user=user_abc)
+        account_abc_3 = account_factory("abc_3", user=user_abc)
+
+        category_abc = category_factory("abc", user_abc)
+
+        transaction_factory(
+            amount=4.00, account=account_abc_1, user=user_abc, category=category_abc
+        )
+        transaction_factory(
+            amount=5.00, account=account_abc_2, user=user_abc, category=category_abc
+        )
+        transaction_factory(
+            amount=6.00, account=account_abc_3, user=user_abc, category=category_abc
+        )
+
+        output = get_category_balance(
+            accounts=[account_abc_1, account_abc_2], user=user_abc,
+        )
+
+        assert output == {"abc": 4.00 + 5.00, "Total": 4.00 + 5.00}
+
+    def test_balance_per_category(
+        self,
+        user_factory: Callable[..., User],
+        account_factory: Callable[..., Account],
+        category_factory: Callable[..., Category],
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        user_abc = user_factory("abc")
+        account_abc = account_factory("abc", user=user_abc)
+        category_abc_1 = category_factory("abc_1", user_abc)
+        category_abc_2 = category_factory("abc_2", user_abc)
+
+        transaction_factory(
+            amount=4.00, account=account_abc, user=user_abc, category=category_abc_1
+        )
+        transaction_factory(
+            amount=5.00, account=account_abc, user=user_abc, category=category_abc_2
+        )
+
+        output = get_category_balance(accounts=[account_abc], user=user_abc,)
+
+        assert output == {"abc_1": 4.00, "abc_2": 5.00, "Total": 4.00 + 5.00}
+
+    def test_filter_by_from_date(
+        self,
+        user_factory: Callable[..., User],
+        account_factory: Callable[..., Account],
+        category_factory: Callable[..., Category],
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        user_abc = user_factory("abc")
+        account_abc = account_factory("abc", user=user_abc)
+        category_abc = category_factory("abc", user_abc)
+
+        transaction_factory(
+            amount=4.00,
+            account=account_abc,
+            date=datetime.date(2020, 2, 1),
+            user=user_abc,
+            category=category_abc,
+        )
+        transaction_factory(
+            amount=5.00,
+            account=account_abc,
+            date=datetime.date(2020, 3, 1),
+            user=user_abc,
+            category=category_abc,
+        )
+        transaction_factory(
+            amount=6.00,
+            account=account_abc,
+            date=datetime.date(2020, 4, 1),
+            user=user_abc,
+            category=category_abc,
+        )
+
+        output = get_category_balance(
+            accounts=[account_abc], user=user_abc, from_date=datetime.date(2020, 3, 1)
+        )
+
+        assert output == {"abc": 5.00 + 6.00, "Total": 5.00 + 6.00}
+
+    def test_filter_by_to_date(
+        self,
+        user_factory: Callable[..., User],
+        account_factory: Callable[..., Account],
+        category_factory: Callable[..., Category],
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        user_abc = user_factory("abc")
+        account_abc = account_factory("abc", user=user_abc)
+        category_abc = category_factory("abc", user_abc)
+
+        transaction_factory(
+            amount=4.00,
+            account=account_abc,
+            date=datetime.date(2020, 2, 1),
+            user=user_abc,
+            category=category_abc,
+        )
+        transaction_factory(
+            amount=5.00,
+            account=account_abc,
+            date=datetime.date(2020, 3, 1),
+            user=user_abc,
+            category=category_abc,
+        )
+        transaction_factory(
+            amount=6.00,
+            account=account_abc,
+            date=datetime.date(2020, 4, 1),
+            user=user_abc,
+            category=category_abc,
+        )
+
+        output = get_category_balance(
+            accounts=[account_abc], user=user_abc, to_date=datetime.date(2020, 3, 1)
+        )
+
+        assert output == {"abc": 4.00 + 5.00, "Total": 4.00 + 5.00}

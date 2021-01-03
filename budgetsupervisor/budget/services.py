@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import swagger_client as saltedge_client
 from budget.models import Account, Connection, Transaction
@@ -7,136 +7,99 @@ from django.db.models import Sum
 from users.models import User
 
 
-def create_connection_in_saltedge(
-    redirect_url: str,
-    customer_id: int,
-    connect_sessions_api: saltedge_client.ConnectSessionsApi,
-) -> str:
-    attempt = saltedge_client.AttemptRequestBody(
-        return_to=redirect_url, store_credentials=False
+def import_saltedge_connection(
+    saltedge_connection: saltedge_client.Connection, user: User
+) -> Tuple[Connection, bool]:
+    return Connection.objects.update_or_create(
+        external_id=int(saltedge_connection.id),
+        defaults={"provider": saltedge_connection.provider_name, "user": user},
     )
-    consent = saltedge_client.ConsentRequestBody(
-        scopes=["account_details", "transactions_details"]
-    )
-    data = saltedge_client.ConnectSessionRequestBodyData(
-        str(customer_id), consent, attempt=attempt, categorization="none",
-    )
-    body = saltedge_client.ConnectSessionRequestBody(data)
-    response = connect_sessions_api.connect_sessions_create_post(body=body)
-    return response.data.connect_url
 
 
-def import_connection_from_saltedge(
-    user: User, connection_id: int, connections_api: saltedge_client.ConnectionsApi,
-) -> Connection:
-    response = connections_api.connections_connection_id_get(str(connection_id))
-    imported_connection = response.data
-    imported_id = int(imported_connection.id)
-    c, _ = Connection.objects.update_or_create(
-        external_id=imported_id,
-        defaults={"provider": imported_connection.provider_name, "user": user},
-    )
-    return c
+def import_saltedge_connections(
+    saltedge_connections: List[saltedge_client.Connection], user: User
+) -> List[Tuple["Connection", bool]]:
+    output = []
+    for saltedge_connection in saltedge_connections:
+        output.append(import_saltedge_connection(saltedge_connection, user))
+    return output
 
 
-def import_connections_from_saltedge(
-    user: User, customer_id: int, connections_api: saltedge_client.ConnectionsApi,
-) -> List[Connection]:
-    connections = []
-    response = connections_api.connections_get(str(customer_id))
-    connections.extend(response.data)
-    while response.meta and response.meta.next_id:
-        response = connections_api.connections_get(
-            str(customer_id), from_id=response.meta.next_id
-        )
-        connections.extend(response.data)
-
-    new_connections = []
-    for imported_connection in connections:
-        imported_id = int(imported_connection.id)
-
-        c, created = Connection.objects.update_or_create(
-            external_id=imported_id,
-            defaults={"provider": imported_connection.provider_name, "user": user},
-        )
-        if created:
-            new_connections.append(c)
-    return new_connections
-
-
-def remove_connection_from_saltedge(
-    connection: Connection, connections_api: saltedge_client.ConnectionsApi
-) -> None:
-    connections_api.connections_connection_id_delete(str(connection.external_id))
-
-
-def import_accounts_from_saltedge(
-    user: User, connection_id: int, accounts_api: saltedge_client.AccountsApi
-) -> List["Account"]:
-    accounts = []
-    response = accounts_api.accounts_get(str(connection_id))
-    accounts.extend(response.data)
-    while response.meta and response.meta.next_id:
-        response = accounts_api.accounts_get(
-            str(connection_id), from_id=response.meta.next_id
-        )
-        accounts.extend(response.data)
-
-    new_accounts = []
-    for imported_account in accounts:
-        imported_id = int(imported_account.id)
-
-        a, created = Account.objects.update_or_create(
-            external_id=imported_id,
+def import_saltedge_accounts(
+    saltedge_accounts: List[saltedge_client.Account], user: User
+) -> List[Tuple["Account", bool]]:
+    output = []
+    for saltedge_account in saltedge_accounts:
+        o = Account.objects.update_or_create(
+            external_id=int(saltedge_account.id),
             defaults={
-                "name": imported_account.name,
-                "connection": Connection.objects.get(external_id=connection_id),
+                "name": saltedge_account.name,
+                "connection": Connection.objects.get(
+                    external_id=int(saltedge_account.connection_id)
+                ),
                 "user": user,
             },
         )
-        if created:
-            new_accounts.append(a)
-    return new_accounts
+        output.append(o)
+    return output
 
 
-def import_transactions_from_saltedge(
-    user: User,
-    connection_id: int,
-    account_id: int,
-    transactions_api: saltedge_client.TransactionsApi,
-) -> List[Transaction]:
-    transactions = []
-    response = transactions_api.transactions_get(
-        str(connection_id), account_id=str(account_id)
-    )
-    transactions.extend(response.data)
-    while response.meta and response.meta.next_id:
-        response = transactions_api.transactions_get(
-            str(connection_id),
-            account_id=str(account_id),
-            from_id=response.meta.next_id,
-        )
-        transactions.extend(response.data)
-
-    new_transactions = []
-    for imported_transaction in transactions:
-        imported_id = int(imported_transaction.id)
-
-        t, created = Transaction.objects.update_or_create(
-            external_id=imported_id,
+def import_saltedge_transactions(
+    saltedge_transactions: List[saltedge_client.Transaction], user: User
+) -> List[Tuple["Transaction", bool]]:
+    output = []
+    for saltedge_transaction in saltedge_transactions:
+        o = Transaction.objects.update_or_create(
+            external_id=int(saltedge_transaction.id),
             defaults={
-                "date": imported_transaction.made_on,
-                "amount": imported_transaction.amount,
-                "description": imported_transaction.description,
-                "account_id": Account.objects.get(
-                    external_id=imported_transaction.account_id
-                ).id,
+                "date": saltedge_transaction.made_on,
+                "amount": saltedge_transaction.amount,
+                "description": saltedge_transaction.description,
+                "account": Account.objects.get(
+                    external_id=saltedge_transaction.account_id
+                ),
                 "user": user,
             },
         )
-        if created:
-            new_transactions.append(t)
-    return new_transactions
+        output.append(o)
+    return output
+
+
+def create_initial_balance(
+    account: Account,
+    saltedge_account: saltedge_client.Account,
+    saltedge_transactions: List[saltedge_client.Transaction],
+) -> Transaction:
+    initial_balance = saltedge_account.balance - sum_saltedge_transactions(
+        saltedge_transactions
+    )
+    oldest_saltedge_transaction = get_oldest_saltedge_transaction(saltedge_transactions)
+    made_on = (
+        oldest_saltedge_transaction.made_on
+        if oldest_saltedge_transaction
+        else datetime.date.today()
+    )
+    return Transaction.objects.create(
+        date=made_on,
+        amount=initial_balance,
+        description="Initial balance",
+        account=account,
+        user=account.user,
+    )
+
+
+def sum_saltedge_transactions(transactions: List[saltedge_client.Transaction]) -> float:
+    return sum(t.amount for t in transactions)
+
+
+def get_oldest_saltedge_transaction(
+    transactions: List[saltedge_client.Transaction],
+) -> Optional[saltedge_client.Transaction]:
+    oldest = None
+    for transaction in transactions:
+        if not oldest or transaction.made_on < oldest.made_on:
+            oldest = transaction
+    return oldest
 
 
 def get_category_balance(
@@ -157,19 +120,3 @@ def get_category_balance(
     balance = {d["category__name"]: d["amount__sum"] for d in queryset}
     balance["Total"] = sum(balance.values())
     return balance
-
-
-def refresh_connection_in_saltedge(
-    redirect_url: str,
-    connection_id: int,
-    connect_sessions_api: saltedge_client.ConnectSessionsApi,
-) -> str:
-    attempt = saltedge_client.AttemptRequestBody(
-        return_to=redirect_url, store_credentials=False
-    )
-    data = saltedge_client.RefreshSessionRequestBodyData(
-        connection_id=str(connection_id), attempt=attempt, categorization="none",
-    )
-    body = saltedge_client.RefreshSessionRequestBody(data)
-    response = connect_sessions_api.connect_sessions_refresh_post(body=body)
-    return response.data.connect_url

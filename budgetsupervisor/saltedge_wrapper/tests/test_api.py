@@ -2,13 +2,7 @@ from typing import Any, Callable, Iterable
 
 import pytest
 import swagger_client as saltedge_client
-from saltedge_wrapper.factory import (
-    accounts_api,
-    connect_sessions_api,
-    connections_api,
-    customers_api,
-    transactions_api,
-)
+from saltedge_wrapper.factory import customers_api
 
 pytestmark = pytest.mark.saltedge
 
@@ -65,81 +59,3 @@ def test_list_customers_successfully(
     response = customers_api().customers_get()
     assert customer_a in response.data
     assert customer_b in response.data
-
-
-def test_create_connect_session_successfully(
-    predefined_customer: saltedge_client.Customer,
-) -> None:
-    return_to = "http://www.example.com"
-    attempt = saltedge_client.AttemptRequestBody(
-        return_to=return_to, store_credentials=False
-    )
-    consent = saltedge_client.ConsentRequestBody(
-        scopes=["account_details", "transactions_details"]
-    )
-    data = saltedge_client.ConnectSessionRequestBodyData(
-        predefined_customer.id, consent, attempt=attempt
-    )
-    body = saltedge_client.ConnectSessionRequestBody(data)
-    response = connect_sessions_api().connect_sessions_create_post(body=body)
-    assert "https://www.saltedge.com/connect?token=" in response.data.connect_url
-
-
-def test_show_connection_successfully(
-    predefined_saltedge_connection: saltedge_client.Connection,
-) -> None:
-    response = connections_api().connections_connection_id_get(
-        predefined_saltedge_connection.id
-    )
-    assert response.data == predefined_saltedge_connection
-
-
-def test_list_connections_successfully(
-    predefined_saltedge_connection: saltedge_client.Connection,
-    predefined_customer: saltedge_client.Customer,
-) -> None:
-    response = connections_api().connections_get(predefined_customer.id)
-    assert predefined_saltedge_connection in response.data
-
-
-def test_list_accounts_successfully(
-    predefined_saltedge_connection: saltedge_client.Connection,
-    predefined_customer: saltedge_client.Customer,
-    predefined_saltedge_account: saltedge_client.Account,
-) -> None:
-    response = accounts_api().accounts_get(
-        predefined_saltedge_connection.id, customer_id=predefined_customer.id
-    )
-    assert predefined_saltedge_account in response.data
-
-
-def test_list_transactions_successfully(
-    predefined_saltedge_connection: saltedge_client.Connection,
-    predefined_saltedge_account: saltedge_client.Account,
-) -> None:
-    response = transactions_api().transactions_get(
-        predefined_saltedge_connection.id, account_id=predefined_saltedge_account.id
-    )
-    assert len(response.data) > 0
-
-
-def test_transaction_categories_lowercase(
-    predefined_saltedge_connection: saltedge_client.Connection,
-    predefined_saltedge_account: saltedge_client.Account,
-) -> None:
-    response = transactions_api().transactions_get(
-        predefined_saltedge_connection.id, account_id=predefined_saltedge_account.id
-    )
-    for transaction in response.data:
-        assert transaction.category == transaction.category.lower()
-
-
-def test_transaction_categories_no_spaces(
-    predefined_saltedge_connection: saltedge_client.Connection,
-    predefined_saltedge_account: saltedge_client.Account,
-) -> None:
-    response = transactions_api().transactions_get(
-        predefined_saltedge_connection.id, account_id=predefined_saltedge_account.id
-    )
-    for transaction in response.data:
-        assert transaction.category.count(" ") == 0

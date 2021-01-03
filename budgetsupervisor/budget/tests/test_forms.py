@@ -106,7 +106,7 @@ def test_update_transaction_account_field_enabled(
     assert form.fields["account"].disabled is False
 
 
-def test_upaccount_transaction_account_field_disabled(
+def test_update_account_transaction_account_field_disabled(
     transaction_foo_external: Transaction,
 ) -> None:
     form = UpdateTransactionForm(data={}, instance=transaction_foo_external)

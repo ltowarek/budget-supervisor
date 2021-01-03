@@ -476,7 +476,7 @@ def saltedge_transaction_factory() -> Callable[..., saltedge_client.Transaction]
         id: str = "444444444444444444",
         mode: str = "normal",
         status: str = "posted",
-        made_on: str = made_on,
+        made_on: datetime.date = made_on,
         amount: float = -200.0,
         currency_code: str = "USD",
         description: str = "test transaction",

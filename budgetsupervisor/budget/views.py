@@ -15,13 +15,11 @@ from budget.forms import (
 )
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
-    create_connection_in_saltedge,
+    create_initial_balance,
     get_category_balance,
-    import_accounts_from_saltedge,
-    import_connection_from_saltedge,
-    import_transactions_from_saltedge,
-    refresh_connection_in_saltedge,
-    remove_connection_from_saltedge,
+    import_saltedge_accounts,
+    import_saltedge_connection,
+    import_saltedge_transactions,
 )
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -50,6 +48,15 @@ from saltedge_wrapper.factory import (
     connections_api,
     transactions_api,
 )
+from saltedge_wrapper.utils import (
+    create_connect_session,
+    get_accounts,
+    get_connection,
+    get_pending_transactions,
+    get_transactions,
+    refresh_connection_in_saltedge,
+    remove_connection_from_saltedge,
+)
 from users.models import Profile
 
 logger = logging.getLogger(__name__)
@@ -73,8 +80,10 @@ class ConnectionCreate(LoginRequiredMixin, FormView):
 
     def form_valid(self, form: CreateConnectionForm) -> HttpResponseRedirect:
         redirect_url = self.request.build_absolute_uri(str(self.success_url))
-        connect_url = create_connection_in_saltedge(
-            redirect_url, self.request.user.profile.external_id, connect_sessions_api()
+        connect_url = create_connect_session(
+            redirect_url,
+            str(self.request.user.profile.external_id),
+            connect_sessions_api(),
         )
         return redirect(connect_url)
 
@@ -125,7 +134,7 @@ class ConnectionRefresh(
         connection = self.get_object()
         redirect_url = self.request.build_absolute_uri(str(self.success_url))
         connect_url = refresh_connection_in_saltedge(
-            redirect_url, connection.external_id, connect_sessions_api()
+            redirect_url, str(connection.external_id), connect_sessions_api()
         )
         return redirect(connect_url)
 
@@ -141,7 +150,7 @@ class ConnectionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def delete(self, *args: Any, **kwargs: Any) -> HttpResponseRedirect:
         connection = self.get_object()
-        remove_connection_from_saltedge(connection, connections_api())
+        remove_connection_from_saltedge(str(connection.external_id), connections_api())
         accounts = Account.objects.filter(connection=connection)
         accounts.update(external_id=None)
         for account in accounts:
@@ -370,25 +379,38 @@ class CallbackSuccess(View):
             return HttpResponse(status=401)
 
         data = json.loads(request.body)["data"]
-        external_customer_id = int(data["customer_id"])
-        external_connection_id = int(data["connection_id"])
+        external_customer_id = data["customer_id"]
+        external_connection_id = data["connection_id"]
 
-        profile = Profile.objects.filter(external_id=external_customer_id).first()
+        profile = Profile.objects.filter(external_id=int(external_customer_id)).first()
         if not profile:
             return HttpResponse(status=400)
         user = profile.user
 
-        import_connection_from_saltedge(user, external_connection_id, connections_api())
-        import_accounts_from_saltedge(user, external_connection_id, accounts_api())
+        saltedge_connection = get_connection(external_connection_id, connections_api())
+        _ = import_saltedge_connection(saltedge_connection, user)
 
-        connection = Connection.objects.get(
-            user=user, external_id=external_connection_id
-        )
-        accounts = Account.objects.filter(user=user, connection=connection)
-        for account in accounts:
-            import_transactions_from_saltedge(
-                user, external_connection_id, account.external_id, transactions_api()
+        saltedge_accounts = get_accounts(external_connection_id, accounts_api())
+        imported_account_tuples = import_saltedge_accounts(saltedge_accounts, user)
+
+        for saltedge_account, imported_account_tuple in zip(
+            saltedge_accounts, imported_account_tuples
+        ):
+            saltedge_transactions = get_transactions(
+                external_connection_id, saltedge_account.id, transactions_api()
             )
+            _ = import_saltedge_transactions(saltedge_transactions, user)
+            account, is_created = imported_account_tuple
+            if is_created:
+                saltedge_pending_transactions = get_pending_transactions(
+                    external_connection_id, saltedge_account.id, transactions_api()
+                )
+                all_saltedge_transactions = (
+                    saltedge_transactions + saltedge_pending_transactions
+                )
+                _ = create_initial_balance(
+                    account, saltedge_account, all_saltedge_transactions
+                )
 
         return HttpResponse(status=204)
 
@@ -410,10 +432,9 @@ class CallbackFail(View):
         error_class = data["error_class"]
 
         if error_class == "InvalidCredentials":
-            response = accounts_api().accounts_get(connection_id)
-            accounts = response.data
+            accounts = get_accounts(connection_id, accounts_api())
             if not accounts:
-                connections_api().connections_connection_id_delete(connection_id)
+                remove_connection_from_saltedge(connection_id, connections_api())
 
         return HttpResponse(status=204)
 
