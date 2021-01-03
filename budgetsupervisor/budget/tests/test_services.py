@@ -107,20 +107,17 @@ class TestImportSaltedgeAccounts:
     def saltedge_accounts(
         self,
         saltedge_account_factory: Callable[..., saltedge_client.Account],
-        saltedge_connection: saltedge_client.Connection,
         connection_foo: Connection,
     ) -> List[saltedge_client.Account]:
-        connection_foo.external_id = saltedge_connection.id
-        connection_foo.save()
         return [
             saltedge_account_factory(
-                id="1", name="a", connection_id=saltedge_connection.id
+                id="1", name="a", connection_id=connection_foo.external_id
             ),
             saltedge_account_factory(
-                id="2", name="b", connection_id=saltedge_connection.id
+                id="2", name="b", connection_id=connection_foo.external_id
             ),
             saltedge_account_factory(
-                id="3", name="c", connection_id=saltedge_connection.id
+                id="3", name="c", connection_id=connection_foo.external_id
             ),
         ]
 
@@ -150,6 +147,7 @@ class TestImportSaltedgeAccounts:
         for output_tuple, saltedge_account in zip(output_tuples, saltedge_accounts):
             new_account, is_created = output_tuple
             assert new_account.name == saltedge_account.name
+            assert new_account.alias == ""
             assert new_account.user == user_foo
             assert new_account.external_id == int(saltedge_account.id)
             assert new_account.connection == connection_foo
@@ -166,6 +164,7 @@ class TestImportSaltedgeAccounts:
         for output_tuple, saltedge_account in zip(output_tuples, saltedge_accounts):
             updated_account, is_created = output_tuple
             assert updated_account.name == saltedge_account.name
+            assert updated_account.alias == ""
             assert updated_account.user == user_foo
             assert updated_account.external_id == int(saltedge_account.id)
             assert updated_account.connection == connection_foo
@@ -182,6 +181,35 @@ class TestImportSaltedgeAccounts:
         for output_tuple, account_type in zip(output_tuples, original_account_types):
             updated_account, _ = output_tuple
             assert updated_account.account_type == account_type
+
+    def test_create_account_with_alias(
+        self,
+        saltedge_account: saltedge_client.Account,
+        user_foo: User,
+        connection_foo: Connection,
+    ) -> None:
+        saltedge_account.extra["account_name"] = "account alias"
+        saltedge_account.connection_id = connection_foo.external_id
+        saltedge_accounts = [saltedge_account]
+        output_tuples = import_saltedge_accounts(saltedge_accounts, user_foo)
+        for new_account, _ in output_tuples:
+            assert new_account.alias == saltedge_account.extra["account_name"]
+
+    def test_update_account_with_alias(
+        self,
+        account_foo: Account,
+        saltedge_account: saltedge_client.Account,
+        user_foo: User,
+        connection_foo: Connection,
+    ) -> None:
+        saltedge_account.extra["account_name"] = "account alias"
+        saltedge_account.connection_id = connection_foo.external_id
+        saltedge_accounts = [saltedge_account]
+        account_foo.alias = "old alias"
+        account_foo.save()
+        output_tuples = import_saltedge_accounts(saltedge_accounts, user_foo)
+        for updated_account, _ in output_tuples:
+            assert updated_account.alias == saltedge_account.extra["account_name"]
 
 
 class TestImportSaltedgeTransactions:

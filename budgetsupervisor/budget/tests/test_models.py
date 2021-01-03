@@ -8,8 +8,13 @@ def test_connection_str(connection_foo: Connection) -> None:
     assert str(connection_foo) == "foo"
 
 
-def test_account_str(account_foo: Account) -> None:
+def test_account_str_name(account_foo: Account) -> None:
     assert str(account_foo) == "foo"
+
+
+def test_account_str_alias(account_foo: Account) -> None:
+    account_foo.alias = "bar"
+    assert str(account_foo) == "bar"
 
 
 def test_category_str(category_foo: Category) -> None:

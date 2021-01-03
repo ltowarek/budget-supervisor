@@ -88,6 +88,7 @@ def login_user(client: Client) -> Callable[..., None]:
 def account_factory(user_foo: User) -> Callable[..., Account]:
     def create_account(
         name: str,
+        alias: str = "",
         account_type: Tuple[str, str] = Account.AccountType.ACCOUNT,
         external_id: int = None,
         connection: Connection = None,
@@ -95,6 +96,7 @@ def account_factory(user_foo: User) -> Callable[..., Account]:
     ) -> Account:
         return Account.objects.create(
             name=name,
+            alias=alias,
             account_type=account_type,
             external_id=external_id,
             connection=connection,

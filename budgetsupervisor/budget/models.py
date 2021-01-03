@@ -18,6 +18,7 @@ class Account(models.Model):
         CASH = "C", _("Cash")
 
     name = models.CharField(max_length=200)
+    alias = models.CharField(max_length=200, blank=True, default="")
     account_type = models.CharField(
         max_length=1, choices=AccountType.choices, default=AccountType.ACCOUNT
     )
@@ -28,7 +29,7 @@ class Account(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return str(self.name)
+        return str(self.alias) if self.alias else str(self.name)
 
 
 class Category(models.Model):

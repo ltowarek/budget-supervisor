@@ -173,6 +173,7 @@ class AccountCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Account
     fields = [
         "name",
+        "alias",
         "account_type",
     ]
     success_url = reverse_lazy("accounts:account_list")

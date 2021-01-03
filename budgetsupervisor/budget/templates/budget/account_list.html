@@ -13,6 +13,7 @@ Accounts
     <thead class="thead-light">
         <tr>
             <th>Name</th>
+            <th>Alias</th>
             <th>Type</th>
             <th>Connection</th>
             <th>Actions</th>
@@ -22,6 +23,7 @@ Accounts
         {% for account in account_list %}
         <tr>
             <td>{{ account.name }}</td>
+            <td>{{ account.alias }}</td>
             <td>{{ account.get_account_type_display }}</td>
             <td>{{ account.connection }}</td>
             <td>

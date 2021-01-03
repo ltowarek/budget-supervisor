@@ -34,6 +34,7 @@ def import_saltedge_accounts(
             external_id=int(saltedge_account.id),
             defaults={
                 "name": saltedge_account.name,
+                "alias": saltedge_account.extra.get("account_name", ""),
                 "connection": Connection.objects.get(
                     external_id=int(saltedge_account.connection_id)
                 ),

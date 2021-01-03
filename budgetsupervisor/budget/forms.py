@@ -21,12 +21,13 @@ class RefreshConnectionForm(forms.Form):
 class UpdateAccountForm(forms.ModelForm):
     class Meta:
         model = Account
-        fields = ["name", "account_type"]
+        fields = ["name", "alias", "account_type"]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if self.instance.connection:
             self.fields["name"].disabled = True
+            self.fields["alias"].disabled = True
             self.fields["account_type"].disabled = True
 
 

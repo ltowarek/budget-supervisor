@@ -430,11 +430,12 @@ class TestAccountList:
         selenium.get(url)
 
         elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
-        assert len(elements) == 4
+        assert len(elements) == 5
         assert elements[0].text == "Name"
-        assert elements[1].text == "Type"
-        assert elements[2].text == "Connection"
-        assert elements[3].text == "Actions"
+        assert elements[1].text == "Alias"
+        assert elements[2].text == "Type"
+        assert elements[3].text == "Connection"
+        assert elements[4].text == "Actions"
 
     def test_table_body(
         self,
@@ -447,6 +448,7 @@ class TestAccountList:
         for i in range(number_of_accounts):
             account_factory(
                 name=f"account {i}",
+                alias=f"alias {i}",
                 account_type=Account.AccountType.ACCOUNT,
                 external_id=None,
                 connection=None,
@@ -463,13 +465,14 @@ class TestAccountList:
         assert len(elements) == len(accounts)
         for element, account in zip(elements, accounts):
             cells = element.find_elements_by_xpath(".//td")
-            assert len(cells) == 4
+            assert len(cells) == 5
 
             assert cells[0].text == account.name
-            assert cells[1].text == account.get_account_type_display()
-            assert cells[2].text == str(account.connection)
+            assert cells[1].text == account.alias
+            assert cells[2].text == account.get_account_type_display()
+            assert cells[3].text == str(account.connection)
 
-            actions = cells[3].find_elements_by_xpath(".//a")
+            actions = cells[4].find_elements_by_xpath(".//a")
             assert actions[0].text == "Update"
             assert actions[0].get_attribute("href") == live_server_path(
                 reverse("accounts:account_update", kwargs={"pk": account.pk})
@@ -501,9 +504,12 @@ class TestAccountCreate:
         user_foo: User,
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
-        self.create_account(selenium, live_server_path, "account name", "Cash")
+        self.create_account(
+            selenium, live_server_path, "account name", "account alias", "Cash"
+        )
         account = Account.objects.filter(user=user_foo).last()
         assert account.name == "account name"
+        assert account.alias == "account alias"
         assert account.account_type == Account.AccountType.CASH
 
     def test_redirect(
@@ -513,7 +519,9 @@ class TestAccountCreate:
         user_foo: User,
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
-        self.create_account(selenium, live_server_path, "account name", "Cash")
+        self.create_account(
+            selenium, live_server_path, "account name", "account alias", "Cash"
+        )
         assert selenium.current_url == live_server_path(
             reverse("accounts:account_list")
         )
@@ -525,7 +533,9 @@ class TestAccountCreate:
         user_foo: User,
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
-        self.create_account(selenium, live_server_path, "account name", "Cash")
+        self.create_account(
+            selenium, live_server_path, "account name", "account alias", "Cash"
+        )
         messages = [
             m.text
             for m in selenium.find_elements_by_xpath('//div[contains(@class, "alert")]')
@@ -539,12 +549,15 @@ class TestAccountCreate:
         selenium: WebDriver,
         live_server_path: Callable[[str], str],
         name: str,
+        alias: str,
         account_type: str,
     ) -> None:
         url = live_server_path(reverse("accounts:account_create"))
         selenium.get(url)
         element = selenium.find_element_by_name("name")
         element.send_keys(name)
+        element = selenium.find_element_by_name("alias")
+        element.send_keys(alias)
         select = Select(selenium.find_element_by_name("account_type"))
         select.select_by_visible_text(account_type)
         element = selenium.find_element_by_xpath('//button[@type="submit"]')
@@ -561,9 +574,15 @@ class TestAccountUpdate:
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_account(
-            selenium, live_server_path, account_foo, "account name", "Cash"
+            selenium,
+            live_server_path,
+            account_foo,
+            "account name",
+            "account alias",
+            "Cash",
         )
         assert account_foo.name == "account name"
+        assert account_foo.alias == "account alias"
         assert account_foo.account_type == Account.AccountType.CASH
 
     def test_redirect(
@@ -575,7 +594,12 @@ class TestAccountUpdate:
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_account(
-            selenium, live_server_path, account_foo, "account name", "Cash"
+            selenium,
+            live_server_path,
+            account_foo,
+            "account name",
+            "account alias",
+            "Cash",
         )
         assert selenium.current_url == live_server_path(
             reverse("accounts:account_list")
@@ -590,7 +614,12 @@ class TestAccountUpdate:
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
         self.update_account(
-            selenium, live_server_path, account_foo, "account name", "Cash"
+            selenium,
+            live_server_path,
+            account_foo,
+            "account name",
+            "account alias",
+            "Cash",
         )
         messages = [
             m.text
@@ -606,6 +635,7 @@ class TestAccountUpdate:
         live_server_path: Callable[[str], str],
         account: Account,
         name: str,
+        alias: str,
         account_type: str,
     ) -> None:
         url = live_server_path(
@@ -615,6 +645,9 @@ class TestAccountUpdate:
         element = selenium.find_element_by_name("name")
         element.clear()
         element.send_keys(name)
+        element = selenium.find_element_by_name("alias")
+        element.clear()
+        element.send_keys(alias)
         select = Select(selenium.find_element_by_name("account_type"))
         select.select_by_visible_text(account_type)
         element = selenium.find_element_by_xpath('//button[@type="submit"]')
