@@ -13,13 +13,7 @@ from django.contrib.messages import get_messages
 from django.test import Client
 from django.urls import resolve, reverse
 from pytest_mock import MockFixture
-from swagger_client import (
-    AccountsResponse,
-    ConnectionResponse,
-    ConnectSessionResponse,
-    ConnectSessionResponseData,
-    TransactionsResponse,
-)
+from swagger_client import ConnectSessionResponse, ConnectSessionResponseData
 from users.models import Profile, User
 from utils import get_url_path
 
@@ -1184,140 +1178,149 @@ def test_callback_success_new_connection(
     client: Client,
     profile_foo_external: Profile,
     mocker: MockFixture,
-    connections_api: saltedge_client.ConnectionsApi,
-    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
-    accounts_api: saltedge_client.AccountsApi,
-    transactions_api: saltedge_client.TransactionsApi,
+    saltedge_connection: saltedge_client.Connection,
 ) -> None:
-    mock_connection = saltedge_connection_factory(id="1234")
-    connections_api.connections_connection_id_get.return_value = ConnectionResponse(
-        data=mock_connection
-    )
-
-    accounts_api.accounts_get.return_value = AccountsResponse(data=[])
     mocker.patch(
-        "budget.views.connections_api", autospec=True, return_value=connections_api
+        "budget.views.get_connection", autospec=True, return_value=saltedge_connection
     )
-    mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
-
-    transactions_api.transactions_get.return_value = TransactionsResponse(data=[])
+    mocker.patch("budget.views.get_accounts", autospec=True, return_value=[])
+    mocker.patch("budget.views.get_transactions", autospec=True, return_value=[])
     mocker.patch(
-        "budget.views.transactions_api", autospec=True, return_value=transactions_api
+        "budget.views.get_pending_transactions", autospec=True, return_value=[]
     )
+    mocker.patch("budget.views.verify_signature", autospec=True)
 
     url = reverse("callbacks:callback_success")
     data = {
         "data": {
-            "connection_id": "1234",
+            "connection_id": saltedge_connection.id,
             "customer_id": str(profile_foo_external.external_id),
             "custom_fields": {"key": "value"},
         },
         "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
     }
-    mocker.patch("budget.views.verify_signature", autospec=True)
     response = client.post(
         url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
     )
     assert response.status_code == 204
-    assert Connection.objects.filter(external_id=1234).exists()
+    assert Connection.objects.filter(external_id=int(saltedge_connection.id)).exists()
 
 
 def test_callback_success_new_account(
     client: Client,
     profile_foo_external: Profile,
     mocker: MockFixture,
-    connections_api: saltedge_client.ConnectionsApi,
-    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
-    accounts_api: saltedge_client.AccountsApi,
-    saltedge_account_factory: Callable[..., saltedge_client.Account],
-    transactions_api: saltedge_client.TransactionsApi,
+    saltedge_connection: saltedge_client.Connection,
+    saltedge_account: saltedge_client.Account,
 ) -> None:
-    mock_connection = saltedge_connection_factory(id="1234")
-    connections_api.connections_connection_id_get.return_value = ConnectionResponse(
-        data=mock_connection
+    mocker.patch(
+        "budget.views.get_connection", autospec=True, return_value=saltedge_connection
     )
     mocker.patch(
-        "budget.views.connections_api", autospec=True, return_value=connections_api
+        "budget.views.get_accounts", autospec=True, return_value=[saltedge_account]
     )
-
-    mock_accounts = [saltedge_account_factory(id="4567", connection_id="1234")]
-    accounts_api.accounts_get.return_value = AccountsResponse(data=mock_accounts)
-    mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
-
-    transactions_api.transactions_get.return_value = TransactionsResponse(data=[])
-    transactions_api.transactions_pending_get.return_value = TransactionsResponse(
-        data=[]
-    )
+    mocker.patch("budget.views.get_transactions", autospec=True, return_value=[])
     mocker.patch(
-        "budget.views.transactions_api", autospec=True, return_value=transactions_api
+        "budget.views.get_pending_transactions", autospec=True, return_value=[]
     )
+    mocker.patch("budget.views.verify_signature", autospec=True)
 
     url = reverse("callbacks:callback_success")
     data = {
         "data": {
-            "connection_id": "1234",
+            "connection_id": saltedge_connection.id,
             "customer_id": str(profile_foo_external.external_id),
             "custom_fields": {"key": "value"},
         },
         "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
     }
-    mocker.patch("budget.views.verify_signature", autospec=True)
     response = client.post(
         url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
     )
     assert response.status_code == 204
-    assert Account.objects.filter(external_id="4567").exists()
+    assert Account.objects.filter(external_id=int(saltedge_account.id)).exists()
 
 
 def test_callback_success_new_transaction(
     client: Client,
     profile_foo_external: Profile,
     mocker: MockFixture,
-    connections_api: saltedge_client.ConnectionsApi,
-    saltedge_connection_factory: Callable[..., saltedge_client.Connection],
-    accounts_api: saltedge_client.AccountsApi,
-    saltedge_account_factory: Callable[..., saltedge_client.Account],
-    transactions_api: saltedge_client.TransactionsApi,
-    saltedge_transaction_factory: Callable[..., saltedge_client.Transaction],
+    saltedge_connection: saltedge_client.Connection,
+    saltedge_account: saltedge_client.Account,
+    saltedge_transaction: saltedge_client.Transaction,
 ) -> None:
-    mock_connection = saltedge_connection_factory(id="1234")
-    connections_api.connections_connection_id_get.return_value = ConnectionResponse(
-        data=mock_connection
+    mocker.patch(
+        "budget.views.get_connection", autospec=True, return_value=saltedge_connection
     )
     mocker.patch(
-        "budget.views.connections_api", autospec=True, return_value=connections_api
-    )
-
-    mock_accounts = [saltedge_account_factory(id="4567", connection_id="1234")]
-    accounts_api.accounts_get.return_value = AccountsResponse(data=mock_accounts)
-    mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
-
-    mock_transactions = [saltedge_transaction_factory(id="8900", account_id="4567")]
-    transactions_api.transactions_get.return_value = TransactionsResponse(
-        data=mock_transactions
-    )
-    transactions_api.transactions_pending_get.return_value = TransactionsResponse(
-        data=[]
+        "budget.views.get_accounts", autospec=True, return_value=[saltedge_account]
     )
     mocker.patch(
-        "budget.views.transactions_api", autospec=True, return_value=transactions_api
+        "budget.views.get_transactions",
+        autospec=True,
+        return_value=[saltedge_transaction],
     )
+    mocker.patch(
+        "budget.views.get_pending_transactions", autospec=True, return_value=[]
+    )
+    mocker.patch("budget.views.verify_signature", autospec=True)
 
     url = reverse("callbacks:callback_success")
     data = {
         "data": {
-            "connection_id": "1234",
+            "connection_id": saltedge_connection.id,
             "customer_id": str(profile_foo_external.external_id),
             "custom_fields": {"key": "value"},
         },
         "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
     }
-    mocker.patch("budget.views.verify_signature", autospec=True)
     response = client.post(
         url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
     )
     assert response.status_code == 204
-    assert Transaction.objects.filter(external_id="8900").exists()
+    assert Transaction.objects.filter(external_id=int(saltedge_transaction.id)).exists()
+
+
+def test_callback_success_initial_balance(
+    client: Client,
+    profile_foo_external: Profile,
+    mocker: MockFixture,
+    saltedge_connection: saltedge_client.Connection,
+    saltedge_account: saltedge_client.Account,
+    saltedge_transaction: saltedge_client.Transaction,
+) -> None:
+    mocker.patch(
+        "budget.views.get_connection", autospec=True, return_value=saltedge_connection
+    )
+    mocker.patch(
+        "budget.views.get_accounts", autospec=True, return_value=[saltedge_account]
+    )
+    mocker.patch(
+        "budget.views.get_transactions",
+        autospec=True,
+        return_value=[saltedge_transaction],
+    )
+    mocker.patch(
+        "budget.views.get_pending_transactions",
+        autospec=True,
+        return_value=[saltedge_transaction],
+    )
+    mocker.patch("budget.views.verify_signature", autospec=True)
+
+    url = reverse("callbacks:callback_success")
+    data = {
+        "data": {
+            "connection_id": saltedge_connection.id,
+            "customer_id": str(profile_foo_external.external_id),
+            "custom_fields": {"key": "value"},
+        },
+        "meta": {"version": "5", "time": "2020-11-12T12:31:01.588Z"},
+    }
+    response = client.post(
+        url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
+    )
+    assert response.status_code == 204
+    assert Transaction.objects.filter(description="Initial balance").exists()
 
 
 @pytest.mark.django_db
@@ -1338,12 +1341,7 @@ def test_callback_success_invalid_customer(client: Client, mocker: MockFixture) 
     assert response.status_code == 400
 
 
-def test_callback_fail(
-    client: Client,
-    mocker: MockFixture,
-    connections_api: saltedge_client.ConnectionsApi,
-    accounts_api: saltedge_client.AccountsApi,
-) -> None:
+def test_callback_fail(client: Client, mocker: MockFixture,) -> None:
     url = reverse("callbacks:callback_fail")
     data = {
         "data": {
@@ -1356,10 +1354,8 @@ def test_callback_fail(
         "meta": {"version": "5", "time": "2020-11-12T12:31:01.606Z"},
     }
     mocker.patch("budget.views.verify_signature", autospec=True)
-    mocker.patch(
-        "budget.views.connections_api", autospec=True, return_value=connections_api
-    )
-    mocker.patch("budget.views.accounts_api", autospec=True, return_value=accounts_api)
+    mocker.patch("budget.views.get_accounts", autospec=True, return_value=[])
+    mocker.patch("budget.views.remove_connection_from_saltedge", autospec=True)
     response = client.post(
         url, json.dumps(data), content_type="application/json", HTTP_SIGNATURE="TODO"
     )
