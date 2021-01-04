@@ -432,6 +432,7 @@ def saltedge_connection(
 def saltedge_account_factory() -> saltedge_client.Account:
     created_at = parse_datetime("2020-09-07T08:35:46Z")
     updated_at = parse_datetime("2020-09-07T08:35:46Z")
+    extra = saltedge_client.AccountExtra()
 
     def create_account(
         id: str = "333333333333333333",
@@ -439,7 +440,7 @@ def saltedge_account_factory() -> saltedge_client.Account:
         nature: str = "card",
         balance: float = 2007.2,
         currency_code: str = "EUR",
-        extra: Dict = None,
+        extra: saltedge_client.AccountExtra = extra,
         connection_id: str = "111111111111111111",
         created_at: str = created_at,
         updated_at: str = updated_at,
@@ -473,6 +474,7 @@ def saltedge_transaction_factory() -> Callable[..., saltedge_client.Transaction]
     made_on = parse_date("2020-05-03")
     created_at = parse_datetime("2020-09-05T11:35:46Z")
     updated_at = parse_datetime("2020-09-06T11:35:46Z")
+    extra = saltedge_client.TransactionExtra()
 
     def create_transaction(
         id: str = "444444444444444444",
@@ -484,7 +486,7 @@ def saltedge_transaction_factory() -> Callable[..., saltedge_client.Transaction]
         description: str = "test transaction",
         category: str = "income",
         duplicated: bool = False,
-        extra: Dict = None,
+        extra: saltedge_client.TransactionExtra = extra,
         account_id: str = "333333333333333333",
         created_at: str = created_at,
         updated_at: str = updated_at,

@@ -188,12 +188,12 @@ class TestImportSaltedgeAccounts:
         user_foo: User,
         connection_foo: Connection,
     ) -> None:
-        saltedge_account.extra["account_name"] = "account alias"
+        saltedge_account.extra.account_name = "account alias"
         saltedge_account.connection_id = connection_foo.external_id
         saltedge_accounts = [saltedge_account]
         output_tuples = import_saltedge_accounts(saltedge_accounts, user_foo)
         for new_account, _ in output_tuples:
-            assert new_account.alias == saltedge_account.extra["account_name"]
+            assert new_account.alias == saltedge_account.extra.account_name
 
     def test_update_account_with_alias(
         self,
@@ -202,14 +202,14 @@ class TestImportSaltedgeAccounts:
         user_foo: User,
         connection_foo: Connection,
     ) -> None:
-        saltedge_account.extra["account_name"] = "account alias"
+        saltedge_account.extra.account_name = "account alias"
         saltedge_account.connection_id = connection_foo.external_id
         saltedge_accounts = [saltedge_account]
         account_foo.alias = "old alias"
         account_foo.save()
         output_tuples = import_saltedge_accounts(saltedge_accounts, user_foo)
         for updated_account, _ in output_tuples:
-            assert updated_account.alias == saltedge_account.extra["account_name"]
+            assert updated_account.alias == saltedge_account.extra.account_name
 
 
 class TestImportSaltedgeTransactions:

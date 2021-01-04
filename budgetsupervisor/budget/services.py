@@ -30,11 +30,16 @@ def import_saltedge_accounts(
 ) -> List[Tuple["Account", bool]]:
     output = []
     for saltedge_account in saltedge_accounts:
+        alias = (
+            saltedge_account.extra.account_name
+            if saltedge_account.extra.account_name
+            else ""
+        )
         o = Account.objects.update_or_create(
             external_id=int(saltedge_account.id),
             defaults={
                 "name": saltedge_account.name,
-                "alias": saltedge_account.extra.get("account_name", ""),
+                "alias": alias,
                 "connection": Connection.objects.get(
                     external_id=int(saltedge_account.connection_id)
                 ),
