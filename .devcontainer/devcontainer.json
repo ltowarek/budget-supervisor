@@ -1,0 +1,27 @@
+{
+	"name": "Python 3",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": ".."
+	},
+
+	"settings": { 
+		"python.formatting.provider": "black",
+		"python.envFile": "${workspaceFolder}/.env",
+		"python.testing.pytestEnabled": true,
+		"python.testing.pytestArgs": [
+			"budgetsupervisor/",
+			"-vv"
+		]
+	},
+
+	"extensions": [
+		"ms-python.python"
+	],
+
+	"forwardPorts": [8000],
+
+	"postCreateCommand": "pip install --user -r requirements-dev.txt",
+
+	"remoteUser": "app"
+}
