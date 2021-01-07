@@ -5,3 +5,5 @@ RUN useradd -u 1000 -g app -s /bin/sh -m app
 USER app
 
 ENV PATH="/home/app/.local/bin/:${PATH}"
+
+CMD ["/bin/bash"]
