@@ -22,7 +22,7 @@
 
 	"forwardPorts": [8000],
 
-	"postCreateCommand": "pip install --user -r requirements-dev.txt",
+	"postCreateCommand": "pip install --user -r requirements-dev.txt && pre-commit install",
 
 	"remoteUser": "app"
 }
