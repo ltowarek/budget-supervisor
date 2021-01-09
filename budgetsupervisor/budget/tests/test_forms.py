@@ -1,5 +1,7 @@
 from typing import Dict
 
+import pytest
+import swagger_client as saltedge_client
 from budget.forms import (
     CreateConnectionForm,
     RefreshConnectionForm,
@@ -8,6 +10,7 @@ from budget.forms import (
     UpdateTransactionForm,
 )
 from budget.models import Account, Transaction
+from budget.services import create_initial_balance
 from users.models import User
 
 
@@ -106,6 +109,38 @@ def test_update_transaction_description_field_disabled(
 ) -> None:
     form = UpdateTransactionForm(data={}, instance=transaction_foo_external)
     assert form.fields["description"].disabled is True
+
+
+@pytest.fixture
+def initial_transaction(
+    account_foo_external: Account,
+    saltedge_account: saltedge_client.Account,
+    saltedge_transaction: saltedge_client.Transaction,
+) -> Transaction:
+    return create_initial_balance(
+        account_foo_external, saltedge_account, [saltedge_transaction]
+    )
+
+
+def test_update_transaction_initial_transaction_date_field_enabled(
+    initial_transaction: Transaction,
+) -> None:
+    form = UpdateTransactionForm(data={}, instance=initial_transaction)
+    assert form.fields["date"].disabled is False
+
+
+def test_update_transaction_initial_transaction_date_field_disabled(
+    initial_transaction: Transaction,
+) -> None:
+    form = UpdateTransactionForm(data={}, instance=initial_transaction)
+    assert form.fields["date"].disabled is True
+
+
+def test_update_transaction_initial_transaction_amount_field_enabled(
+    initial_transaction: Transaction,
+) -> None:
+    form = UpdateTransactionForm(data={}, instance=initial_transaction)
+    assert form.fields["amount"].disabled is False
 
 
 def test_update_transaction_account_field_enabled(

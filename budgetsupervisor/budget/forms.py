@@ -25,7 +25,7 @@ class UpdateAccountForm(forms.ModelForm):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        if self.instance.connection:
+        if self.instance.external_id:
             self.fields["name"].disabled = True
             self.fields["alias"].disabled = True
             self.fields["account_type"].disabled = True
@@ -48,7 +48,7 @@ class UpdateTransactionForm(forms.ModelForm):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        if self.instance.account.connection:
+        if self.instance.external_id:
             self.fields["date"].disabled = True
             self.fields["amount"].disabled = True
             self.fields["description"].disabled = True
