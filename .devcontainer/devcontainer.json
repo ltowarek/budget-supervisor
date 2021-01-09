@@ -6,6 +6,7 @@
 	},
 
 	"settings": { 
+    	"terminal.integrated.shell.linux": "/bin/bash",
 		"python.formatting.provider": "black",
 		"python.envFile": "${workspaceFolder}/.env",
 		"python.testing.pytestEnabled": true,
