@@ -129,18 +129,18 @@ def test_update_transaction_initial_transaction_date_field_enabled(
     assert form.fields["date"].disabled is False
 
 
-def test_update_transaction_initial_transaction_date_field_disabled(
-    initial_transaction: Transaction,
-) -> None:
-    form = UpdateTransactionForm(data={}, instance=initial_transaction)
-    assert form.fields["date"].disabled is True
-
-
 def test_update_transaction_initial_transaction_amount_field_enabled(
     initial_transaction: Transaction,
 ) -> None:
     form = UpdateTransactionForm(data={}, instance=initial_transaction)
     assert form.fields["amount"].disabled is False
+
+
+def test_update_transaction_initial_transaction_description_field_enabled(
+    initial_transaction: Transaction,
+) -> None:
+    form = UpdateTransactionForm(data={}, instance=initial_transaction)
+    assert form.fields["description"].disabled is False
 
 
 def test_update_transaction_account_field_enabled(
