@@ -1162,6 +1162,7 @@ def test_report_balance_view_get_with_parameters(
     user_foo: User,
     login_user: Callable[[User], None],
     account_foo: Account,
+    category_foo: Category,
 ) -> None:
     login_user(user_foo)
     url = reverse("reports:report_balance")
@@ -1169,6 +1170,7 @@ def test_report_balance_view_get_with_parameters(
         "accounts": [account_foo.pk],
         "from_date": datetime.date.today(),
         "to_date": datetime.date.today(),
+        "excluded_categories": [category_foo],
     }
     response = client.get(url, data)
     assert response.status_code == 200

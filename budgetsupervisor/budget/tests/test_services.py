@@ -1,17 +1,31 @@
 import datetime
+from decimal import Decimal
 from typing import Callable, List
 
 import pytest
 import swagger_client as saltedge_client
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
+    add_month,
     create_initial_balance,
-    get_category_balance,
+    diff_month,
+    get_balance_details,
+    get_balance_details_per_month,
+    get_balance_report,
+    get_balance_summary,
+    get_balance_transactions,
+    get_date_range_per_month,
+    get_expenses,
+    get_month_end,
+    get_month_start,
+    get_opening_balance,
+    get_revenue,
     import_saltedge_accounts,
     import_saltedge_connection,
     import_saltedge_connections,
     import_saltedge_transactions,
 )
+from pytest_mock import MockFixture
 from users.models import User
 
 
@@ -381,164 +395,479 @@ class TestCreateInitialBalance:
         assert transaction.user == account_foo.user
 
 
-class TestGetCategoryBalance:
-    def test_filter_by_user(
+class TestGetBalanceReport:
+    def test_no_accounts(self) -> None:
+        output = get_balance_report([])
+        assert output == {"balance": [], "summary": {}}
+
+    def test_no_transactions(self, account_foo: Account) -> None:
+        output = get_balance_report([account_foo])
+        assert output == {"balance": [], "summary": {}}
+
+
+class TestGetBalanceDetailsPerMonth:
+    def test_no_date_range(self, mocker: MockFixture) -> None:
+        mocker.patch(
+            "budget.services.get_date_range_per_month", autospec=True, return_value=[],
+        )
+
+        accounts: List[Account] = []
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        excluded_categories: List[Category] = []
+
+        output = get_balance_details_per_month(
+            accounts, from_date, to_date, excluded_categories
+        )
+        assert output == []
+
+    def test_multiple_date_ranges(self, mocker: MockFixture) -> None:
+        date = datetime.date.today()
+        mocker.patch(
+            "budget.services.get_date_range_per_month",
+            autospec=True,
+            return_value=[(date, date), (date, date)],
+        )
+        mocker.patch(
+            "budget.services.get_balance_details", autospec=True, return_value={},
+        )
+
+        accounts: List[Account] = []
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        excluded_categories: List[Category] = []
+
+        output = get_balance_details_per_month(
+            accounts, from_date, to_date, excluded_categories
+        )
+        assert output == [{}, {}]
+
+
+class TestGetBalanceSummary:
+    def test_no_entries(self) -> None:
+        output = get_balance_summary([])
+        assert output["revenue"] == Decimal()
+        assert output["expenses"] == Decimal()
+        assert output["income"] == Decimal()
+        assert output["opening_balance"] == Decimal()
+        assert output["ending_balance"] == Decimal()
+
+    def test_single_entry(self) -> None:
+        balance = [
+            {
+                "from": datetime.date.today(),
+                "to": datetime.date.today(),
+                "revenue": Decimal(150.0),
+                "expenses": Decimal(50.0),
+                "income": Decimal(100.0),
+                "opening_balance": Decimal(1000.0),
+                "ending_balance": Decimal(1100.0),
+            }
+        ]
+        output = get_balance_summary(balance)
+        assert output["revenue"] == Decimal(150.0)
+        assert output["expenses"] == Decimal(50.0)
+        assert output["income"] == Decimal(100.0)
+        assert output["opening_balance"] == Decimal(1000.0)
+        assert output["ending_balance"] == Decimal(1100.0)
+
+    def test_multiple_entries(self) -> None:
+        balance = [
+            {
+                "from": datetime.date.today(),
+                "to": datetime.date.today(),
+                "revenue": Decimal(150.0),
+                "expenses": Decimal(50.0),
+                "income": Decimal(100.0),
+                "opening_balance": Decimal(1000.0),
+                "ending_balance": Decimal(1100.0),
+            },
+            {
+                "from": datetime.date.today(),
+                "to": datetime.date.today(),
+                "revenue": Decimal(250.0),
+                "expenses": Decimal(350.0),
+                "income": Decimal(-100.0),
+                "opening_balance": Decimal(2000.0),
+                "ending_balance": Decimal(1900.0),
+            },
+        ]
+        output = get_balance_summary(balance)
+        assert output["revenue"] == sum(b["revenue"] for b in balance)
+        assert output["expenses"] == sum(b["expenses"] for b in balance)
+        assert output["income"] == sum(b["income"] for b in balance)
+        assert output["opening_balance"] == balance[0]["opening_balance"]
+        assert output["ending_balance"] == balance[-1]["ending_balance"]
+
+
+def test_get_balance_details(
+    account_foo: Account, category_foo: Category, mocker: MockFixture
+) -> None:
+    revenue = 100.0
+    expenses = 50.0
+    income = revenue - expenses
+    opening_balance = 1000
+    ending_balance = opening_balance + income
+
+    mocker.patch(
+        "budget.services.get_balance_transactions", autospec=True, return_value=[],
+    )
+    mocker.patch(
+        "budget.services.get_revenue", autospec=True, return_value=revenue,
+    )
+    mocker.patch(
+        "budget.services.get_expenses", autospec=True, return_value=expenses,
+    )
+    mocker.patch(
+        "budget.services.get_opening_balance",
+        autospec=True,
+        return_value=opening_balance,
+    )
+
+    accounts = [account_foo]
+    from_date = datetime.date.today()
+    to_date = datetime.date.today() + datetime.timedelta(days=1)
+    excluded_categories = [category_foo]
+
+    output = get_balance_details(accounts, from_date, to_date, excluded_categories)
+    assert output["from"] == from_date
+    assert output["to"] == to_date
+    assert output["revenue"] == revenue
+    assert output["expenses"] == expenses
+    assert output["income"] == income
+    assert output["opening_balance"] == opening_balance
+    assert output["ending_balance"] == ending_balance
+
+
+class TestGetBalanceTransactions:
+    def test_no_accounts(self) -> None:
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        output = get_balance_transactions([], from_date, to_date)
+        assert list(output) == []
+
+    def test_no_transactions(self, account_foo: Account) -> None:
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        output = get_balance_transactions([account_foo], from_date, to_date)
+        assert list(output) == []
+
+    def test_transactions_before_from_date(
+        self, account_foo: Account, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        from_date = datetime.date.today()
+        past = from_date - datetime.timedelta(days=1)
+        to_date = datetime.date.today()
+        transaction_factory(date=past, account=account_foo)
+        output = get_balance_transactions([account_foo], from_date, to_date)
+        assert list(output) == []
+
+    def test_transactions_at_from_date(
+        self, account_foo: Account, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        from_date = datetime.date.today()
+        to_date = from_date + datetime.timedelta(days=1)
+        transactions = [transaction_factory(date=from_date, account=account_foo)]
+        output = get_balance_transactions([account_foo], from_date, to_date)
+        assert list(output) == transactions
+
+    def test_transactions_after_to_date(
+        self, account_foo: Account, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        future = to_date + datetime.timedelta(days=1)
+        transaction_factory(date=future, account=account_foo)
+        output = get_balance_transactions([account_foo], from_date, to_date)
+        assert list(output) == []
+
+    def test_transactions_at_to_date(
+        self, account_foo: Account, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        from_date = datetime.date.today()
+        to_date = from_date + datetime.timedelta(days=1)
+        transactions = [transaction_factory(date=to_date, account=account_foo)]
+        output = get_balance_transactions([account_foo], from_date, to_date)
+        assert list(output) == transactions
+
+    def test_transactions_between_from_and_to_dates(
+        self, account_foo: Account, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        from_date = datetime.date.today()
+        date = from_date + datetime.timedelta(days=1)
+        to_date = date + datetime.timedelta(days=1)
+        transactions = [transaction_factory(date=date, account=account_foo)]
+        output = get_balance_transactions([account_foo], from_date, to_date)
+        assert list(output) == transactions
+
+    def test_different_accounts(
         self,
-        user_factory: Callable[..., User],
         account_factory: Callable[..., Account],
-        category_factory: Callable[..., Category],
         transaction_factory: Callable[..., Transaction],
     ) -> None:
-        user_abc = user_factory("abc")
-        user_xyz = user_factory("xyz")
+        account_a = account_factory(name="a")
+        account_b = account_factory(name="b")
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        transactions = [transaction_factory(date=to_date, account=account_a)]
+        transaction_factory(date=to_date, account=account_b)
+        output = get_balance_transactions([account_a], from_date, to_date)
+        assert list(output) == transactions
 
-        account_abc = account_factory("abc", user=user_abc)
-        account_xyz = account_factory("xyz", user=user_xyz)
-
-        category_abc = category_factory("abc", user_abc)
-        category_xyz = category_factory("xyz", user_xyz)
-
-        transaction_factory(
-            amount=123.00, account=account_abc, user=user_abc, category=category_abc
-        )
-        transaction_factory(
-            amount=256.00, account=account_xyz, user=user_xyz, category=category_xyz
-        )
-
-        output = get_category_balance(
-            accounts=[account_abc, account_xyz], user=user_abc,
-        )
-
-        assert output == {"abc": 123.00, "Total": 123.00}
-
-    def test_filter_by_account(
+    def test_multiple_accounts(
         self,
-        user_factory: Callable[..., User],
         account_factory: Callable[..., Account],
-        category_factory: Callable[..., Category],
         transaction_factory: Callable[..., Transaction],
     ) -> None:
-        user_abc = user_factory("abc")
+        account_a = account_factory(name="a")
+        account_b = account_factory(name="b")
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        transactions = [
+            transaction_factory(date=to_date, account=account_a),
+            transaction_factory(date=to_date, account=account_b),
+        ]
+        output = get_balance_transactions([account_a, account_b], from_date, to_date)
+        assert list(output) == transactions
 
-        account_abc_1 = account_factory("abc_1", user=user_abc)
-        account_abc_2 = account_factory("abc_2", user=user_abc)
-        account_abc_3 = account_factory("abc_3", user=user_abc)
-
-        category_abc = category_factory("abc", user_abc)
-
-        transaction_factory(
-            amount=4.00, account=account_abc_1, user=user_abc, category=category_abc
-        )
-        transaction_factory(
-            amount=5.00, account=account_abc_2, user=user_abc, category=category_abc
-        )
-        transaction_factory(
-            amount=6.00, account=account_abc_3, user=user_abc, category=category_abc
-        )
-
-        output = get_category_balance(
-            accounts=[account_abc_1, account_abc_2], user=user_abc,
-        )
-
-        assert output == {"abc": 4.00 + 5.00, "Total": 4.00 + 5.00}
-
-    def test_balance_per_category(
+    def test_excluded_categories(
         self,
-        user_factory: Callable[..., User],
-        account_factory: Callable[..., Account],
+        account_foo: Account,
+        transaction_factory: Callable[..., Transaction],
         category_factory: Callable[..., Category],
+    ) -> None:
+        category_a = category_factory(name="a")
+        category_b = category_factory(name="b")
+        category_c = category_factory(name="c")
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        transactions = [
+            transaction_factory(date=to_date, account=account_foo, category=category_a)
+        ]
+        transaction_factory(date=to_date, account=account_foo, category=category_b)
+        transaction_factory(date=to_date, account=account_foo, category=category_c)
+        output = get_balance_transactions(
+            [account_foo], from_date, to_date, [category_b, category_c]
+        )
+        assert list(output) == transactions
+
+
+class TestGetRevenue:
+    def test_no_transactions(self) -> None:
+        output = get_revenue(Transaction.objects.none())
+        assert output == Decimal()
+
+    def test_no_revenue(self, transaction_factory: Callable[..., Transaction]) -> None:
+        transaction_factory(amount=-100.0)
+        output = get_revenue(Transaction.objects.all())
+        assert output == Decimal()
+
+    def test_revenue(self, transaction_factory: Callable[..., Transaction]) -> None:
+        transactions = [
+            transaction_factory(amount=100.0),
+            transaction_factory(amount=100.0),
+        ]
+        output = get_revenue(Transaction.objects.all())
+        assert output == sum(t.amount for t in transactions)
+
+
+class TestGetExpenses:
+    def test_no_transactions(self) -> None:
+        output = get_expenses(Transaction.objects.none())
+        assert output == Decimal()
+
+    def test_no_expenses(self, transaction_factory: Callable[..., Transaction]) -> None:
+        transaction_factory(amount=100.0)
+        output = get_expenses(Transaction.objects.all())
+        assert output == Decimal()
+
+    def test_expenses(self, transaction_factory: Callable[..., Transaction]) -> None:
+        transactions = [
+            transaction_factory(amount=-100.0),
+            transaction_factory(amount=-100.0),
+        ]
+        output = get_expenses(Transaction.objects.all())
+        assert output == abs(sum(t.amount for t in transactions))
+
+
+class TestGetOpeningBalance:
+    def test_no_transactions(self, account_foo: Account) -> None:
+        date = datetime.date.today()
+        output = get_opening_balance(date, [account_foo])
+        assert output == Decimal()
+
+    def test_transactions_after_date(
+        self, account_foo: Account, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        date = datetime.date.today()
+        future = date + datetime.timedelta(days=1)
+        transaction_factory(date=future, account=account_foo)
+        output = get_opening_balance(date, [account_foo])
+        assert output == Decimal()
+
+    def test_transactions_at_date(
+        self, account_foo: Account, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        date = datetime.date.today()
+        transaction_factory(date=date, account=account_foo)
+        output = get_opening_balance(date, [account_foo])
+        assert output == Decimal()
+
+    def test_transactions_before_date(
+        self, account_foo: Account, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        date = datetime.date.today()
+        past = date - datetime.timedelta(days=1)
+        transactions = [
+            transaction_factory(date=past, account=account_foo),
+            transaction_factory(date=past, account=account_foo),
+        ]
+        output = get_opening_balance(date, [account_foo])
+        assert output == sum(t.amount for t in transactions)
+
+    def test_transactions_from_different_account(
+        self,
+        account_factory: Callable[..., Account],
         transaction_factory: Callable[..., Transaction],
     ) -> None:
-        user_abc = user_factory("abc")
-        account_abc = account_factory("abc", user=user_abc)
-        category_abc_1 = category_factory("abc_1", user_abc)
-        category_abc_2 = category_factory("abc_2", user_abc)
+        date = datetime.date.today()
+        past = date - datetime.timedelta(days=1)
+        account_a = account_factory(name="a")
+        account_b = account_factory(name="b")
+        transaction_factory(date=past, account=account_a)
+        output = get_opening_balance(date, [account_b])
+        assert output == Decimal()
 
-        transaction_factory(
-            amount=4.00, account=account_abc, user=user_abc, category=category_abc_1
-        )
-        transaction_factory(
-            amount=5.00, account=account_abc, user=user_abc, category=category_abc_2
-        )
-
-        output = get_category_balance(accounts=[account_abc], user=user_abc,)
-
-        assert output == {"abc_1": 4.00, "abc_2": 5.00, "Total": 4.00 + 5.00}
-
-    def test_filter_by_from_date(
+    def test_transactions_from_multiple_accounts(
         self,
-        user_factory: Callable[..., User],
         account_factory: Callable[..., Account],
-        category_factory: Callable[..., Category],
         transaction_factory: Callable[..., Transaction],
     ) -> None:
-        user_abc = user_factory("abc")
-        account_abc = account_factory("abc", user=user_abc)
-        category_abc = category_factory("abc", user_abc)
+        date = datetime.date.today()
+        past = date - datetime.timedelta(days=1)
+        account_a = account_factory(name="a")
+        account_b = account_factory(name="b")
+        transactions = [
+            transaction_factory(date=past, account=account_a),
+            transaction_factory(date=past, account=account_b),
+        ]
+        output = get_opening_balance(date, [account_a, account_b])
+        assert output == sum(t.amount for t in transactions)
 
-        transaction_factory(
-            amount=4.00,
-            account=account_abc,
-            date=datetime.date(2020, 2, 1),
-            user=user_abc,
-            category=category_abc,
-        )
-        transaction_factory(
-            amount=5.00,
-            account=account_abc,
-            date=datetime.date(2020, 3, 1),
-            user=user_abc,
-            category=category_abc,
-        )
-        transaction_factory(
-            amount=6.00,
-            account=account_abc,
-            date=datetime.date(2020, 4, 1),
-            user=user_abc,
-            category=category_abc,
-        )
 
-        output = get_category_balance(
-            accounts=[account_abc], user=user_abc, from_date=datetime.date(2020, 3, 1)
-        )
+class TestGetDateRangePerMonth:
+    def test_from_date_and_end_date_are_the_same(self) -> None:
+        assert get_date_range_per_month(
+            datetime.date(2020, 1, 2), datetime.date(2020, 1, 2)
+        ) == [(datetime.date(2020, 1, 2), datetime.date(2020, 1, 2))]
 
-        assert output == {"abc": 5.00 + 6.00, "Total": 5.00 + 6.00}
+    def test_from_date_and_end_date_in_the_same_month(self) -> None:
+        assert get_date_range_per_month(
+            datetime.date(2020, 1, 2), datetime.date(2020, 1, 15)
+        ) == [(datetime.date(2020, 1, 2), datetime.date(2020, 1, 15))]
 
-    def test_filter_by_to_date(
-        self,
-        user_factory: Callable[..., User],
-        account_factory: Callable[..., Account],
-        category_factory: Callable[..., Category],
-        transaction_factory: Callable[..., Transaction],
-    ) -> None:
-        user_abc = user_factory("abc")
-        account_abc = account_factory("abc", user=user_abc)
-        category_abc = category_factory("abc", user_abc)
+    def test_from_date_and_end_date_within_one_month_31_days(self) -> None:
+        assert get_date_range_per_month(
+            datetime.date(2020, 1, 2), datetime.date(2020, 2, 15)
+        ) == [
+            (datetime.date(2020, 1, 2), datetime.date(2020, 1, 31)),
+            (datetime.date(2020, 2, 1), datetime.date(2020, 2, 15)),
+        ]
 
-        transaction_factory(
-            amount=4.00,
-            account=account_abc,
-            date=datetime.date(2020, 2, 1),
-            user=user_abc,
-            category=category_abc,
-        )
-        transaction_factory(
-            amount=5.00,
-            account=account_abc,
-            date=datetime.date(2020, 3, 1),
-            user=user_abc,
-            category=category_abc,
-        )
-        transaction_factory(
-            amount=6.00,
-            account=account_abc,
-            date=datetime.date(2020, 4, 1),
-            user=user_abc,
-            category=category_abc,
-        )
+    def test_from_date_and_end_date_within_one_month_30_days(self) -> None:
+        assert get_date_range_per_month(
+            datetime.date(2020, 4, 2), datetime.date(2020, 5, 15)
+        ) == [
+            (datetime.date(2020, 4, 2), datetime.date(2020, 4, 30)),
+            (datetime.date(2020, 5, 1), datetime.date(2020, 5, 15)),
+        ]
 
-        output = get_category_balance(
-            accounts=[account_abc], user=user_abc, to_date=datetime.date(2020, 3, 1)
-        )
+    def test_from_date_and_end_date_within_one_month_29_days(self) -> None:
+        assert get_date_range_per_month(
+            datetime.date(2020, 2, 2), datetime.date(2020, 3, 15)
+        ) == [
+            (datetime.date(2020, 2, 2), datetime.date(2020, 2, 29)),
+            (datetime.date(2020, 3, 1), datetime.date(2020, 3, 15)),
+        ]
 
-        assert output == {"abc": 4.00 + 5.00, "Total": 4.00 + 5.00}
+    def test_from_date_and_end_date_within_one_month_28_days(self) -> None:
+        assert get_date_range_per_month(
+            datetime.date(2021, 2, 2), datetime.date(2021, 3, 15)
+        ) == [
+            (datetime.date(2021, 2, 2), datetime.date(2021, 2, 28)),
+            (datetime.date(2021, 3, 1), datetime.date(2021, 3, 15)),
+        ]
+
+    def test_from_date_and_end_date_within_multiple_months(self) -> None:
+        assert get_date_range_per_month(
+            datetime.date(2020, 3, 2), datetime.date(2020, 6, 15)
+        ) == [
+            (datetime.date(2020, 3, 2), datetime.date(2020, 3, 31)),
+            (datetime.date(2020, 4, 1), datetime.date(2020, 4, 30)),
+            (datetime.date(2020, 5, 1), datetime.date(2020, 5, 31)),
+            (datetime.date(2020, 6, 1), datetime.date(2020, 6, 15)),
+        ]
+
+    def test_from_date_and_end_date_with_different_years(self) -> None:
+        assert get_date_range_per_month(
+            datetime.date(2020, 12, 2), datetime.date(2021, 1, 15)
+        ) == [
+            (datetime.date(2020, 12, 2), datetime.date(2020, 12, 31)),
+            (datetime.date(2021, 1, 1), datetime.date(2021, 1, 15)),
+        ]
+
+
+class TestDiffMonth:
+    def test_from_and_to_date_are_the_same(self) -> None:
+        assert diff_month(datetime.date(2020, 1, 2), datetime.date(2020, 1, 2)) == 0
+
+    def test_from_date_before_to_date(self) -> None:
+        assert diff_month(datetime.date(2020, 1, 2), datetime.date(2020, 3, 4)) == -2
+
+    def test_from_date_after_to_date(self) -> None:
+        assert diff_month(datetime.date(2020, 3, 4), datetime.date(2020, 1, 2)) == 2
+
+    def test_dates_with_the_same_month_and_different_days(self) -> None:
+        assert diff_month(datetime.date(2020, 1, 2), datetime.date(2020, 1, 3)) == 0
+
+    def test_dates_with_the_same_month_day_and_different_year(self) -> None:
+        assert diff_month(datetime.date(2020, 1, 2), datetime.date(2022, 1, 2)) == -24
+
+
+class TestAddMonth:
+    def test_regular_input(self) -> None:
+        assert add_month(datetime.date(2020, 3, 5)) == datetime.date(2020, 4, 5)
+
+    def test_input_date_in_december(self) -> None:
+        assert add_month(datetime.date(2020, 12, 2)) == datetime.date(2021, 1, 2)
+
+    def test_input_date_with_more_days_than_output(self) -> None:
+        assert add_month(datetime.date(2020, 3, 31)) == datetime.date(2020, 4, 30)
+
+
+class TestGetMonthStart:
+    def test_input_date_already_at_start(self) -> None:
+        assert get_month_start(datetime.date(2020, 2, 1)) == datetime.date(2020, 2, 1)
+
+    def test_input_date_not_at_start(self) -> None:
+        assert get_month_start(datetime.date(2020, 2, 3)) == datetime.date(2020, 2, 1)
+
+
+class TestGetMonthEnd:
+    def test_input_date_already_at_end(self) -> None:
+        assert get_month_end(datetime.date(2020, 1, 31)) == datetime.date(2020, 1, 31)
+
+    def test_input_date_not_at_end(self) -> None:
+        assert get_month_end(datetime.date(2020, 1, 2)) == datetime.date(2020, 1, 31)
+
+    def test_month_with_31_days(self) -> None:
+        assert get_month_end(datetime.date(2020, 1, 2)) == datetime.date(2020, 1, 31)
+
+    def test_month_with_30_days(self) -> None:
+        assert get_month_end(datetime.date(2020, 4, 2)) == datetime.date(2020, 4, 30)
+
+    def test_month_with_29_days(self) -> None:
+        assert get_month_end(datetime.date(2020, 2, 2)) == datetime.date(2020, 2, 29)
+
+    def test_month_with_28_days(self) -> None:
+        assert get_month_end(datetime.date(2021, 2, 2)) == datetime.date(2021, 2, 28)

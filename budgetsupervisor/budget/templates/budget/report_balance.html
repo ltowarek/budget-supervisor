@@ -1,7 +1,7 @@
 {% extends "budget/base.html" %}
 
 {% block title %}
-Category Balance
+Balance Report
 {% endblock %}
 
 {% block content %}
@@ -13,17 +13,39 @@ Category Balance
 <table class="table table-bordered text-center mt-1">
   <thead class="thead-light">
     <tr>
-      <th>Category</th>
-      <th>Balance</th>
+      <th>From</th>
+      <th>To</th>
+      <th>Revenue</th>
+      <th>Expenses</th>
+      <th>Income</th>
+      <th>Opening balance</th>
+      <th>Ending balance</th>
     </tr>
   </thead>
   <tbody>
-    {% for key, value in balance.items %}
+    {% for balance in report.balance %}
     <tr>
-      <td>{{ key }}</td>
-      <td>{{ value|floatformat:2 }}</td>
+      <td>{{ balance.from|date:"SHORT_DATE_FORMAT"}}</td>
+      <td>{{ balance.to|date:"SHORT_DATE_FORMAT"}}</td>
+      <td>{{ balance.revenue|floatformat:2 }}</td>
+      <td>{{ balance.expenses|floatformat:2 }}</td>
+      <td>{{ balance.income|floatformat:2 }}</td>
+      <td>{{ balance.opening_balance|floatformat:2 }}</td>
+      <td>{{ balance.ending_balance|floatformat:2 }}</td>
     </tr>
     {% endfor %}
   </tbody>
+  <tfoot>
+    {% if report.summary %}
+    <tr>
+      <td colspan="2">Overall</td>
+      <td>{{ report.summary.revenue|floatformat:2 }}</td>
+      <td>{{ report.summary.expenses|floatformat:2 }}</td>
+      <td>{{ report.summary.income|floatformat:2 }}</td>
+      <td>{{ report.summary.opening_balance|floatformat:2 }}</td>
+      <td>{{ report.summary.ending_balance|floatformat:2 }}</td>
+    </tr>
+    {% endif %}
+  </tfoot>
 </table>
 {% endblock %}

@@ -1409,56 +1409,43 @@ class TestReportBalance:
         self.report_balance(selenium, live_server_path, [account_foo])
 
         elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
-        assert len(elements) == 2
-        assert elements[0].text == "Category"
-        assert elements[1].text == "Balance"
+        assert len(elements) == 7
+        assert elements[0].text == "From"
+        assert elements[1].text == "To"
+        assert elements[2].text == "Revenue"
+        assert elements[3].text == "Expenses"
+        assert elements[4].text == "Income"
+        assert elements[5].text == "Opening balance"
+        assert elements[6].text == "Ending balance"
 
     def test_table_body(
         self,
         authenticate_selenium: Callable[..., WebDriver],
         live_server_path: Callable[[str], str],
         user_foo: User,
-        account_factory: Callable[..., Account],
-        category_factory: Callable[..., Category],
+        account_foo: Account,
+        category_foo: Category,
         transaction_factory: Callable[..., Transaction],
     ) -> None:
-        number_of_accounts = 10
-        for i in range(number_of_accounts):
-            account_factory(name=f"account {i}", user=user_foo)
-        accounts = Account.objects.filter(user=user_foo)
-        selected_accounts = accounts[:5]
-
-        number_of_categories = 2
-        category_even = category_factory(name="even")
-        category_odd = category_factory(name="odd")
-
-        from_date = datetime.date.today() - datetime.timedelta(days=5)
-        to_date = datetime.date.today() - datetime.timedelta(days=2)
-
-        transaction_start_date = from_date - datetime.timedelta(days=2)
-        number_of_transactions = 10
-        for j in range(number_of_accounts):
-            for i in range(number_of_transactions):
-                category = category_even if i % 2 == 0 else category_odd
-                transaction_factory(
-                    description=f"transaction {j + i}",
-                    amount=float(i),
-                    date=transaction_start_date + datetime.timedelta(days=i),
-                    account=accounts[j],
-                    category=category,
-                    user=user_foo,
-                )
+        months = 2
+        from_date = datetime.date(2020, 1, 10)
+        to_date = datetime.date(2020, 1 + months, 15)
+        transaction_factory(date=from_date)
 
         selenium = authenticate_selenium(user=user_foo)
         self.report_balance(
-            selenium, live_server_path, selected_accounts, from_date, to_date
+            selenium,
+            live_server_path,
+            [account_foo],
+            from_date,
+            to_date,
+            [category_foo],
         )
 
-        elements = selenium.find_elements_by_xpath("//table/tbody/tr")
-        total = 1
-        assert len(elements) == number_of_categories + total
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr/td")
+        assert len(elements) == (1 + months) * 7
 
-    def test_table_body_null_categories_are_included(
+    def test_table_footer(
         self,
         authenticate_selenium: Callable[..., WebDriver],
         live_server_path: Callable[[str], str],
@@ -1469,18 +1456,17 @@ class TestReportBalance:
         selenium = authenticate_selenium(user=user_foo)
         self.report_balance(selenium, live_server_path, [account_foo])
 
-        elements = selenium.find_elements_by_xpath("//table/tbody/tr")
-        assert len(elements) == 2
-        assert elements[0].find_elements_by_xpath(".//td")[0].text == "None"
-        assert elements[1].find_elements_by_xpath(".//td")[0].text == "Total"
+        elements = selenium.find_elements_by_xpath("//table/tfoot/tr/td")
+        assert len(elements) == 6
 
     def report_balance(
         self,
         selenium: WebDriver,
         live_server_path: Callable[[str], str],
         accounts: List[Account],
-        from_date: datetime.date = None,
-        to_date: datetime.date = None,
+        from_date: Optional[datetime.date] = None,
+        to_date: Optional[datetime.date] = None,
+        excluded_categories: Optional[List[Category]] = None,
     ) -> None:
         url = live_server_path(reverse("reports:report_balance"))
         selenium.get(url)
@@ -1493,6 +1479,10 @@ class TestReportBalance:
         if to_date:
             element = selenium.find_element_by_name("to_date")
             element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
+        if excluded_categories:
+            select = Select(selenium.find_element_by_name("excluded_categories"))
+            for c in excluded_categories:
+                select.select_by_visible_text(c.name)
         element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 

@@ -16,7 +16,7 @@ from budget.forms import (
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
     create_initial_balance,
-    get_category_balance,
+    get_balance_report,
     import_saltedge_accounts,
     import_saltedge_connection,
     import_saltedge_transactions,
@@ -339,15 +339,13 @@ class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
         return kwargs
 
     def form_valid(self, form: ReportBalanceForm) -> HttpResponse:
-        balance = get_category_balance(
+        report = get_balance_report(
             form.cleaned_data["accounts"],
-            self.request.user,
             form.cleaned_data["from_date"],
             form.cleaned_data["to_date"],
+            form.cleaned_data["excluded_categories"],
         )
-        return self.render_to_response(
-            self.get_context_data(form=form, balance=balance)
-        )
+        return self.render_to_response(self.get_context_data(form=form, report=report))
 
 
 def verify_saltedge_signature(request: HttpRequest) -> None:

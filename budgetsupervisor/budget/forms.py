@@ -3,7 +3,7 @@ from typing import Any
 from django import forms
 from django.conf import settings
 
-from .models import Account, Transaction
+from .models import Account, Category, Transaction
 
 date_input_with_placeholder = forms.DateInput(
     attrs={"placeholder": settings.DATE_INPUT_FORMATS[0].replace("%", "")}
@@ -63,11 +63,14 @@ class ReportBalanceForm(forms.Form):
     to_date = forms.DateField(
         required=False, widget=date_input_with_placeholder, localize=True
     )
+    excluded_categories = forms.ModelMultipleChoiceField(required=False, queryset=None)
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
         self.fields["accounts"].queryset = Account.objects.filter(user=user)
+        # TODO: Add Uncategorized/None option
+        self.fields["excluded_categories"].queryset = Category.objects.filter(user=user)
 
     def clean(self) -> None:
         cleaned_data = super().clean()

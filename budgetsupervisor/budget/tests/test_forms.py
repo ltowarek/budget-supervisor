@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Any, Callable, Dict
 
 import pytest
 import swagger_client as saltedge_client
@@ -9,7 +9,7 @@ from budget.forms import (
     UpdateAccountForm,
     UpdateTransactionForm,
 )
-from budget.models import Account, Transaction
+from budget.models import Account, Category, Transaction
 from budget.services import create_initial_balance
 from users.models import User
 
@@ -228,3 +228,47 @@ def test_report_balance_form_to_date_before_from_date(
     form = ReportBalanceForm(data=data, user=user_foo)
     form.is_valid()
     assert "to_date" in form.errors
+
+
+def test_report_balance_form_with_excluded_category(
+    user_foo: User, account_foo: Account, category_foo: Category
+) -> None:
+    data = {
+        "accounts": [account_foo],
+        "excluded_categories": [category_foo],
+    }
+    form = ReportBalanceForm(data=data, user=user_foo)
+    assert form.is_valid()
+
+
+def test_report_balance_form_with_excluded_categories(
+    user_foo: User, account_foo: Account, category_factory: Callable[..., Category]
+) -> None:
+    categories = [
+        category_factory(name="a", user=account_foo.user),
+        category_factory(name="b", user=account_foo.user),
+    ]
+    data: Dict[str, Any] = {
+        "accounts": [account_foo],
+        "excluded_categories": categories,
+    }
+    form = ReportBalanceForm(data=data, user=user_foo)
+    assert form.is_valid()
+
+
+def test_report_balance_form_with_unknown_excluded_category(
+    user_foo: User,
+    account_foo: Account,
+    category_factory: Callable[..., Category],
+    user_factory: Callable[..., User],
+) -> None:
+    categories = [
+        category_factory(name="a", user=user_factory(username="bar")),
+    ]
+    data: Dict[str, Any] = {
+        "accounts": [account_foo],
+        "excluded_categories": categories,
+    }
+    form = ReportBalanceForm(data=data, user=user_foo)
+    form.is_valid()
+    assert "excluded_categories" in form.errors

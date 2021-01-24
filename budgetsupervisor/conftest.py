@@ -1,6 +1,6 @@
 import datetime
 import os
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import pytest
 import saltedge_wrapper.factory
@@ -55,7 +55,9 @@ def user_foo_inactive(user_factory: Callable[..., User]) -> User:
 @pytest.fixture
 @pytest.mark.django_db
 def profile_factory(user_foo: User) -> Callable[..., Profile]:
-    def create_profile(user: User = user_foo, external_id: int = None) -> Profile:
+    def create_profile(
+        user: User = user_foo, external_id: Optional[int] = None
+    ) -> Profile:
         profile = user.profile
         profile.external_id = external_id
         profile.save()
@@ -90,8 +92,8 @@ def account_factory(user_foo: User) -> Callable[..., Account]:
         name: str,
         alias: str = "",
         account_type: Tuple[str, str] = Account.AccountType.ACCOUNT,
-        external_id: int = None,
-        connection: Connection = None,
+        external_id: Optional[int] = None,
+        connection: Optional[Connection] = None,
         user: User = user_foo,
     ) -> Account:
         return Account.objects.create(
@@ -165,10 +167,10 @@ def transaction_factory(
         date: datetime.date = today,
         amount: float = 100.00,
         payee: str = "",
-        category: Category = None,
+        category: Optional[Category] = None,
         description: str = "",
         account: Account = account_foo,
-        external_id: int = None,
+        external_id: Optional[int] = None,
         user: User = user_foo,
     ) -> Transaction:
         return Transaction.objects.create(
@@ -246,12 +248,12 @@ def saltedge_customer(
 @pytest.fixture
 def saltedge_stage_factory() -> Callable[..., saltedge_client.Stage]:
     def create_stage(
-        created_at: str = None,
-        id: str = None,
-        interactive_fields_names: str = None,
-        interactive_html: str = None,
-        name: str = None,
-        updated_at: str = None,
+        created_at: Optional[str] = None,
+        id: Optional[str] = None,
+        interactive_fields_names: Optional[str] = None,
+        interactive_html: Optional[str] = None,
+        name: Optional[str] = None,
+        updated_at: Optional[str] = None,
     ) -> saltedge_client.Stage:
         return saltedge_client.Stage(
             created_at=parse_datetime("2020-09-07T10:35:46Z"),
@@ -288,30 +290,30 @@ def saltedge_simplified_attempt_factory(
         daily_refresh: bool = False,
         categorization: str = "personal",
         created_at: str = created_at,
-        custom_fields: Dict = None,
+        custom_fields: Optional[Dict] = None,
         device_type: str = "desktop",
         remote_ip: str = "93.184.216.34",
-        exclude_accounts: List = None,
+        exclude_accounts: Optional[List] = None,
         user_present: bool = False,
         customer_last_logged_at: str = customer_last_logged_at,
-        fail_at: str = None,
-        fail_error_class: str = None,
-        fail_message: str = None,
-        fetch_scopes: List[str] = None,
+        fail_at: Optional[str] = None,
+        fail_error_class: Optional[str] = None,
+        fail_message: Optional[str] = None,
+        fetch_scopes: Optional[List[str]] = None,
         finished: bool = True,
         finished_recent: bool = True,
-        from_date: str = None,
+        from_date: Optional[str] = None,
         id: str = "777777777777777777",
         interactive: bool = False,
         locale: str = "en",
         partial: bool = False,
         store_credentials: bool = True,
         success_at: str = success_at,
-        to_date: str = None,
+        to_date: Optional[str] = None,
         updated_at: str = updated_at,
         show_consent_confirmation: bool = False,
-        include_natures: List[str] = None,
-        last_stage: str = None,
+        include_natures: Optional[List[str]] = None,
+        last_stage: Optional[str] = None,
     ) -> saltedge_client.SimplifiedAttempt:
         if not custom_fields:
             custom_fields = {}

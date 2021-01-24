@@ -12,3 +12,4 @@ black==19.10b0
 isort==5.5.4
 mypy==0.790
 pre-commit == 2.7.1
+tox == 3.21.2
