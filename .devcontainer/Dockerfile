@@ -1,7 +1,7 @@
 FROM python:3.8
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends curl firefox-esr
+    && apt-get -y install --no-install-recommends curl firefox-esr default-jre
 
 RUN curl -L https://github.com/mozilla/geckodriver/releases/download/v0.29.0/geckodriver-v0.29.0-linux64.tar.gz | \
     tar xz -C /usr/local/bin/ && \

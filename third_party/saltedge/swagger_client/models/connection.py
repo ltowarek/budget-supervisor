@@ -99,7 +99,8 @@ class Connection(object):
         self.last_success_at = last_success_at
         self.status = status
         self.country_code = country_code
-        self.next_refresh_possible_at = next_refresh_possible_at
+        if next_refresh_possible_at is not None:
+            self.next_refresh_possible_at = next_refresh_possible_at
         self.store_credentials = store_credentials
         self.last_attempt = last_attempt
         self.show_consent_confirmation = show_consent_confirmation
@@ -429,8 +430,6 @@ class Connection(object):
         :param next_refresh_possible_at: The next_refresh_possible_at of this Connection.  # noqa: E501
         :type: datetime
         """
-        if next_refresh_possible_at is None:
-            raise ValueError("Invalid value for `next_refresh_possible_at`, must not be `None`")  # noqa: E501
 
         self._next_refresh_possible_at = next_refresh_possible_at
 

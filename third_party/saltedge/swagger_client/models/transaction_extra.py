@@ -944,7 +944,7 @@ class TransactionExtra(object):
     def tags(self):
         """Gets the tags of this TransactionExtra.  # noqa: E501
 
-        the original tags of the transaction  # noqa: E501
+        user defined information in the bank or e-wallet interface, assigned to a transaction record (not category)  # noqa: E501
 
         :return: The tags of this TransactionExtra.  # noqa: E501
         :rtype: list[str]
@@ -955,7 +955,7 @@ class TransactionExtra(object):
     def tags(self, tags):
         """Sets the tags of this TransactionExtra.
 
-        the original tags of the transaction  # noqa: E501
+        user defined information in the bank or e-wallet interface, assigned to a transaction record (not category)  # noqa: E501
 
         :param tags: The tags of this TransactionExtra.  # noqa: E501
         :type: list[str]

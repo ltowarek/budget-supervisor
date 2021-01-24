@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 **last_success_at** | **datetime** | time when the connection was successfully fetched | 
 **status** | **str** |  | 
 **country_code** | **str** | code of the country the provider belongs to | 
-**next_refresh_possible_at** | **datetime** | when the next refresh will be available. May contain &#x60;null&#x60; value if connection has &#x60;automatic_fetch&#x60; set as &#x60;false&#x60;, or is already processing | 
+**next_refresh_possible_at** | **datetime** | when the next refresh will be available. May contain &#x60;null&#x60; value if connection has &#x60;automatic_fetch&#x60; set as &#x60;false&#x60;, or is already processing | [optional] 
 **store_credentials** | **bool** | whether the credentials were stored on our side | 
 **last_attempt** | [**SimplifiedAttempt**](SimplifiedAttempt.md) |  | 
 **show_consent_confirmation** | **bool** | whether any consent was given for this connection on Salt Edge side | 

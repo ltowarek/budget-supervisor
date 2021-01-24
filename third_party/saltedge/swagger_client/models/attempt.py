@@ -711,7 +711,7 @@ class Attempt(object):
     def locale(self):
         """Gets the locale of this Attempt.  # noqa: E501
 
-        the language of the Connect widget or/and provider error message in the <a href='http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes' target=\"_blank\">ISO 639-1</a> format. Possible values are: `bg`, `cz`, `de`, `en`, `es-MX`, `es`, `fr`, `he`, `hu`, `it`, `nl`, `pl`, `pt-BR`, `pt`, `ro`, `ru`, `sk`, `tr`, `uk`, `zh-hk`(Traditional), `zh`(Simplified). Defaults to `en`  # noqa: E501
+        the language of the Connect widget or/and provider error message in the <a href='http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes' target=\"_blank\">ISO 639-1</a> format. Possible values are: `bg`, `cz`, `de`, `en`, `es-MX`, `es`, `fr`, `he`, `hu`, `it`, `nl`, `pl`, `pt-BR`, `pt`, `ro`, `ru`, `sk`, `tr`, `uk`, `zh-HK`(Traditional), `zh`(Simplified). Defaults to `en`  # noqa: E501
 
         :return: The locale of this Attempt.  # noqa: E501
         :rtype: str
@@ -722,7 +722,7 @@ class Attempt(object):
     def locale(self, locale):
         """Sets the locale of this Attempt.
 
-        the language of the Connect widget or/and provider error message in the <a href='http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes' target=\"_blank\">ISO 639-1</a> format. Possible values are: `bg`, `cz`, `de`, `en`, `es-MX`, `es`, `fr`, `he`, `hu`, `it`, `nl`, `pl`, `pt-BR`, `pt`, `ro`, `ru`, `sk`, `tr`, `uk`, `zh-hk`(Traditional), `zh`(Simplified). Defaults to `en`  # noqa: E501
+        the language of the Connect widget or/and provider error message in the <a href='http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes' target=\"_blank\">ISO 639-1</a> format. Possible values are: `bg`, `cz`, `de`, `en`, `es-MX`, `es`, `fr`, `he`, `hu`, `it`, `nl`, `pl`, `pt-BR`, `pt`, `ro`, `ru`, `sk`, `tr`, `uk`, `zh-HK`(Traditional), `zh`(Simplified). Defaults to `en`  # noqa: E501
 
         :param locale: The locale of this Attempt.  # noqa: E501
         :type: str

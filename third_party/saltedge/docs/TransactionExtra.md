@@ -34,7 +34,7 @@ Name | Type | Description | Notes
 **posting_time** | **str** | time in &#x60;HH:MM:SS&#x60; format, representing time when the transaction appears in statement | [optional] 
 **record_number** | **str** | bank record number | [optional] 
 **specific_code** | **str** | additional identification information for cashless domestic payments (transfers) | [optional] 
-**tags** | **list[str]** | the original tags of the transaction | [optional] 
+**tags** | **list[str]** | user defined information in the bank or e-wallet interface, assigned to a transaction record (not category) | [optional] 
 **time** | **str** | time when the transaction was made | [optional] 
 **transfer_account_name** | **str** | name of the linked account | [optional] 
 **type** | **str** | transaction type | [optional] 

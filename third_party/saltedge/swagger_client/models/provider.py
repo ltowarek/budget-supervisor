@@ -59,7 +59,10 @@ class Provider(object):
         'supported_account_types': 'list[str]',
         'identification_codes': 'list[str]',
         'bic_codes': 'list[str]',
-        'supported_iframe_embedding': 'bool'
+        'supported_iframe_embedding': 'bool',
+        'payment_templates': 'list[str]',
+        'supported_payment_fields': 'object',
+        'required_payment_fields': 'object'
     }
 
     attribute_map = {
@@ -94,10 +97,13 @@ class Provider(object):
         'supported_account_types': 'supported_account_types',
         'identification_codes': 'identification_codes',
         'bic_codes': 'bic_codes',
-        'supported_iframe_embedding': 'supported_iframe_embedding'
+        'supported_iframe_embedding': 'supported_iframe_embedding',
+        'payment_templates': 'payment_templates',
+        'supported_payment_fields': 'supported_payment_fields',
+        'required_payment_fields': 'required_payment_fields'
     }
 
-    def __init__(self, id=None, code=None, name=None, mode=None, status=None, automatic_fetch=None, customer_notified_on_sign_in=None, interactive=None, identification_mode=None, instruction=None, home_url=None, login_url=None, logo_url=None, country_code=None, refresh_timeout=None, holder_info=None, max_consent_days=None, created_at=None, updated_at=None, timezone=None, max_interactive_delay=None, optional_interactivity=None, regulated=None, max_fetch_interval=None, supported_fetch_scopes=None, supported_account_extra_fields=None, supported_transaction_extra_fields=None, supported_account_natures=None, supported_account_types=None, identification_codes=None, bic_codes=None, supported_iframe_embedding=None):  # noqa: E501
+    def __init__(self, id=None, code=None, name=None, mode=None, status=None, automatic_fetch=None, customer_notified_on_sign_in=None, interactive=None, identification_mode=None, instruction=None, home_url=None, login_url=None, logo_url=None, country_code=None, refresh_timeout=None, holder_info=None, max_consent_days=None, created_at=None, updated_at=None, timezone=None, max_interactive_delay=None, optional_interactivity=None, regulated=None, max_fetch_interval=None, supported_fetch_scopes=None, supported_account_extra_fields=None, supported_transaction_extra_fields=None, supported_account_natures=None, supported_account_types=None, identification_codes=None, bic_codes=None, supported_iframe_embedding=None, payment_templates=None, supported_payment_fields=None, required_payment_fields=None):  # noqa: E501
         """Provider - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._code = None
@@ -131,6 +137,9 @@ class Provider(object):
         self._identification_codes = None
         self._bic_codes = None
         self._supported_iframe_embedding = None
+        self._payment_templates = None
+        self._supported_payment_fields = None
+        self._required_payment_fields = None
         self.discriminator = None
         self.id = id
         self.code = code
@@ -164,6 +173,11 @@ class Provider(object):
         self.identification_codes = identification_codes
         self.bic_codes = bic_codes
         self.supported_iframe_embedding = supported_iframe_embedding
+        self.payment_templates = payment_templates
+        if supported_payment_fields is not None:
+            self.supported_payment_fields = supported_payment_fields
+        if required_payment_fields is not None:
+            self.required_payment_fields = required_payment_fields
 
     @property
     def id(self):
@@ -244,7 +258,7 @@ class Provider(object):
     def mode(self):
         """Gets the mode of this Provider.  # noqa: E501
 
-        possible values are:     - `oauth` -- access through the bank's dedicated API (`regulated: true`). The user is redirected to the bank's page for authorization. For more details, check [OAuth providers](#oauth_providers).    - `web` -- access through the bank's WEB interface using screen scraping technology. Therefore, a user undergoes the same authorization flow as in their bank's web interface with an identical set of credentials.    - `api` -- access through a dedicated (`regulated: true`) or non-dedicated (`regulated: false`) bank's API. Some required credentials fields might be present which the user should complete (IBAN, username, etc.). In case of a dedicated API, an [interactive redirect](#connections-interactive) might be present, but there are required credentials fields which the user should complete (IBAN, username, etc.). Using these credentials, we authorize the user on the bank's side.    - `file` -- access through uploading a file of certain format (XLS, CSV, etc.), which is processed to extract information of their accounts and transactions.    # noqa: E501
+        possible values are:    - `oauth` -- access through the bank's dedicated API (`regulated: true`). The user is redirected to the bank's page for authorization. For more details, check [OAuth providers](#oauth_providers).   - `web` -- access through the bank's WEB interface using screen scraping technology. Therefore, a user undergoes the same authorization flow as in their bank's web interface with an identical set of credentials.   - `api` -- access through a dedicated (`regulated: true`) or non-dedicated (`regulated: false`) bank's API. Some required credentials fields might be present which the user should complete (IBAN, username, etc.). In case of a dedicated API, an [interactive redirect](#connections-interactive) might be present, but there are required credentials fields which the user should complete (IBAN, username, etc.). Using these credentials, we authorize the user on the bank's side.   - `file` -- access through uploading a file of certain format (XLS, CSV, etc.), which is processed to extract information of their accounts and transactions.   # noqa: E501
 
         :return: The mode of this Provider.  # noqa: E501
         :rtype: str
@@ -255,7 +269,7 @@ class Provider(object):
     def mode(self, mode):
         """Sets the mode of this Provider.
 
-        possible values are:     - `oauth` -- access through the bank's dedicated API (`regulated: true`). The user is redirected to the bank's page for authorization. For more details, check [OAuth providers](#oauth_providers).    - `web` -- access through the bank's WEB interface using screen scraping technology. Therefore, a user undergoes the same authorization flow as in their bank's web interface with an identical set of credentials.    - `api` -- access through a dedicated (`regulated: true`) or non-dedicated (`regulated: false`) bank's API. Some required credentials fields might be present which the user should complete (IBAN, username, etc.). In case of a dedicated API, an [interactive redirect](#connections-interactive) might be present, but there are required credentials fields which the user should complete (IBAN, username, etc.). Using these credentials, we authorize the user on the bank's side.    - `file` -- access through uploading a file of certain format (XLS, CSV, etc.), which is processed to extract information of their accounts and transactions.    # noqa: E501
+        possible values are:    - `oauth` -- access through the bank's dedicated API (`regulated: true`). The user is redirected to the bank's page for authorization. For more details, check [OAuth providers](#oauth_providers).   - `web` -- access through the bank's WEB interface using screen scraping technology. Therefore, a user undergoes the same authorization flow as in their bank's web interface with an identical set of credentials.   - `api` -- access through a dedicated (`regulated: true`) or non-dedicated (`regulated: false`) bank's API. Some required credentials fields might be present which the user should complete (IBAN, username, etc.). In case of a dedicated API, an [interactive redirect](#connections-interactive) might be present, but there are required credentials fields which the user should complete (IBAN, username, etc.). Using these credentials, we authorize the user on the bank's side.   - `file` -- access through uploading a file of certain format (XLS, CSV, etc.), which is processed to extract information of their accounts and transactions.   # noqa: E501
 
         :param mode: The mode of this Provider.  # noqa: E501
         :type: str
@@ -977,6 +991,77 @@ class Provider(object):
             raise ValueError("Invalid value for `supported_iframe_embedding`, must not be `None`")  # noqa: E501
 
         self._supported_iframe_embedding = supported_iframe_embedding
+
+    @property
+    def payment_templates(self):
+        """Gets the payment_templates of this Provider.  # noqa: E501
+
+        identifiers of the [payment templates](/payment_initiation/v1/#payment_templates) that are supported by this provider  # noqa: E501
+
+        :return: The payment_templates of this Provider.  # noqa: E501
+        :rtype: list[str]
+        """
+        return self._payment_templates
+
+    @payment_templates.setter
+    def payment_templates(self, payment_templates):
+        """Sets the payment_templates of this Provider.
+
+        identifiers of the [payment templates](/payment_initiation/v1/#payment_templates) that are supported by this provider  # noqa: E501
+
+        :param payment_templates: The payment_templates of this Provider.  # noqa: E501
+        :type: list[str]
+        """
+        if payment_templates is None:
+            raise ValueError("Invalid value for `payment_templates`, must not be `None`")  # noqa: E501
+
+        self._payment_templates = payment_templates
+
+    @property
+    def supported_payment_fields(self):
+        """Gets the supported_payment_fields of this Provider.  # noqa: E501
+
+        list of supported payment fields for a payment template  # noqa: E501
+
+        :return: The supported_payment_fields of this Provider.  # noqa: E501
+        :rtype: object
+        """
+        return self._supported_payment_fields
+
+    @supported_payment_fields.setter
+    def supported_payment_fields(self, supported_payment_fields):
+        """Sets the supported_payment_fields of this Provider.
+
+        list of supported payment fields for a payment template  # noqa: E501
+
+        :param supported_payment_fields: The supported_payment_fields of this Provider.  # noqa: E501
+        :type: object
+        """
+
+        self._supported_payment_fields = supported_payment_fields
+
+    @property
+    def required_payment_fields(self):
+        """Gets the required_payment_fields of this Provider.  # noqa: E501
+
+        list of supported payment fields for a payment template  # noqa: E501
+
+        :return: The required_payment_fields of this Provider.  # noqa: E501
+        :rtype: object
+        """
+        return self._required_payment_fields
+
+    @required_payment_fields.setter
+    def required_payment_fields(self, required_payment_fields):
+        """Sets the required_payment_fields of this Provider.
+
+        list of supported payment fields for a payment template  # noqa: E501
+
+        :param required_payment_fields: The required_payment_fields of this Provider.  # noqa: E501
+        :type: object
+        """
+
+        self._required_payment_fields = required_payment_fields
 
     def to_dict(self):
         """Returns the model properties as a dict"""
