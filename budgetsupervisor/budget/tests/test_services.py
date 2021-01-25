@@ -15,6 +15,7 @@ from budget.services import (
     get_balance_summary,
     get_balance_transactions,
     get_date_range_per_month,
+    get_ending_balance,
     get_expenses,
     get_month_end,
     get_month_start,
@@ -523,6 +524,11 @@ def test_get_balance_details(
         autospec=True,
         return_value=opening_balance,
     )
+    mocker.patch(
+        "budget.services.get_ending_balance",
+        autospec=True,
+        return_value=ending_balance,
+    )
 
     accounts = [account_foo]
     from_date = datetime.date.today()
@@ -752,6 +758,71 @@ class TestGetOpeningBalance:
             transaction_factory(date=past, account=account_b),
         ]
         output = get_opening_balance(date, [account_a, account_b])
+        assert output == sum(t.amount for t in transactions)
+
+
+class TestGetEndingBalance:
+    def test_no_transactions(self, account_foo: Account) -> None:
+        date = datetime.date.today()
+        output = get_ending_balance(date, [account_foo])
+        assert output == Decimal()
+
+    def test_transactions_after_date(
+        self, account_foo: Account, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        date = datetime.date.today()
+        future = date + datetime.timedelta(days=1)
+        transaction_factory(date=future, account=account_foo)
+        output = get_ending_balance(date, [account_foo])
+        assert output == Decimal()
+
+    def test_transactions_at_date(
+        self, account_foo: Account, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        date = datetime.date.today()
+        transactions = [transaction_factory(date=date, account=account_foo)]
+        output = get_ending_balance(date, [account_foo])
+        assert output == sum(t.amount for t in transactions)
+
+    def test_transactions_before_date(
+        self, account_foo: Account, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        date = datetime.date.today()
+        past = date - datetime.timedelta(days=1)
+        transactions = [
+            transaction_factory(date=past, account=account_foo),
+            transaction_factory(date=past, account=account_foo),
+        ]
+        output = get_ending_balance(date, [account_foo])
+        assert output == sum(t.amount for t in transactions)
+
+    def test_transactions_from_different_account(
+        self,
+        account_factory: Callable[..., Account],
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        date = datetime.date.today()
+        past = date - datetime.timedelta(days=1)
+        account_a = account_factory(name="a")
+        account_b = account_factory(name="b")
+        transaction_factory(date=past, account=account_a)
+        output = get_ending_balance(date, [account_b])
+        assert output == Decimal()
+
+    def test_transactions_from_multiple_accounts(
+        self,
+        account_factory: Callable[..., Account],
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        date = datetime.date.today()
+        past = date - datetime.timedelta(days=1)
+        account_a = account_factory(name="a")
+        account_b = account_factory(name="b")
+        transactions = [
+            transaction_factory(date=past, account=account_a),
+            transaction_factory(date=past, account=account_b),
+        ]
+        output = get_ending_balance(date, [account_a, account_b])
         assert output == sum(t.amount for t in transactions)
 
 

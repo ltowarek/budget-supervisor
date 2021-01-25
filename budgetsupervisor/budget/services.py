@@ -195,7 +195,7 @@ def get_balance_details(
     expenses = get_expenses(transactions)
     income = revenue - expenses
     opening_balance = get_opening_balance(from_date, accounts)
-    ending_balance = opening_balance + income
+    ending_balance = get_ending_balance(to_date, accounts)
     return {
         "from": from_date,
         "to": to_date,
@@ -240,6 +240,12 @@ def get_opening_balance(date: datetime.date, accounts: List[Account]) -> Decimal
     all_transactions = Transaction.objects.filter(account__in=accounts, date__lt=date)
     opening_balance = all_transactions.aggregate(Sum("amount"))["amount__sum"]
     return opening_balance if opening_balance else Decimal()
+
+
+def get_ending_balance(date: datetime.date, accounts: List[Account]) -> Decimal:
+    all_transactions = Transaction.objects.filter(account__in=accounts, date__lte=date)
+    ending_balance = all_transactions.aggregate(Sum("amount"))["amount__sum"]
+    return ending_balance if ending_balance else Decimal()
 
 
 def get_balance_summary(balance_details: List[Dict[str, Any]]) -> Dict[str, Any]:
