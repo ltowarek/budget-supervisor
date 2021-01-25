@@ -112,27 +112,15 @@ def get_oldest_saltedge_transaction(
 
 def get_balance_report(
     accounts: List[Account],
-    from_date: Optional[datetime.date] = None,
-    to_date: Optional[datetime.date] = None,
+    from_date: datetime.date,
+    to_date: datetime.date,
     excluded_categories: Optional[List[Category]] = None,
 ) -> Dict[str, Any]:
-    output: Dict[str, Any] = {"balance": [], "summary": {}}
-
-    all_transactions = Transaction.objects.filter(account__in=accounts)
-    if excluded_categories:
-        all_transactions = all_transactions.exclude(category__in=excluded_categories)
-    if not all_transactions:
-        return output
-    if from_date is None:
-        from_date = all_transactions.order_by("date").first().date
-    if to_date is None:
-        to_date = all_transactions.order_by("-date").first().date
-
-    output["balance"] = get_balance_details_per_month(
+    balance = get_balance_details_per_month(
         accounts, from_date, to_date, excluded_categories
     )
-    output["summary"] = get_balance_summary(output["balance"])
-    return output
+    summary = get_balance_summary(balance)
+    return {"balance": balance, "summary": summary}
 
 
 def get_balance_details_per_month(

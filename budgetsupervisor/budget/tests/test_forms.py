@@ -1,3 +1,4 @@
+import datetime
 from typing import Any, Callable, Dict
 
 import pytest
@@ -165,7 +166,11 @@ def test_refresh_connection_form_valid() -> None:
 def test_report_balance_form_valid_single_account(
     user_foo: User, account_foo: Account
 ) -> None:
-    data = {"accounts": [account_foo]}
+    data = {
+        "accounts": [account_foo],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
     form = ReportBalanceForm(data=data, user=user_foo)
     assert form.is_valid() is True
 
@@ -175,23 +180,11 @@ def test_report_balance_form_valid_multiple_accounts(
 ) -> None:
     account_a = account_factory("a")
     account_b = account_factory("b")
-    data = {"accounts": [account_a, account_b]}
-    form = ReportBalanceForm(data=data, user=user_foo)
-    assert form.is_valid() is True
-
-
-def test_report_balance_form_valid_with_from_date(
-    user_foo: User, account_foo: Account
-) -> None:
-    data = {"accounts": [account_foo], "from_date": "2020-05-03"}
-    form = ReportBalanceForm(data=data, user=user_foo)
-    assert form.is_valid() is True
-
-
-def test_report_balance_form_valid_with_to_date(
-    user_foo: User, account_foo: Account
-) -> None:
-    data = {"accounts": [account_foo], "to_date": "2020-05-03"}
+    data = {
+        "accounts": [account_a, account_b],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
     form = ReportBalanceForm(data=data, user=user_foo)
     assert form.is_valid() is True
 
@@ -211,6 +204,8 @@ def test_report_balance_form_valid_with_from_and_to_date(
 def test_report_balance_form_empty_accounts(user_foo: User) -> None:
     data: Dict = {
         "accounts": [],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
     }
     form = ReportBalanceForm(data=data, user=user_foo)
     form.is_valid()
@@ -236,6 +231,8 @@ def test_report_balance_form_with_excluded_category(
     data = {
         "accounts": [account_foo],
         "excluded_categories": [category_foo],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
     }
     form = ReportBalanceForm(data=data, user=user_foo)
     assert form.is_valid()
@@ -251,6 +248,8 @@ def test_report_balance_form_with_excluded_categories(
     data: Dict[str, Any] = {
         "accounts": [account_foo],
         "excluded_categories": categories,
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
     }
     form = ReportBalanceForm(data=data, user=user_foo)
     assert form.is_valid()
@@ -268,6 +267,8 @@ def test_report_balance_form_with_unknown_excluded_category(
     data: Dict[str, Any] = {
         "accounts": [account_foo],
         "excluded_categories": categories,
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
     }
     form = ReportBalanceForm(data=data, user=user_foo)
     form.is_valid()

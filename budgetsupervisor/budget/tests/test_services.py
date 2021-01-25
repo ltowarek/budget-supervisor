@@ -397,12 +397,16 @@ class TestCreateInitialBalance:
 
 
 class TestGetBalanceReport:
-    def test_no_accounts(self) -> None:
-        output = get_balance_report([])
-        assert output == {"balance": [], "summary": {}}
-
-    def test_no_transactions(self, account_foo: Account) -> None:
-        output = get_balance_report([account_foo])
+    def test_output(self, mocker: MockFixture) -> None:
+        mocker.patch(
+            "budget.services.get_balance_details_per_month",
+            autospec=True,
+            return_value=[],
+        )
+        mocker.patch(
+            "budget.services.get_balance_summary", autospec=True, return_value={},
+        )
+        output = get_balance_report([], datetime.date.today(), datetime.date.today())
         assert output == {"balance": [], "summary": {}}
 
 

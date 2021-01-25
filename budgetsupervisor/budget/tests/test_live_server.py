@@ -1468,17 +1468,19 @@ class TestReportBalance:
         to_date: Optional[datetime.date] = None,
         excluded_categories: Optional[List[Category]] = None,
     ) -> None:
+        if from_date is None:
+            from_date = datetime.date.today()
+        if to_date is None:
+            to_date = datetime.date.today()
         url = live_server_path(reverse("reports:report_balance"))
         selenium.get(url)
         select = Select(selenium.find_element_by_name("accounts"))
         for account in accounts:
             select.select_by_visible_text(account.name)
-        if from_date:
-            element = selenium.find_element_by_name("from_date")
-            element.send_keys(date_format(from_date, "SHORT_DATE_FORMAT"))
-        if to_date:
-            element = selenium.find_element_by_name("to_date")
-            element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
+        element = selenium.find_element_by_name("from_date")
+        element.send_keys(date_format(from_date, "SHORT_DATE_FORMAT"))
+        element = selenium.find_element_by_name("to_date")
+        element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
         if excluded_categories:
             select = Select(selenium.find_element_by_name("excluded_categories"))
             for c in excluded_categories:

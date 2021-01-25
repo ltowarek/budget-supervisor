@@ -57,12 +57,8 @@ class UpdateTransactionForm(forms.ModelForm):
 
 class ReportBalanceForm(forms.Form):
     accounts = forms.ModelMultipleChoiceField(queryset=None)
-    from_date = forms.DateField(
-        required=False, widget=date_input_with_placeholder, localize=True
-    )
-    to_date = forms.DateField(
-        required=False, widget=date_input_with_placeholder, localize=True
-    )
+    from_date = forms.DateField(widget=date_input_with_placeholder, localize=True)
+    to_date = forms.DateField(widget=date_input_with_placeholder, localize=True)
     excluded_categories = forms.ModelMultipleChoiceField(required=False, queryset=None)
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
