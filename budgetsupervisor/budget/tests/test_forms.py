@@ -6,7 +6,7 @@ import swagger_client as saltedge_client
 from budget.forms import (
     CreateConnectionForm,
     RefreshConnectionForm,
-    ReportBalanceForm,
+    ReportIncomeForm,
     UpdateAccountForm,
     UpdateTransactionForm,
 )
@@ -163,7 +163,7 @@ def test_refresh_connection_form_valid() -> None:
     assert form.is_valid() is True
 
 
-def test_report_balance_form_valid_single_account(
+def test_report_income_form_valid_single_account(
     user_foo: User, account_foo: Account
 ) -> None:
     data = {
@@ -171,11 +171,11 @@ def test_report_balance_form_valid_single_account(
         "from_date": datetime.date.today(),
         "to_date": datetime.date.today(),
     }
-    form = ReportBalanceForm(data=data, user=user_foo)
+    form = ReportIncomeForm(data=data, user=user_foo)
     assert form.is_valid() is True
 
 
-def test_report_balance_form_valid_multiple_accounts(
+def test_report_income_form_valid_multiple_accounts(
     user_foo: User, account_factory: Account
 ) -> None:
     account_a = account_factory("a")
@@ -185,11 +185,11 @@ def test_report_balance_form_valid_multiple_accounts(
         "from_date": datetime.date.today(),
         "to_date": datetime.date.today(),
     }
-    form = ReportBalanceForm(data=data, user=user_foo)
+    form = ReportIncomeForm(data=data, user=user_foo)
     assert form.is_valid() is True
 
 
-def test_report_balance_form_valid_with_from_and_to_date(
+def test_report_income_form_valid_with_from_and_to_date(
     user_foo: User, account_foo: Account
 ) -> None:
     data = {
@@ -197,22 +197,22 @@ def test_report_balance_form_valid_with_from_and_to_date(
         "from_date": "2020-05-03",
         "to_date": "2020-06-03",
     }
-    form = ReportBalanceForm(data=data, user=user_foo)
+    form = ReportIncomeForm(data=data, user=user_foo)
     assert form.is_valid() is True
 
 
-def test_report_balance_form_empty_accounts(user_foo: User) -> None:
+def test_report_income_form_empty_accounts(user_foo: User) -> None:
     data: Dict = {
         "accounts": [],
         "from_date": datetime.date.today(),
         "to_date": datetime.date.today(),
     }
-    form = ReportBalanceForm(data=data, user=user_foo)
+    form = ReportIncomeForm(data=data, user=user_foo)
     form.is_valid()
     assert "accounts" in form.errors
 
 
-def test_report_balance_form_to_date_before_from_date(
+def test_report_income_form_to_date_before_from_date(
     user_foo: User, account_foo: Account
 ) -> None:
     data = {
@@ -220,12 +220,12 @@ def test_report_balance_form_to_date_before_from_date(
         "from_date": "2020-05-03",
         "to_date": "2020-04-03",
     }
-    form = ReportBalanceForm(data=data, user=user_foo)
+    form = ReportIncomeForm(data=data, user=user_foo)
     form.is_valid()
     assert "to_date" in form.errors
 
 
-def test_report_balance_form_with_excluded_category(
+def test_report_income_form_with_excluded_category(
     user_foo: User, account_foo: Account, category_foo: Category
 ) -> None:
     data = {
@@ -234,11 +234,11 @@ def test_report_balance_form_with_excluded_category(
         "from_date": datetime.date.today(),
         "to_date": datetime.date.today(),
     }
-    form = ReportBalanceForm(data=data, user=user_foo)
+    form = ReportIncomeForm(data=data, user=user_foo)
     assert form.is_valid()
 
 
-def test_report_balance_form_with_excluded_categories(
+def test_report_income_form_with_excluded_categories(
     user_foo: User, account_foo: Account, category_factory: Callable[..., Category]
 ) -> None:
     categories = [
@@ -251,11 +251,11 @@ def test_report_balance_form_with_excluded_categories(
         "from_date": datetime.date.today(),
         "to_date": datetime.date.today(),
     }
-    form = ReportBalanceForm(data=data, user=user_foo)
+    form = ReportIncomeForm(data=data, user=user_foo)
     assert form.is_valid()
 
 
-def test_report_balance_form_with_unknown_excluded_category(
+def test_report_income_form_with_unknown_excluded_category(
     user_foo: User,
     account_foo: Account,
     category_factory: Callable[..., Category],
@@ -270,6 +270,6 @@ def test_report_balance_form_with_unknown_excluded_category(
         "from_date": datetime.date.today(),
         "to_date": datetime.date.today(),
     }
-    form = ReportBalanceForm(data=data, user=user_foo)
+    form = ReportIncomeForm(data=data, user=user_foo)
     form.is_valid()
     assert "excluded_categories" in form.errors

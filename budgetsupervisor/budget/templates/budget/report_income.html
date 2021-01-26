@@ -1,7 +1,7 @@
 {% extends "budget/base.html" %}
 
 {% block title %}
-Balance Report
+Income Report
 {% endblock %}
 
 {% block content %}
@@ -23,15 +23,15 @@ Balance Report
     </tr>
   </thead>
   <tbody>
-    {% for balance in report.balance %}
+    {% for record in report.income_records %}
     <tr>
-      <td>{{ balance.from|date:"SHORT_DATE_FORMAT"}}</td>
-      <td>{{ balance.to|date:"SHORT_DATE_FORMAT"}}</td>
-      <td>{{ balance.revenue|floatformat:2 }}</td>
-      <td>{{ balance.expenses|floatformat:2 }}</td>
-      <td>{{ balance.income|floatformat:2 }}</td>
-      <td>{{ balance.opening_balance|floatformat:2 }}</td>
-      <td>{{ balance.ending_balance|floatformat:2 }}</td>
+      <td>{{ record.from|date:"SHORT_DATE_FORMAT"}}</td>
+      <td>{{ record.to|date:"SHORT_DATE_FORMAT"}}</td>
+      <td>{{ record.revenue|floatformat:2 }}</td>
+      <td>{{ record.expenses|floatformat:2 }}</td>
+      <td>{{ record.income|floatformat:2 }}</td>
+      <td>{{ record.opening_balance|floatformat:2 }}</td>
+      <td>{{ record.ending_balance|floatformat:2 }}</td>
     </tr>
     {% endfor %}
   </tbody>

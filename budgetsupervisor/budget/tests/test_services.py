@@ -9,14 +9,14 @@ from budget.services import (
     add_month,
     create_initial_balance,
     diff_month,
-    get_balance_details,
-    get_balance_details_per_month,
-    get_balance_report,
-    get_balance_summary,
-    get_balance_transactions,
     get_date_range_per_month,
     get_ending_balance,
     get_expenses,
+    get_income_record,
+    get_income_record_per_month,
+    get_income_records_summary,
+    get_income_report,
+    get_income_transactions,
     get_month_end,
     get_month_start,
     get_opening_balance,
@@ -396,21 +396,23 @@ class TestCreateInitialBalance:
         assert transaction.user == account_foo.user
 
 
-class TestGetBalanceReport:
+class TestGetIncomeReport:
     def test_output(self, mocker: MockFixture) -> None:
         mocker.patch(
-            "budget.services.get_balance_details_per_month",
+            "budget.services.get_income_record_per_month",
             autospec=True,
             return_value=[],
         )
         mocker.patch(
-            "budget.services.get_balance_summary", autospec=True, return_value={},
+            "budget.services.get_income_records_summary",
+            autospec=True,
+            return_value={},
         )
-        output = get_balance_report([], datetime.date.today(), datetime.date.today())
-        assert output == {"balance": [], "summary": {}}
+        output = get_income_report([], datetime.date.today(), datetime.date.today())
+        assert output == {"income_records": [], "summary": {}}
 
 
-class TestGetBalanceDetailsPerMonth:
+class TestGetIncomeDetailsPerMonth:
     def test_no_date_range(self, mocker: MockFixture) -> None:
         mocker.patch(
             "budget.services.get_date_range_per_month", autospec=True, return_value=[],
@@ -421,7 +423,7 @@ class TestGetBalanceDetailsPerMonth:
         to_date = datetime.date.today()
         excluded_categories: List[Category] = []
 
-        output = get_balance_details_per_month(
+        output = get_income_record_per_month(
             accounts, from_date, to_date, excluded_categories
         )
         assert output == []
@@ -434,7 +436,7 @@ class TestGetBalanceDetailsPerMonth:
             return_value=[(date, date), (date, date)],
         )
         mocker.patch(
-            "budget.services.get_balance_details", autospec=True, return_value={},
+            "budget.services.get_income_record", autospec=True, return_value={},
         )
 
         accounts: List[Account] = []
@@ -442,15 +444,15 @@ class TestGetBalanceDetailsPerMonth:
         to_date = datetime.date.today()
         excluded_categories: List[Category] = []
 
-        output = get_balance_details_per_month(
+        output = get_income_record_per_month(
             accounts, from_date, to_date, excluded_categories
         )
         assert output == [{}, {}]
 
 
-class TestGetBalanceSummary:
+class TestGetIncomeSummary:
     def test_no_entries(self) -> None:
-        output = get_balance_summary([])
+        output = get_income_records_summary([])
         assert output["revenue"] == Decimal()
         assert output["expenses"] == Decimal()
         assert output["income"] == Decimal()
@@ -458,7 +460,7 @@ class TestGetBalanceSummary:
         assert output["ending_balance"] == Decimal()
 
     def test_single_entry(self) -> None:
-        balance = [
+        income_records = [
             {
                 "from": datetime.date.today(),
                 "to": datetime.date.today(),
@@ -469,7 +471,7 @@ class TestGetBalanceSummary:
                 "ending_balance": Decimal(1100.0),
             }
         ]
-        output = get_balance_summary(balance)
+        output = get_income_records_summary(income_records)
         assert output["revenue"] == Decimal(150.0)
         assert output["expenses"] == Decimal(50.0)
         assert output["income"] == Decimal(100.0)
@@ -477,7 +479,7 @@ class TestGetBalanceSummary:
         assert output["ending_balance"] == Decimal(1100.0)
 
     def test_multiple_entries(self) -> None:
-        balance = [
+        income_records = [
             {
                 "from": datetime.date.today(),
                 "to": datetime.date.today(),
@@ -497,15 +499,15 @@ class TestGetBalanceSummary:
                 "ending_balance": Decimal(1900.0),
             },
         ]
-        output = get_balance_summary(balance)
-        assert output["revenue"] == sum(b["revenue"] for b in balance)
-        assert output["expenses"] == sum(b["expenses"] for b in balance)
-        assert output["income"] == sum(b["income"] for b in balance)
-        assert output["opening_balance"] == balance[0]["opening_balance"]
-        assert output["ending_balance"] == balance[-1]["ending_balance"]
+        output = get_income_records_summary(income_records)
+        assert output["revenue"] == sum(r["revenue"] for r in income_records)
+        assert output["expenses"] == sum(r["expenses"] for r in income_records)
+        assert output["income"] == sum(r["income"] for r in income_records)
+        assert output["opening_balance"] == income_records[0]["opening_balance"]
+        assert output["ending_balance"] == income_records[-1]["ending_balance"]
 
 
-def test_get_balance_details(
+def test_get_income_record(
     account_foo: Account, category_foo: Category, mocker: MockFixture
 ) -> None:
     revenue = 100.0
@@ -515,7 +517,7 @@ def test_get_balance_details(
     ending_balance = opening_balance + income
 
     mocker.patch(
-        "budget.services.get_balance_transactions", autospec=True, return_value=[],
+        "budget.services.get_income_transactions", autospec=True, return_value=[],
     )
     mocker.patch(
         "budget.services.get_revenue", autospec=True, return_value=revenue,
@@ -539,7 +541,7 @@ def test_get_balance_details(
     to_date = datetime.date.today() + datetime.timedelta(days=1)
     excluded_categories = [category_foo]
 
-    output = get_balance_details(accounts, from_date, to_date, excluded_categories)
+    output = get_income_record(accounts, from_date, to_date, excluded_categories)
     assert output["from"] == from_date
     assert output["to"] == to_date
     assert output["revenue"] == revenue
@@ -549,17 +551,17 @@ def test_get_balance_details(
     assert output["ending_balance"] == ending_balance
 
 
-class TestGetBalanceTransactions:
+class TestGetIncomeTransactions:
     def test_no_accounts(self) -> None:
         from_date = datetime.date.today()
         to_date = datetime.date.today()
-        output = get_balance_transactions([], from_date, to_date)
+        output = get_income_transactions([], from_date, to_date)
         assert list(output) == []
 
     def test_no_transactions(self, account_foo: Account) -> None:
         from_date = datetime.date.today()
         to_date = datetime.date.today()
-        output = get_balance_transactions([account_foo], from_date, to_date)
+        output = get_income_transactions([account_foo], from_date, to_date)
         assert list(output) == []
 
     def test_transactions_before_from_date(
@@ -569,7 +571,7 @@ class TestGetBalanceTransactions:
         past = from_date - datetime.timedelta(days=1)
         to_date = datetime.date.today()
         transaction_factory(date=past, account=account_foo)
-        output = get_balance_transactions([account_foo], from_date, to_date)
+        output = get_income_transactions([account_foo], from_date, to_date)
         assert list(output) == []
 
     def test_transactions_at_from_date(
@@ -578,7 +580,7 @@ class TestGetBalanceTransactions:
         from_date = datetime.date.today()
         to_date = from_date + datetime.timedelta(days=1)
         transactions = [transaction_factory(date=from_date, account=account_foo)]
-        output = get_balance_transactions([account_foo], from_date, to_date)
+        output = get_income_transactions([account_foo], from_date, to_date)
         assert list(output) == transactions
 
     def test_transactions_after_to_date(
@@ -588,7 +590,7 @@ class TestGetBalanceTransactions:
         to_date = datetime.date.today()
         future = to_date + datetime.timedelta(days=1)
         transaction_factory(date=future, account=account_foo)
-        output = get_balance_transactions([account_foo], from_date, to_date)
+        output = get_income_transactions([account_foo], from_date, to_date)
         assert list(output) == []
 
     def test_transactions_at_to_date(
@@ -597,7 +599,7 @@ class TestGetBalanceTransactions:
         from_date = datetime.date.today()
         to_date = from_date + datetime.timedelta(days=1)
         transactions = [transaction_factory(date=to_date, account=account_foo)]
-        output = get_balance_transactions([account_foo], from_date, to_date)
+        output = get_income_transactions([account_foo], from_date, to_date)
         assert list(output) == transactions
 
     def test_transactions_between_from_and_to_dates(
@@ -607,7 +609,7 @@ class TestGetBalanceTransactions:
         date = from_date + datetime.timedelta(days=1)
         to_date = date + datetime.timedelta(days=1)
         transactions = [transaction_factory(date=date, account=account_foo)]
-        output = get_balance_transactions([account_foo], from_date, to_date)
+        output = get_income_transactions([account_foo], from_date, to_date)
         assert list(output) == transactions
 
     def test_different_accounts(
@@ -621,7 +623,7 @@ class TestGetBalanceTransactions:
         to_date = datetime.date.today()
         transactions = [transaction_factory(date=to_date, account=account_a)]
         transaction_factory(date=to_date, account=account_b)
-        output = get_balance_transactions([account_a], from_date, to_date)
+        output = get_income_transactions([account_a], from_date, to_date)
         assert list(output) == transactions
 
     def test_multiple_accounts(
@@ -637,7 +639,7 @@ class TestGetBalanceTransactions:
             transaction_factory(date=to_date, account=account_a),
             transaction_factory(date=to_date, account=account_b),
         ]
-        output = get_balance_transactions([account_a, account_b], from_date, to_date)
+        output = get_income_transactions([account_a, account_b], from_date, to_date)
         assert list(output) == transactions
 
     def test_excluded_categories(
@@ -656,7 +658,7 @@ class TestGetBalanceTransactions:
         ]
         transaction_factory(date=to_date, account=account_foo, category=category_b)
         transaction_factory(date=to_date, account=account_foo, category=category_c)
-        output = get_balance_transactions(
+        output = get_income_transactions(
             [account_foo], from_date, to_date, [category_b, category_c]
         )
         assert list(output) == transactions

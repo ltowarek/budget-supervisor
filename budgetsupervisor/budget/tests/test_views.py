@@ -1141,23 +1141,23 @@ def test_category_delete_view_post_different_user(
     assert response.status_code == 403
 
 
-def test_report_balance_view_get(
+def test_report_income_view_get(
     client: Client, user_foo: User, login_user: Callable[[User], None]
 ) -> None:
     login_user(user_foo)
-    url = reverse("reports:report_balance")
+    url = reverse("reports:report_income")
     response = client.get(url)
     assert response.status_code == 200
 
 
-def test_report_balance_view_get_not_logged_in(client: Client) -> None:
-    url = reverse("reports:report_balance")
+def test_report_income_view_get_not_logged_in(client: Client) -> None:
+    url = reverse("reports:report_income")
     response = client.get(url)
     assert response.status_code == 302
     assert resolve(get_url_path(response)).url_name == "login"
 
 
-def test_report_balance_view_get_with_parameters(
+def test_report_income_view_get_with_parameters(
     client: Client,
     user_foo: User,
     login_user: Callable[[User], None],
@@ -1165,7 +1165,7 @@ def test_report_balance_view_get_with_parameters(
     category_foo: Category,
 ) -> None:
     login_user(user_foo)
-    url = reverse("reports:report_balance")
+    url = reverse("reports:report_income")
     data = {
         "accounts": [account_foo.pk],
         "from_date": datetime.date.today(),

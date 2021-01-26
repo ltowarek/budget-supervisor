@@ -110,30 +110,30 @@ def get_oldest_saltedge_transaction(
     return oldest
 
 
-def get_balance_report(
+def get_income_report(
     accounts: List[Account],
     from_date: datetime.date,
     to_date: datetime.date,
     excluded_categories: Optional[List[Category]] = None,
 ) -> Dict[str, Any]:
-    balance = get_balance_details_per_month(
+    income_records = get_income_record_per_month(
         accounts, from_date, to_date, excluded_categories
     )
-    summary = get_balance_summary(balance)
-    return {"balance": balance, "summary": summary}
+    summary = get_income_records_summary(income_records)
+    return {"income_records": income_records, "summary": summary}
 
 
-def get_balance_details_per_month(
+def get_income_record_per_month(
     accounts: List[Account],
     from_date: datetime.date,
     to_date: datetime.date,
     excluded_categories: Optional[List[Category]] = None,
 ) -> List[Dict[str, Any]]:
-    reports = []
+    records = []
     for start, end in get_date_range_per_month(from_date, to_date):
-        report = get_balance_details(accounts, start, end, excluded_categories)
-        reports.append(report)
-    return reports
+        record = get_income_record(accounts, start, end, excluded_categories)
+        records.append(record)
+    return records
 
 
 def get_date_range_per_month(
@@ -170,13 +170,13 @@ def get_month_end(date: datetime.date) -> datetime.date:
     )
 
 
-def get_balance_details(
+def get_income_record(
     accounts: List[Account],
     from_date: datetime.date,
     to_date: datetime.date,
     excluded_categories: Optional[List[Category]] = None,
 ) -> Dict[str, Any]:
-    transactions = get_balance_transactions(
+    transactions = get_income_transactions(
         accounts, from_date, to_date, excluded_categories
     )
     revenue = get_revenue(transactions)
@@ -195,7 +195,7 @@ def get_balance_details(
     }
 
 
-def get_balance_transactions(
+def get_income_transactions(
     accounts: List[Account],
     from_date: datetime.date,
     to_date: datetime.date,
@@ -236,19 +236,19 @@ def get_ending_balance(date: datetime.date, accounts: List[Account]) -> Decimal:
     return ending_balance if ending_balance else Decimal()
 
 
-def get_balance_summary(balance_details: List[Dict[str, Any]]) -> Dict[str, Any]:
+def get_income_records_summary(income_records: List[Dict[str, Any]]) -> Dict[str, Any]:
     revenue = Decimal()
     expenses = Decimal()
     income = Decimal()
-    for b in balance_details:
+    for b in income_records:
         revenue += b["revenue"]
         expenses += b["expenses"]
         income += b["income"]
     opening_balance = (
-        balance_details[0]["opening_balance"] if balance_details else Decimal()
+        income_records[0]["opening_balance"] if income_records else Decimal()
     )
     ending_balance = (
-        balance_details[-1]["ending_balance"] if balance_details else Decimal()
+        income_records[-1]["ending_balance"] if income_records else Decimal()
     )
     return {
         "revenue": revenue,

@@ -9,14 +9,14 @@ from budget.forms import (
     CreateConnectionForm,
     CreateTransactionForm,
     RefreshConnectionForm,
-    ReportBalanceForm,
+    ReportIncomeForm,
     UpdateAccountForm,
     UpdateTransactionForm,
 )
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
     create_initial_balance,
-    get_balance_report,
+    get_income_report,
     import_saltedge_accounts,
     import_saltedge_connection,
     import_saltedge_transactions,
@@ -320,9 +320,9 @@ class CategoryDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return output
 
 
-class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
-    template_name = "budget/report_balance.html"
-    form_class = ReportBalanceForm
+class ReportIncomeView(LoginRequiredMixin, FormMixin, TemplateView):
+    template_name = "budget/report_income.html"
+    form_class = ReportIncomeForm
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         form = self.get_form()
@@ -338,8 +338,8 @@ class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
         kwargs["user"] = self.request.user
         return kwargs
 
-    def form_valid(self, form: ReportBalanceForm) -> HttpResponse:
-        report = get_balance_report(
+    def form_valid(self, form: ReportIncomeForm) -> HttpResponse:
+        report = get_income_report(
             form.cleaned_data["accounts"],
             form.cleaned_data["from_date"],
             form.cleaned_data["to_date"],

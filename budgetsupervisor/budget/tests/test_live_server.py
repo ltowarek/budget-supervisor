@@ -1397,7 +1397,7 @@ class TestCategoryDelete:
         element.click()
 
 
-class TestReportBalance:
+class TestReportIncome:
     def test_table_header(
         self,
         authenticate_selenium: Callable[..., WebDriver],
@@ -1406,7 +1406,7 @@ class TestReportBalance:
         account_foo: Account,
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
-        self.report_balance(selenium, live_server_path, [account_foo])
+        self.report_income(selenium, live_server_path, [account_foo])
 
         elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
         assert len(elements) == 7
@@ -1433,7 +1433,7 @@ class TestReportBalance:
         transaction_factory(date=from_date)
 
         selenium = authenticate_selenium(user=user_foo)
-        self.report_balance(
+        self.report_income(
             selenium,
             live_server_path,
             [account_foo],
@@ -1454,12 +1454,12 @@ class TestReportBalance:
         transaction_foo: Transaction,
     ) -> None:
         selenium = authenticate_selenium(user=user_foo)
-        self.report_balance(selenium, live_server_path, [account_foo])
+        self.report_income(selenium, live_server_path, [account_foo])
 
         elements = selenium.find_elements_by_xpath("//table/tfoot/tr/td")
         assert len(elements) == 6
 
-    def report_balance(
+    def report_income(
         self,
         selenium: WebDriver,
         live_server_path: Callable[[str], str],
@@ -1472,7 +1472,7 @@ class TestReportBalance:
             from_date = datetime.date.today()
         if to_date is None:
             to_date = datetime.date.today()
-        url = live_server_path(reverse("reports:report_balance"))
+        url = live_server_path(reverse("reports:report_income"))
         selenium.get(url)
         select = Select(selenium.find_element_by_name("accounts"))
         for account in accounts:
@@ -1522,9 +1522,9 @@ class TestNavigationBar:
         assert elements[4].get_attribute("href") == live_server_path(
             reverse("categories:category_list")
         )
-        assert elements[5].text == "Balance"
+        assert elements[5].text == "Income"
         assert elements[5].get_attribute("href") == live_server_path(
-            reverse("reports:report_balance")
+            reverse("reports:report_income")
         )
 
     def test_not_authenticated_budget_links(

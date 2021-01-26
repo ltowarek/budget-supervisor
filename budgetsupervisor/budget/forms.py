@@ -55,7 +55,7 @@ class UpdateTransactionForm(forms.ModelForm):
             self.fields["account"].disabled = True
 
 
-class ReportBalanceForm(forms.Form):
+class ReportIncomeForm(forms.Form):
     accounts = forms.ModelMultipleChoiceField(queryset=None)
     from_date = forms.DateField(widget=date_input_with_placeholder, localize=True)
     to_date = forms.DateField(widget=date_input_with_placeholder, localize=True)
