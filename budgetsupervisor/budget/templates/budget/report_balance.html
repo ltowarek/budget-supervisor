@@ -1,7 +1,7 @@
 {% extends "budget/base.html" %}
 
 {% block title %}
-Income Report
+Balance Report
 {% endblock %}
 
 {% block content %}
@@ -15,9 +15,9 @@ Income Report
     <tr>
       <th>From</th>
       <th>To</th>
-      <th>Revenue</th>
-      <th>Expenses</th>
-      <th>Income</th>
+      <th>Opening balance</th>
+      <th>Ending balance</th>
+      <th>Difference</th>
     </tr>
   </thead>
   <tbody>
@@ -25,9 +25,9 @@ Income Report
     <tr>
       <td>{{ record.from|date:"SHORT_DATE_FORMAT"}}</td>
       <td>{{ record.to|date:"SHORT_DATE_FORMAT"}}</td>
-      <td>{{ record.revenue|floatformat:2 }}</td>
-      <td>{{ record.expenses|floatformat:2 }}</td>
-      <td>{{ record.income|floatformat:2 }}</td>
+      <td>{{ record.opening_balance|floatformat:2 }}</td>
+      <td>{{ record.ending_balance|floatformat:2 }}</td>
+      <td>{{ record.difference|floatformat:2 }}</td>
     </tr>
     {% endfor %}
   </tbody>
@@ -36,9 +36,9 @@ Income Report
     <tr>
       <td>{{ report.summary.from|date:"SHORT_DATE_FORMAT"}}</td>
       <td>{{ report.summary.to|date:"SHORT_DATE_FORMAT"}}</td>
-      <td>{{ report.summary.revenue|floatformat:2 }}</td>
-      <td>{{ report.summary.expenses|floatformat:2 }}</td>
-      <td>{{ report.summary.income|floatformat:2 }}</td>
+      <td>{{ report.summary.opening_balance|floatformat:2 }}</td>
+      <td>{{ report.summary.ending_balance|floatformat:2 }}</td>
+      <td>{{ report.summary.difference|floatformat:2 }}</td>
     </tr>
     {% endif %}
   </tfoot>

@@ -1176,6 +1176,39 @@ def test_report_income_view_get_with_parameters(
     assert response.status_code == 200
 
 
+def test_report_balance_view_get(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
+    login_user(user_foo)
+    url = reverse("reports:report_balance")
+    response = client.get(url)
+    assert response.status_code == 200
+
+
+def test_report_balance_view_get_not_logged_in(client: Client) -> None:
+    url = reverse("reports:report_balance")
+    response = client.get(url)
+    assert response.status_code == 302
+    assert resolve(get_url_path(response)).url_name == "login"
+
+
+def test_report_balance_view_get_with_parameters(
+    client: Client,
+    user_foo: User,
+    login_user: Callable[[User], None],
+    account_foo: Account,
+) -> None:
+    login_user(user_foo)
+    url = reverse("reports:report_balance")
+    data = {
+        "accounts": [account_foo.pk],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
+    response = client.get(url, data)
+    assert response.status_code == 200
+
+
 def test_callback_success_new_connection(
     client: Client,
     profile_foo_external: Profile,

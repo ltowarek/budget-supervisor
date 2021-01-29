@@ -110,32 +110,6 @@ def get_oldest_saltedge_transaction(
     return oldest
 
 
-def get_income_report(
-    accounts: List[Account],
-    from_date: datetime.date,
-    to_date: datetime.date,
-    excluded_categories: Optional[List[Category]] = None,
-) -> Dict[str, Any]:
-    income_records = get_income_record_per_month(
-        accounts, from_date, to_date, excluded_categories
-    )
-    summary = get_income_records_summary(income_records)
-    return {"income_records": income_records, "summary": summary}
-
-
-def get_income_record_per_month(
-    accounts: List[Account],
-    from_date: datetime.date,
-    to_date: datetime.date,
-    excluded_categories: Optional[List[Category]] = None,
-) -> List[Dict[str, Any]]:
-    records = []
-    for start, end in get_date_range_per_month(from_date, to_date):
-        record = get_income_record(accounts, start, end, excluded_categories)
-        records.append(record)
-    return records
-
-
 def get_date_range_per_month(
     from_date: datetime.date, to_date: datetime.date
 ) -> List[Tuple[datetime.date, datetime.date]]:
@@ -170,6 +144,32 @@ def get_month_end(date: datetime.date) -> datetime.date:
     )
 
 
+def get_income_report(
+    accounts: List[Account],
+    from_date: datetime.date,
+    to_date: datetime.date,
+    excluded_categories: Optional[List[Category]] = None,
+) -> Dict[str, Any]:
+    income_records = get_income_record_per_month(
+        accounts, from_date, to_date, excluded_categories
+    )
+    summary = get_income_records_summary(income_records)
+    return {"records": income_records, "summary": summary}
+
+
+def get_income_record_per_month(
+    accounts: List[Account],
+    from_date: datetime.date,
+    to_date: datetime.date,
+    excluded_categories: Optional[List[Category]] = None,
+) -> List[Dict[str, Any]]:
+    records = []
+    for start, end in get_date_range_per_month(from_date, to_date):
+        record = get_income_record(accounts, start, end, excluded_categories)
+        records.append(record)
+    return records
+
+
 def get_income_record(
     accounts: List[Account],
     from_date: datetime.date,
@@ -182,16 +182,12 @@ def get_income_record(
     revenue = get_revenue(transactions)
     expenses = get_expenses(transactions)
     income = revenue - expenses
-    opening_balance = get_opening_balance(from_date, accounts)
-    ending_balance = get_ending_balance(to_date, accounts)
     return {
         "from": from_date,
         "to": to_date,
         "revenue": revenue,
         "expenses": expenses,
         "income": income,
-        "opening_balance": opening_balance,
-        "ending_balance": ending_balance,
     }
 
 
@@ -224,6 +220,58 @@ def get_expenses(transactions: QuerySet) -> Decimal:
     return abs(expenses) if expenses else Decimal()
 
 
+def get_income_records_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
+    revenue = Decimal()
+    expenses = Decimal()
+    income = Decimal()
+    for r in records:
+        revenue += r["revenue"]
+        expenses += r["expenses"]
+        income += r["income"]
+    from_date = records[0]["from"] if records else datetime.date.today()
+    to_date = records[-1]["to"] if records else datetime.date.today()
+    return {
+        "from": from_date,
+        "to": to_date,
+        "revenue": revenue,
+        "expenses": expenses,
+        "income": income,
+    }
+
+
+def get_balance_report(
+    accounts: List[Account], from_date: datetime.date, to_date: datetime.date,
+) -> Dict[str, Any]:
+    records = get_balance_record_per_month(accounts, from_date, to_date)
+    summary = get_balance_records_summary(records)
+    return {"records": records, "summary": summary}
+
+
+def get_balance_record_per_month(
+    accounts: List[Account], from_date: datetime.date, to_date: datetime.date,
+) -> List[Dict[str, Any]]:
+    records = []
+    for start, end in get_date_range_per_month(from_date, to_date):
+        record = get_balance_record(accounts, start, end)
+        records.append(record)
+    return records
+
+
+def get_balance_record(
+    accounts: List[Account], from_date: datetime.date, to_date: datetime.date,
+) -> Dict[str, Any]:
+    opening_balance = get_opening_balance(from_date, accounts)
+    ending_balance = get_ending_balance(to_date, accounts)
+    difference = ending_balance - opening_balance
+    return {
+        "from": from_date,
+        "to": to_date,
+        "opening_balance": opening_balance,
+        "ending_balance": ending_balance,
+        "difference": difference,
+    }
+
+
 def get_opening_balance(date: datetime.date, accounts: List[Account]) -> Decimal:
     all_transactions = Transaction.objects.filter(account__in=accounts, date__lt=date)
     opening_balance = all_transactions.aggregate(Sum("amount"))["amount__sum"]
@@ -236,24 +284,16 @@ def get_ending_balance(date: datetime.date, accounts: List[Account]) -> Decimal:
     return ending_balance if ending_balance else Decimal()
 
 
-def get_income_records_summary(income_records: List[Dict[str, Any]]) -> Dict[str, Any]:
-    revenue = Decimal()
-    expenses = Decimal()
-    income = Decimal()
-    for b in income_records:
-        revenue += b["revenue"]
-        expenses += b["expenses"]
-        income += b["income"]
-    opening_balance = (
-        income_records[0]["opening_balance"] if income_records else Decimal()
-    )
-    ending_balance = (
-        income_records[-1]["ending_balance"] if income_records else Decimal()
-    )
+def get_balance_records_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
+    opening_balance = records[0]["opening_balance"] if records else Decimal()
+    ending_balance = records[-1]["ending_balance"] if records else Decimal()
+    difference = ending_balance - opening_balance
+    from_date = records[0]["from"] if records else datetime.date.today()
+    to_date = records[-1]["to"] if records else datetime.date.today()
     return {
-        "revenue": revenue,
-        "expenses": expenses,
-        "income": income,
+        "from": from_date,
+        "to": to_date,
         "opening_balance": opening_balance,
         "ending_balance": ending_balance,
+        "difference": difference,
     }

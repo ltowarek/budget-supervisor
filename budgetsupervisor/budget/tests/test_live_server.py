@@ -1409,14 +1409,10 @@ class TestReportIncome:
         self.report_income(selenium, live_server_path, [account_foo])
 
         elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
-        assert len(elements) == 7
-        assert elements[0].text == "From"
-        assert elements[1].text == "To"
-        assert elements[2].text == "Revenue"
-        assert elements[3].text == "Expenses"
-        assert elements[4].text == "Income"
-        assert elements[5].text == "Opening balance"
-        assert elements[6].text == "Ending balance"
+        expected = ["From", "To", "Revenue", "Expenses", "Income"]
+        assert len(elements) == len(expected)
+        for el, ex in zip(elements, expected):
+            assert el.text == ex
 
     def test_table_body(
         self,
@@ -1443,7 +1439,8 @@ class TestReportIncome:
         )
 
         elements = selenium.find_elements_by_xpath("//table/tbody/tr/td")
-        assert len(elements) == (1 + months) * 7
+        columns = 5
+        assert len(elements) == (1 + months) * columns
 
     def test_table_footer(
         self,
@@ -1457,7 +1454,8 @@ class TestReportIncome:
         self.report_income(selenium, live_server_path, [account_foo])
 
         elements = selenium.find_elements_by_xpath("//table/tfoot/tr/td")
-        assert len(elements) == 6
+        columns = 5
+        assert len(elements) == columns
 
     def report_income(
         self,
@@ -1485,6 +1483,85 @@ class TestReportIncome:
             select = Select(selenium.find_element_by_name("excluded_categories"))
             for c in excluded_categories:
                 select.select_by_visible_text(c.name)
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
+        element.click()
+
+
+class TestReportBalance:
+    def test_table_header(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        self.report_balance(selenium, live_server_path, [account_foo])
+
+        elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
+        expected = ["From", "To", "Opening balance", "Ending balance", "Difference"]
+        assert len(elements) == len(expected)
+        for el, ex in zip(elements, expected):
+            assert el.text == ex
+
+    def test_table_body(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        months = 2
+        from_date = datetime.date(2020, 1, 10)
+        to_date = datetime.date(2020, 1 + months, 15)
+        transaction_factory(date=from_date)
+
+        selenium = authenticate_selenium(user=user_foo)
+        self.report_balance(
+            selenium, live_server_path, [account_foo], from_date, to_date,
+        )
+
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr/td")
+        columns = 5
+        assert len(elements) == (1 + months) * columns
+
+    def test_table_footer(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_foo: Account,
+        transaction_foo: Transaction,
+    ) -> None:
+        selenium = authenticate_selenium(user=user_foo)
+        self.report_balance(selenium, live_server_path, [account_foo])
+
+        elements = selenium.find_elements_by_xpath("//table/tfoot/tr/td")
+        columns = 5
+        assert len(elements) == columns
+
+    def report_balance(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        accounts: List[Account],
+        from_date: Optional[datetime.date] = None,
+        to_date: Optional[datetime.date] = None,
+    ) -> None:
+        if from_date is None:
+            from_date = datetime.date.today()
+        if to_date is None:
+            to_date = datetime.date.today()
+        url = live_server_path(reverse("reports:report_balance"))
+        selenium.get(url)
+        select = Select(selenium.find_element_by_name("accounts"))
+        for account in accounts:
+            select.select_by_visible_text(account.name)
+        element = selenium.find_element_by_name("from_date")
+        element.send_keys(date_format(from_date, "SHORT_DATE_FORMAT"))
+        element = selenium.find_element_by_name("to_date")
+        element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
         element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
@@ -1525,6 +1602,10 @@ class TestNavigationBar:
         assert elements[5].text == "Income"
         assert elements[5].get_attribute("href") == live_server_path(
             reverse("reports:report_income")
+        )
+        assert elements[6].text == "Balance"
+        assert elements[6].get_attribute("href") == live_server_path(
+            reverse("reports:report_balance")
         )
 
     def test_not_authenticated_budget_links(

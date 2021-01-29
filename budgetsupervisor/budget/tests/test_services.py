@@ -9,6 +9,10 @@ from budget.services import (
     add_month,
     create_initial_balance,
     diff_month,
+    get_balance_record,
+    get_balance_record_per_month,
+    get_balance_records_summary,
+    get_balance_report,
     get_date_range_per_month,
     get_ending_balance,
     get_expenses,
@@ -409,10 +413,10 @@ class TestGetIncomeReport:
             return_value={},
         )
         output = get_income_report([], datetime.date.today(), datetime.date.today())
-        assert output == {"income_records": [], "summary": {}}
+        assert output == {"records": [], "summary": {}}
 
 
-class TestGetIncomeDetailsPerMonth:
+class TestGetIncomeRecordPerMonth:
     def test_no_date_range(self, mocker: MockFixture) -> None:
         mocker.patch(
             "budget.services.get_date_range_per_month", autospec=True, return_value=[],
@@ -450,61 +454,55 @@ class TestGetIncomeDetailsPerMonth:
         assert output == [{}, {}]
 
 
-class TestGetIncomeSummary:
+class TestGetIncomeRecordsSummary:
     def test_no_entries(self) -> None:
         output = get_income_records_summary([])
-        assert output["revenue"] == Decimal()
-        assert output["expenses"] == Decimal()
-        assert output["income"] == Decimal()
-        assert output["opening_balance"] == Decimal()
-        assert output["ending_balance"] == Decimal()
+        assert output == {
+            "from": datetime.date.today(),
+            "to": datetime.date.today(),
+            "revenue": Decimal(),
+            "expenses": Decimal(),
+            "income": Decimal(),
+        }
 
     def test_single_entry(self) -> None:
-        income_records = [
+        records = [
             {
                 "from": datetime.date.today(),
-                "to": datetime.date.today(),
+                "to": datetime.date.today() + datetime.timedelta(days=1),
                 "revenue": Decimal(150.0),
                 "expenses": Decimal(50.0),
                 "income": Decimal(100.0),
-                "opening_balance": Decimal(1000.0),
-                "ending_balance": Decimal(1100.0),
             }
         ]
-        output = get_income_records_summary(income_records)
-        assert output["revenue"] == Decimal(150.0)
-        assert output["expenses"] == Decimal(50.0)
-        assert output["income"] == Decimal(100.0)
-        assert output["opening_balance"] == Decimal(1000.0)
-        assert output["ending_balance"] == Decimal(1100.0)
+        output = get_income_records_summary(records)
+        assert output == records[0]
 
     def test_multiple_entries(self) -> None:
-        income_records = [
+        records = [
             {
                 "from": datetime.date.today(),
-                "to": datetime.date.today(),
+                "to": datetime.date.today() + datetime.timedelta(days=1),
                 "revenue": Decimal(150.0),
                 "expenses": Decimal(50.0),
                 "income": Decimal(100.0),
-                "opening_balance": Decimal(1000.0),
-                "ending_balance": Decimal(1100.0),
             },
             {
-                "from": datetime.date.today(),
-                "to": datetime.date.today(),
+                "from": datetime.date.today() + datetime.timedelta(days=2),
+                "to": datetime.date.today() + datetime.timedelta(days=3),
                 "revenue": Decimal(250.0),
                 "expenses": Decimal(350.0),
                 "income": Decimal(-100.0),
-                "opening_balance": Decimal(2000.0),
-                "ending_balance": Decimal(1900.0),
             },
         ]
-        output = get_income_records_summary(income_records)
-        assert output["revenue"] == sum(r["revenue"] for r in income_records)
-        assert output["expenses"] == sum(r["expenses"] for r in income_records)
-        assert output["income"] == sum(r["income"] for r in income_records)
-        assert output["opening_balance"] == income_records[0]["opening_balance"]
-        assert output["ending_balance"] == income_records[-1]["ending_balance"]
+        output = get_income_records_summary(records)
+        assert output == {
+            "from": records[0]["from"],
+            "to": records[-1]["to"],
+            "revenue": sum(r["revenue"] for r in records),
+            "expenses": sum(r["expenses"] for r in records),
+            "income": sum(r["income"] for r in records),
+        }
 
 
 def test_get_income_record(
@@ -513,8 +511,6 @@ def test_get_income_record(
     revenue = 100.0
     expenses = 50.0
     income = revenue - expenses
-    opening_balance = 1000
-    ending_balance = opening_balance + income
 
     mocker.patch(
         "budget.services.get_income_transactions", autospec=True, return_value=[],
@@ -525,16 +521,6 @@ def test_get_income_record(
     mocker.patch(
         "budget.services.get_expenses", autospec=True, return_value=expenses,
     )
-    mocker.patch(
-        "budget.services.get_opening_balance",
-        autospec=True,
-        return_value=opening_balance,
-    )
-    mocker.patch(
-        "budget.services.get_ending_balance",
-        autospec=True,
-        return_value=ending_balance,
-    )
 
     accounts = [account_foo]
     from_date = datetime.date.today()
@@ -542,13 +528,13 @@ def test_get_income_record(
     excluded_categories = [category_foo]
 
     output = get_income_record(accounts, from_date, to_date, excluded_categories)
-    assert output["from"] == from_date
-    assert output["to"] == to_date
-    assert output["revenue"] == revenue
-    assert output["expenses"] == expenses
-    assert output["income"] == income
-    assert output["opening_balance"] == opening_balance
-    assert output["ending_balance"] == ending_balance
+    assert output == {
+        "from": from_date,
+        "to": to_date,
+        "revenue": revenue,
+        "expenses": expenses,
+        "income": income,
+    }
 
 
 class TestGetIncomeTransactions:
@@ -702,6 +688,84 @@ class TestGetExpenses:
         assert output == abs(sum(t.amount for t in transactions))
 
 
+class TestGetBalanceReport:
+    def test_output(self, mocker: MockFixture) -> None:
+        mocker.patch(
+            "budget.services.get_balance_record_per_month",
+            autospec=True,
+            return_value=[],
+        )
+        mocker.patch(
+            "budget.services.get_balance_records_summary",
+            autospec=True,
+            return_value={},
+        )
+        output = get_balance_report([], datetime.date.today(), datetime.date.today())
+        assert output == {"records": [], "summary": {}}
+
+
+class TestGetBalanceRecordPerMonth:
+    def test_no_date_range(self, mocker: MockFixture) -> None:
+        mocker.patch(
+            "budget.services.get_date_range_per_month", autospec=True, return_value=[],
+        )
+
+        accounts: List[Account] = []
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+
+        output = get_balance_record_per_month(accounts, from_date, to_date)
+        assert output == []
+
+    def test_multiple_date_ranges(self, mocker: MockFixture) -> None:
+        date = datetime.date.today()
+        mocker.patch(
+            "budget.services.get_date_range_per_month",
+            autospec=True,
+            return_value=[(date, date), (date, date)],
+        )
+        mocker.patch(
+            "budget.services.get_balance_record", autospec=True, return_value={},
+        )
+
+        accounts: List[Account] = []
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+
+        output = get_balance_record_per_month(accounts, from_date, to_date)
+        assert output == [{}, {}]
+
+
+def test_get_balance_record(account_foo: Account, mocker: MockFixture) -> None:
+    opening_balance = 1000
+    ending_balance = 1500
+    difference = ending_balance - opening_balance
+
+    mocker.patch(
+        "budget.services.get_opening_balance",
+        autospec=True,
+        return_value=opening_balance,
+    )
+    mocker.patch(
+        "budget.services.get_ending_balance",
+        autospec=True,
+        return_value=ending_balance,
+    )
+
+    accounts = [account_foo]
+    from_date = datetime.date.today()
+    to_date = datetime.date.today() + datetime.timedelta(days=1)
+
+    output = get_balance_record(accounts, from_date, to_date)
+    assert output == {
+        "from": from_date,
+        "to": to_date,
+        "opening_balance": opening_balance,
+        "ending_balance": ending_balance,
+        "difference": difference,
+    }
+
+
 class TestGetOpeningBalance:
     def test_no_transactions(self, account_foo: Account) -> None:
         date = datetime.date.today()
@@ -830,6 +894,58 @@ class TestGetEndingBalance:
         ]
         output = get_ending_balance(date, [account_a, account_b])
         assert output == sum(t.amount for t in transactions)
+
+
+class TestGetBalanceRecordsSummary:
+    def test_no_entries(self) -> None:
+        output = get_balance_records_summary([])
+        assert output == {
+            "from": datetime.date.today(),
+            "to": datetime.date.today(),
+            "opening_balance": Decimal(),
+            "ending_balance": Decimal(),
+            "difference": Decimal(),
+        }
+
+    def test_single_entry(self) -> None:
+        records = [
+            {
+                "from": datetime.date.today(),
+                "to": datetime.date.today() + datetime.timedelta(days=1),
+                "opening_balance": Decimal(1000.0),
+                "ending_balance": Decimal(1100.0),
+                "difference": Decimal(100.0),
+            }
+        ]
+        output = get_balance_records_summary(records)
+        assert output == records[0]
+
+    def test_multiple_entries(self) -> None:
+        records = [
+            {
+                "from": datetime.date.today(),
+                "to": datetime.date.today() + datetime.timedelta(days=1),
+                "opening_balance": Decimal(1000.0),
+                "ending_balance": Decimal(1100.0),
+                "difference": Decimal(100.0),
+            },
+            {
+                "from": datetime.date.today() + datetime.timedelta(days=2),
+                "to": datetime.date.today() + datetime.timedelta(days=3),
+                "opening_balance": Decimal(2000.0),
+                "ending_balance": Decimal(1900.0),
+                "difference": Decimal(-100.0),
+            },
+        ]
+        output = get_balance_records_summary(records)
+        assert output == {
+            "from": records[0]["from"],
+            "to": records[-1]["to"],
+            "opening_balance": records[0]["opening_balance"],
+            "ending_balance": records[-1]["ending_balance"],
+            # For some reason mypy can't deduce that ending_balance is Decimal
+            "difference": records[-1]["ending_balance"] - records[0]["opening_balance"],  # type: ignore
+        }
 
 
 class TestGetDateRangePerMonth:

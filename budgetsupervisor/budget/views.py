@@ -9,6 +9,7 @@ from budget.forms import (
     CreateConnectionForm,
     CreateTransactionForm,
     RefreshConnectionForm,
+    ReportBalanceForm,
     ReportIncomeForm,
     UpdateAccountForm,
     UpdateTransactionForm,
@@ -16,6 +17,7 @@ from budget.forms import (
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
     create_initial_balance,
+    get_balance_report,
     get_income_report,
     import_saltedge_accounts,
     import_saltedge_connection,
@@ -344,6 +346,33 @@ class ReportIncomeView(LoginRequiredMixin, FormMixin, TemplateView):
             form.cleaned_data["from_date"],
             form.cleaned_data["to_date"],
             form.cleaned_data["excluded_categories"],
+        )
+        return self.render_to_response(self.get_context_data(form=form, report=report))
+
+
+class ReportBalanceView(LoginRequiredMixin, FormMixin, TemplateView):
+    template_name = "budget/report_balance.html"
+    form_class = ReportBalanceForm
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def get_form_kwargs(self) -> Dict:
+        kwargs = super().get_form_kwargs()
+        if self.request.GET:
+            kwargs["data"] = self.request.GET
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form: ReportIncomeForm) -> HttpResponse:
+        report = get_balance_report(
+            form.cleaned_data["accounts"],
+            form.cleaned_data["from_date"],
+            form.cleaned_data["to_date"],
         )
         return self.render_to_response(self.get_context_data(form=form, report=report))
 

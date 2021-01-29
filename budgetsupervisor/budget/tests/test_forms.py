@@ -6,6 +6,7 @@ import swagger_client as saltedge_client
 from budget.forms import (
     CreateConnectionForm,
     RefreshConnectionForm,
+    ReportBalanceForm,
     ReportIncomeForm,
     UpdateAccountForm,
     UpdateTransactionForm,
@@ -273,3 +274,65 @@ def test_report_income_form_with_unknown_excluded_category(
     form = ReportIncomeForm(data=data, user=user_foo)
     form.is_valid()
     assert "excluded_categories" in form.errors
+
+
+def test_report_balance_form_valid_single_account(
+    user_foo: User, account_foo: Account
+) -> None:
+    data = {
+        "accounts": [account_foo],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
+    form = ReportBalanceForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_report_balance_form_valid_multiple_accounts(
+    user_foo: User, account_factory: Account
+) -> None:
+    account_a = account_factory("a")
+    account_b = account_factory("b")
+    data = {
+        "accounts": [account_a, account_b],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
+    form = ReportBalanceForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_report_balance_form_valid_with_from_and_to_date(
+    user_foo: User, account_foo: Account
+) -> None:
+    data = {
+        "accounts": [account_foo],
+        "from_date": "2020-05-03",
+        "to_date": "2020-06-03",
+    }
+    form = ReportBalanceForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_report_balance_form_empty_accounts(user_foo: User) -> None:
+    data: Dict = {
+        "accounts": [],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
+    form = ReportBalanceForm(data=data, user=user_foo)
+    form.is_valid()
+    assert "accounts" in form.errors
+
+
+def test_report_balance_form_to_date_before_from_date(
+    user_foo: User, account_foo: Account
+) -> None:
+    data = {
+        "accounts": [account_foo],
+        "from_date": "2020-05-03",
+        "to_date": "2020-04-03",
+    }
+    form = ReportBalanceForm(data=data, user=user_foo)
+    form.is_valid()
+    assert "to_date" in form.errors
