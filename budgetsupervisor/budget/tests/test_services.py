@@ -13,6 +13,11 @@ from budget.services import (
     get_balance_record_per_month,
     get_balance_records_summary,
     get_balance_report,
+    get_category_balance,
+    get_category_balance_record_per_month,
+    get_category_balance_records_summary,
+    get_category_balance_report,
+    get_category_balance_report_header,
     get_date_range_per_month,
     get_ending_balance,
     get_expenses,
@@ -1064,3 +1069,323 @@ class TestGetMonthEnd:
 
     def test_month_with_28_days(self) -> None:
         assert get_month_end(datetime.date(2021, 2, 2)) == datetime.date(2021, 2, 28)
+
+
+class TestGetCategoryBalance:
+    def test_no_transactions(
+        self,
+        account_foo: Account,
+        transaction_factory: Callable[..., Transaction],
+        category_factory: Callable[..., Category],
+    ) -> None:
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        category_foo = category_factory(name="foo", user=account_foo.user)
+        category_bar = category_factory(name="bar", user=account_foo.user)
+        transaction_factory(
+            account=account_foo,
+            user=account_foo.user,
+            date=from_date,
+            amount=Decimal(100.0),
+        )
+        transaction_factory(
+            account=account_foo,
+            user=account_foo.user,
+            date=from_date,
+            amount=Decimal(200.0),
+            category=category_foo,
+        )
+        output = get_category_balance(category_bar, [account_foo], from_date, to_date)
+        assert output == Decimal()
+
+    def test_single_transaction(
+        self,
+        account_foo: Account,
+        transaction_factory: Callable[..., Transaction],
+        category_foo: Category,
+    ) -> None:
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        transaction = transaction_factory(
+            account=account_foo,
+            user=account_foo.user,
+            date=from_date,
+            amount=Decimal(-150.0),
+            category=category_foo,
+        )
+        output = get_category_balance(category_foo, [account_foo], from_date, to_date)
+        assert output == transaction.amount
+
+    def test_multiple_transactions(
+        self,
+        account_foo: Account,
+        transaction_factory: Callable[..., Transaction],
+        category_foo: Category,
+    ) -> None:
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        transactions = [
+            transaction_factory(
+                account=account_foo,
+                user=account_foo.user,
+                date=from_date,
+                amount=Decimal(-150.0),
+                category=category_foo,
+            ),
+            transaction_factory(
+                account=account_foo,
+                user=account_foo.user,
+                date=from_date,
+                amount=Decimal(200.0),
+                category=category_foo,
+            ),
+        ]
+        output = get_category_balance(category_foo, [account_foo], from_date, to_date)
+        assert output == sum(t.amount for t in transactions)
+
+    def test_transactions_before_from_date(
+        self,
+        account_foo: Account,
+        transaction_factory: Callable[..., Transaction],
+        category_foo: Category,
+    ) -> None:
+        from_date = datetime.date.today()
+        past = from_date - datetime.timedelta(days=1)
+        to_date = datetime.date.today()
+        transaction_factory(
+            account=account_foo,
+            user=account_foo.user,
+            date=past,
+            amount=Decimal(-150.0),
+            category=category_foo,
+        )
+        output = get_category_balance(category_foo, [account_foo], from_date, to_date)
+        assert output == Decimal()
+
+    def test_transactions_after_to_date(
+        self,
+        account_foo: Account,
+        transaction_factory: Callable[..., Transaction],
+        category_foo: Category,
+    ) -> None:
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+        future = to_date + datetime.timedelta(days=1)
+        transaction_factory(
+            account=account_foo,
+            user=account_foo.user,
+            date=future,
+            amount=Decimal(-150.0),
+            category=category_foo,
+        )
+        output = get_category_balance(category_foo, [account_foo], from_date, to_date)
+        assert output == Decimal()
+
+
+class TestGetCategoryBalanceRecordPerMonth:
+    def test_no_date_range(self, category_foo: Category, mocker: MockFixture) -> None:
+        mocker.patch(
+            "budget.services.get_date_range_per_month", autospec=True, return_value=[],
+        )
+
+        categories: List[Category] = [category_foo]
+        accounts: List[Account] = []
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+
+        output = get_category_balance_record_per_month(
+            categories, accounts, from_date, to_date
+        )
+        assert output == []
+
+    def test_single_date_range(
+        self, category_foo: Category, mocker: MockFixture
+    ) -> None:
+        date_range = (
+            datetime.date.today(),
+            datetime.date.today() + datetime.timedelta(days=1),
+        )
+        mocker.patch(
+            "budget.services.get_date_range_per_month",
+            autospec=True,
+            return_value=[date_range],
+        )
+        mocker.patch(
+            "budget.services.get_category_balance", autospec=True, return_value=123,
+        )
+
+        categories: List[Category] = [category_foo]
+        accounts: List[Account] = []
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+
+        output = get_category_balance_record_per_month(
+            categories, accounts, from_date, to_date
+        )
+        assert output == [
+            {"from": date_range[0], "to": date_range[1], category_foo.name: 123}
+        ]
+
+    def test_multiple_date_ranges(
+        self, category_foo: Category, mocker: MockFixture
+    ) -> None:
+        date_ranges = [
+            (datetime.date.today(), datetime.date.today() + datetime.timedelta(days=1)),
+            (
+                datetime.date.today() + datetime.timedelta(days=2),
+                datetime.date.today() + datetime.timedelta(days=3),
+            ),
+        ]
+        mocker.patch(
+            "budget.services.get_date_range_per_month",
+            autospec=True,
+            return_value=date_ranges,
+        )
+        mocker.patch(
+            "budget.services.get_category_balance",
+            autospec=True,
+            side_effect=[123, 456],
+        )
+
+        categories: List[Category] = [category_foo]
+        accounts: List[Account] = []
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+
+        output = get_category_balance_record_per_month(
+            categories, accounts, from_date, to_date
+        )
+        assert output == [
+            {
+                "from": date_ranges[0][0],
+                "to": date_ranges[0][1],
+                category_foo.name: 123,
+            },
+            {
+                "from": date_ranges[1][0],
+                "to": date_ranges[1][1],
+                category_foo.name: 456,
+            },
+        ]
+
+    def test_multiple_categories(
+        self, category_factory: Callable[..., Category], mocker: MockFixture
+    ) -> None:
+        date_range = (
+            datetime.date.today(),
+            datetime.date.today() + datetime.timedelta(days=1),
+        )
+        mocker.patch(
+            "budget.services.get_date_range_per_month",
+            autospec=True,
+            return_value=[date_range],
+        )
+        mocker.patch(
+            "budget.services.get_category_balance",
+            autospec=True,
+            side_effect=[123, 456],
+        )
+
+        categories: List[Category] = [
+            category_factory(name="a"),
+            category_factory(name="b"),
+        ]
+        accounts: List[Account] = []
+        from_date = datetime.date.today()
+        to_date = datetime.date.today()
+
+        output = get_category_balance_record_per_month(
+            categories, accounts, from_date, to_date
+        )
+        assert output == [
+            {
+                "from": date_range[0],
+                "to": date_range[1],
+                categories[0].name: 123,
+                categories[1].name: 456,
+            }
+        ]
+
+
+class TestGetCategoryBalanceReport:
+    def test_output(self, mocker: MockFixture) -> None:
+        mocker.patch(
+            "budget.services.get_category_balance_report_header",
+            autospec=True,
+            return_value=[],
+        )
+        mocker.patch(
+            "budget.services.get_category_balance_record_per_month",
+            autospec=True,
+            return_value=[],
+        )
+        mocker.patch(
+            "budget.services.get_category_balance_records_summary",
+            autospec=True,
+            return_value={},
+        )
+        output = get_category_balance_report(
+            [], [], datetime.date.today(), datetime.date.today()
+        )
+        assert output == {"header": [], "records": [], "summary": {}}
+
+
+class TestGetCategoryBalanceReportHeader:
+    def test_no_categories(self) -> None:
+        output = get_category_balance_report_header([])
+        assert output == ["From", "To"]
+
+    def test_single_category(self, category_foo: Category) -> None:
+        output = get_category_balance_report_header([category_foo])
+        assert output == ["From", "To", category_foo.name]
+
+    def test_multiple_categories(
+        self, category_factory: Callable[..., Category]
+    ) -> None:
+        categories = [category_factory(name="a"), category_factory(name="b")]
+        output = get_category_balance_report_header(categories)
+        assert output == ["From", "To", categories[0].name, categories[1].name]
+
+
+class TestGetCategoryBalanceRecordsSummary:
+    def test_no_entries(self) -> None:
+        output = get_category_balance_records_summary([])
+        assert output == {
+            "from": datetime.date.today(),
+            "to": datetime.date.today(),
+        }
+
+    def test_single_entry(self) -> None:
+        records = [
+            {
+                "from": datetime.date.today(),
+                "to": datetime.date.today() + datetime.timedelta(days=1),
+                "category_a": Decimal(150.0),
+                "category_b": Decimal(-150.0),
+            }
+        ]
+        output = get_category_balance_records_summary(records)
+        assert output == records[0]
+
+    def test_multiple_entries(self) -> None:
+        records = [
+            {
+                "from": datetime.date.today(),
+                "to": datetime.date.today() + datetime.timedelta(days=1),
+                "category_a": Decimal(150.0),
+                "category_b": Decimal(-150.0),
+            },
+            {
+                "from": datetime.date.today(),
+                "to": datetime.date.today() + datetime.timedelta(days=1),
+                "category_a": Decimal(50.0),
+                "category_b": Decimal(150.0),
+            },
+        ]
+        output = get_category_balance_records_summary(records)
+        assert output == {
+            "from": records[0]["from"],
+            "to": records[-1]["to"],
+            "category_a": sum(r["category_a"] for r in records),
+            "category_b": sum(r["category_b"] for r in records),
+        }

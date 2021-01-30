@@ -94,3 +94,24 @@ class ReportBalanceForm(forms.Form):
 
         if from_date and to_date and to_date < from_date:
             self.add_error("to_date", "To date can't point before from date.")
+
+
+class ReportCategoryBalanceForm(forms.Form):
+    categories = forms.ModelMultipleChoiceField(queryset=None)
+    accounts = forms.ModelMultipleChoiceField(queryset=None)
+    from_date = forms.DateField(widget=date_input_with_placeholder, localize=True)
+    to_date = forms.DateField(widget=date_input_with_placeholder, localize=True)
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        self.fields["categories"].queryset = Category.objects.filter(user=user)
+        self.fields["accounts"].queryset = Account.objects.filter(user=user)
+
+    def clean(self) -> None:
+        cleaned_data = super().clean()
+        from_date = cleaned_data.get("from_date")
+        to_date = cleaned_data.get("to_date")
+
+        if from_date and to_date and to_date < from_date:
+            self.add_error("to_date", "To date can't point before from date.")

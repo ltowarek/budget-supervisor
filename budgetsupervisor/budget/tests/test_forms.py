@@ -7,6 +7,7 @@ from budget.forms import (
     CreateConnectionForm,
     RefreshConnectionForm,
     ReportBalanceForm,
+    ReportCategoryBalanceForm,
     ReportIncomeForm,
     UpdateAccountForm,
     UpdateTransactionForm,
@@ -334,5 +335,116 @@ def test_report_balance_form_to_date_before_from_date(
         "to_date": "2020-04-03",
     }
     form = ReportBalanceForm(data=data, user=user_foo)
+    form.is_valid()
+    assert "to_date" in form.errors
+
+
+def test_report_category_balance_form_valid_single_category(
+    user_foo: User, category_foo: Category, account_foo: Account
+) -> None:
+    data = {
+        "categories": [category_foo],
+        "accounts": [account_foo],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
+    form = ReportCategoryBalanceForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_report_category_balance_form_valid_multiple_categories(
+    user_foo: User, category_factory: Callable[..., Category], account_foo: Account
+) -> None:
+    category_a = category_factory("a")
+    category_b = category_factory("b")
+    data = {
+        "categories": [category_a, category_b],
+        "accounts": [account_foo],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
+    form = ReportCategoryBalanceForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_report_category_balance_form_valid_single_account(
+    user_foo: User, category_foo: Category, account_foo: Account
+) -> None:
+    data = {
+        "categories": [category_foo],
+        "accounts": [account_foo],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
+    form = ReportCategoryBalanceForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_report_category_balance_form_valid_multiple_accounts(
+    user_foo: User, category_foo: Category, account_factory: Callable[..., Account]
+) -> None:
+    account_a = account_factory("a")
+    account_b = account_factory("b")
+    data = {
+        "categories": [category_foo],
+        "accounts": [account_a, account_b],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
+    form = ReportCategoryBalanceForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_report_category_balance_form_valid_with_from_and_to_date(
+    user_foo: User, category_foo: Category, account_foo: Account
+) -> None:
+    data = {
+        "categories": [category_foo],
+        "accounts": [account_foo],
+        "from_date": "2020-05-03",
+        "to_date": "2020-06-03",
+    }
+    form = ReportCategoryBalanceForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_report_category_balance_form_empty_categories(
+    user_foo: User, account_foo: Account
+) -> None:
+    data: Dict = {
+        "categories": [],
+        "accounts": [account_foo],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
+    form = ReportCategoryBalanceForm(data=data, user=user_foo)
+    form.is_valid()
+    assert "categories" in form.errors
+
+
+def test_report_category_balance_form_empty_accounts(
+    user_foo: User, category_foo: Category
+) -> None:
+    data: Dict = {
+        "categories": [category_foo],
+        "accounts": [],
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today(),
+    }
+    form = ReportCategoryBalanceForm(data=data, user=user_foo)
+    form.is_valid()
+    assert "accounts" in form.errors
+
+
+def test_report_category_balance_form_to_date_before_from_date(
+    user_foo: User, category_foo: Category, account_foo: Account
+) -> None:
+    data = {
+        "categories": [category_foo],
+        "accounts": [account_foo],
+        "from_date": "2020-05-03",
+        "to_date": "2020-04-03",
+    }
+    form = ReportCategoryBalanceForm(data=data, user=user_foo)
     form.is_valid()
     assert "to_date" in form.errors

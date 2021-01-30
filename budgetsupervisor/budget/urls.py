@@ -71,6 +71,11 @@ reports_patterns = (
     [
         path("income/", views.ReportIncomeView.as_view(), name="report_income"),
         path("balance/", views.ReportBalanceView.as_view(), name="report_balance"),
+        path(
+            "category_balance/",
+            views.ReportCategoryBalanceView.as_view(),
+            name="report_category_balance",
+        ),
     ],
     "reports",
 )

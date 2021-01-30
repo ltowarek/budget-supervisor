@@ -297,3 +297,65 @@ def get_balance_records_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]
         "ending_balance": ending_balance,
         "difference": difference,
     }
+
+
+def get_category_balance_report(
+    categories: List[Category],
+    accounts: List[Account],
+    from_date: datetime.date,
+    to_date: datetime.date,
+) -> Dict[str, Any]:
+    header = get_category_balance_report_header(categories)
+    records = get_category_balance_record_per_month(
+        categories, accounts, from_date, to_date
+    )
+    summary = get_category_balance_records_summary(records)
+    return {"header": header, "records": records, "summary": summary}
+
+
+def get_category_balance_report_header(categories: List[Category]) -> List[str]:
+    return ["From", "To"] + [c.name for c in categories]
+
+
+def get_category_balance_record_per_month(
+    categories: List[Category],
+    accounts: List[Account],
+    from_date: datetime.date,
+    to_date: datetime.date,
+) -> List[Dict[str, Any]]:
+    records = []
+    for start, end in get_date_range_per_month(from_date, to_date):
+        record: Dict[str, Any] = {"from": start, "to": end}
+        for category in categories:
+            record[category.name] = get_category_balance(
+                category, accounts, from_date, to_date
+            )
+        records.append(record)
+    return records
+
+
+def get_category_balance(
+    category: Category,
+    accounts: List[Account],
+    from_date: datetime.date,
+    to_date: datetime.date,
+) -> Decimal:
+    transactions = Transaction.objects.filter(
+        category=category, account__in=accounts, date__gte=from_date, date__lte=to_date
+    )
+    balance = transactions.aggregate(Sum("amount"))["amount__sum"]
+    return balance if balance else Decimal()
+
+
+def get_category_balance_records_summary(
+    records: List[Dict[str, Any]]
+) -> Dict[str, Any]:
+    balance: Dict[str, Decimal] = {}
+    for r in records:
+        for k, v in r.items():
+            if k == "from" or k == "to":
+                continue
+            balance[k] = balance.get(k, Decimal()) + v
+    from_date = records[0]["from"] if records else datetime.date.today()
+    to_date = records[-1]["to"] if records else datetime.date.today()
+    return {"from": from_date, "to": to_date, **balance}

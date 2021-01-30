@@ -1,0 +1,50 @@
+{% extends "budget/base.html" %}
+
+{% block title %}
+Category Balance Report
+{% endblock %}
+
+{% block content %}
+<form action="" method="get">
+  {% include "budget/form_snippet.html" %}
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+<table class="table table-bordered text-center mt-1">
+  <thead class="thead-light">
+    {% if report.header %}
+    <tr>
+      {% for header in report.header %}
+      <th>{{ header }}</th>
+      {% endfor %}
+    </tr>
+    {% endif %}
+  </thead>
+  <tbody>
+    {% for record in report.records %}
+    <tr>
+      {% for k, v in record.items %}
+        {% if k == "from" or k == "to" %}
+        <td>{{ v|date:"SHORT_DATE_FORMAT"}}</td>
+        {% else %}
+        <td>{{ v|floatformat:2 }}</td>
+        {% endif %}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    {% if report.summary %}
+    <tr>
+      {% for k, v in report.summary.items %}
+        {% if k == "from" or k == "to" %}
+        <td>{{ v|date:"SHORT_DATE_FORMAT"}}</td>
+        {% else %}
+        <td>{{ v|floatformat:2 }}</td>
+        {% endif %}
+      {% endfor %}
+    </tr>
+    {% endif %}
+  </tfoot>
+</table>
+{% endblock %}

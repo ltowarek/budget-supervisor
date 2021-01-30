@@ -1566,6 +1566,108 @@ class TestReportBalance:
         element.click()
 
 
+class TestReportCategoryBalance:
+    def test_table_header(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_factory: Callable[..., Category],
+        account_foo: Account,
+    ) -> None:
+        categories = [
+            category_factory(name="category_a"),
+            category_factory(name="category_b"),
+        ]
+        selenium = authenticate_selenium(user=user_foo)
+        self.report_category_balance(
+            selenium, live_server_path, categories, [account_foo]
+        )
+
+        elements = selenium.find_elements_by_xpath("//table/thead/tr/th")
+        expected = ["From", "To", "category_a", "category_b"]
+        assert len(elements) == len(expected)
+        for el, ex in zip(elements, expected):
+            assert el.text == ex
+
+    def test_table_body(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_factory: Callable[..., Category],
+        account_foo: Account,
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        categories = [
+            category_factory(name="category_a"),
+            category_factory(name="category_b"),
+        ]
+        months = 2
+        from_date = datetime.date(2020, 1, 10)
+        to_date = datetime.date(2020, 1 + months, 15)
+        transaction_factory(date=from_date)
+
+        selenium = authenticate_selenium(user=user_foo)
+        self.report_category_balance(
+            selenium, live_server_path, categories, [account_foo], from_date, to_date,
+        )
+
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr/td")
+        columns = 4
+        assert len(elements) == (1 + months) * columns
+
+    def test_table_footer(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        category_factory: Callable[..., Category],
+        account_foo: Account,
+        transaction_foo: Transaction,
+    ) -> None:
+        categories = [
+            category_factory(name="category_a"),
+            category_factory(name="category_b"),
+        ]
+        selenium = authenticate_selenium(user=user_foo)
+        self.report_category_balance(
+            selenium, live_server_path, categories, [account_foo]
+        )
+
+        elements = selenium.find_elements_by_xpath("//table/tfoot/tr/td")
+        columns = 4
+        assert len(elements) == columns
+
+    def report_category_balance(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        categories: List[Category],
+        accounts: List[Account],
+        from_date: Optional[datetime.date] = None,
+        to_date: Optional[datetime.date] = None,
+    ) -> None:
+        if from_date is None:
+            from_date = datetime.date.today()
+        if to_date is None:
+            to_date = datetime.date.today()
+        url = live_server_path(reverse("reports:report_category_balance"))
+        selenium.get(url)
+        select = Select(selenium.find_element_by_name("categories"))
+        for c in categories:
+            select.select_by_visible_text(c.name)
+        select = Select(selenium.find_element_by_name("accounts"))
+        for account in accounts:
+            select.select_by_visible_text(account.name)
+        element = selenium.find_element_by_name("from_date")
+        element.send_keys(date_format(from_date, "SHORT_DATE_FORMAT"))
+        element = selenium.find_element_by_name("to_date")
+        element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
+        element.click()
+
+
 class TestNavigationBar:
     def test_authenticated_budget_links(
         self,
@@ -1606,6 +1708,10 @@ class TestNavigationBar:
         assert elements[6].text == "Balance"
         assert elements[6].get_attribute("href") == live_server_path(
             reverse("reports:report_balance")
+        )
+        assert elements[7].text == "Category Balance"
+        assert elements[7].get_attribute("href") == live_server_path(
+            reverse("reports:report_category_balance")
         )
 
     def test_not_authenticated_budget_links(
