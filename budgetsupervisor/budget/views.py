@@ -74,7 +74,9 @@ class ConnectionsListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self) -> QuerySet:
-        return Connection.objects.filter(user=self.request.user).order_by("provider")
+        return Connection.objects.filter(user=self.request.user).order_by(
+            "provider", "pk"
+        )
 
 
 class ConnectionCreate(LoginRequiredMixin, FormView):
@@ -170,7 +172,7 @@ class AccountListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self) -> QuerySet:
-        return Account.objects.filter(user=self.request.user).order_by("name")
+        return Account.objects.filter(user=self.request.user).order_by("name", "pk")
 
 
 class AccountCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -220,7 +222,9 @@ class TransactionListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self) -> QuerySet:
-        return Transaction.objects.filter(user=self.request.user).order_by("-date")
+        return Transaction.objects.filter(user=self.request.user).order_by(
+            "-date", "pk"
+        )
 
 
 class TransactionCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -282,7 +286,7 @@ class CategoryListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self) -> QuerySet:
-        return Category.objects.filter(user=self.request.user).order_by("name")
+        return Category.objects.filter(user=self.request.user).order_by("name", "pk")
 
 
 class CategoryCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
