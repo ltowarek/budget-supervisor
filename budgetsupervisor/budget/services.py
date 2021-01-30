@@ -327,9 +327,7 @@ def get_category_balance_record_per_month(
     for start, end in get_date_range_per_month(from_date, to_date):
         record: Dict[str, Any] = {"from": start, "to": end}
         for category in categories:
-            record[category.name] = get_category_balance(
-                category, accounts, from_date, to_date
-            )
+            record[category.name] = get_category_balance(category, accounts, start, end)
         records.append(record)
     return records
 
