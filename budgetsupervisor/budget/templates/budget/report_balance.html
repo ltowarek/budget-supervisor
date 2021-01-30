@@ -31,7 +31,7 @@ Balance Report
     </tr>
     {% endfor %}
   </tbody>
-  <tfoot>
+  <tfoot class="thead-light">
     {% if report.summary %}
     <tr>
       <td>{{ report.summary.from|date:"SHORT_DATE_FORMAT"}}</td>

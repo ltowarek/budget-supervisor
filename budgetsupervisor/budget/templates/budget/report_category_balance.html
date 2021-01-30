@@ -33,7 +33,7 @@ Category Balance Report
     </tr>
     {% endfor %}
   </tbody>
-  <tfoot>
+  <tfoot class="thead-light">
     {% if report.summary %}
     <tr>
       {% for k, v in report.summary.items %}
