@@ -34,11 +34,11 @@ Income Report
   <tfoot class="thead-light">
     {% if report.summary %}
     <tr>
-      <td>{{ report.summary.from|date:"SHORT_DATE_FORMAT"}}</td>
-      <td>{{ report.summary.to|date:"SHORT_DATE_FORMAT"}}</td>
-      <td>{{ report.summary.revenue|floatformat:2 }}</td>
-      <td>{{ report.summary.expenses|floatformat:2 }}</td>
-      <td>{{ report.summary.income|floatformat:2 }}</td>
+      <th>{{ report.summary.from|date:"SHORT_DATE_FORMAT"}}</th>
+      <th>{{ report.summary.to|date:"SHORT_DATE_FORMAT"}}</th>
+      <th>{{ report.summary.revenue|floatformat:2 }}</th>
+      <th>{{ report.summary.expenses|floatformat:2 }}</th>
+      <th>{{ report.summary.income|floatformat:2 }}</th>
     </tr>
     {% endif %}
   </tfoot>

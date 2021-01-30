@@ -38,9 +38,9 @@ Category Balance Report
     <tr>
       {% for k, v in report.summary.items %}
         {% if k == "from" or k == "to" %}
-        <td>{{ v|date:"SHORT_DATE_FORMAT"}}</td>
+        <th>{{ v|date:"SHORT_DATE_FORMAT"}}</th>
         {% else %}
-        <td>{{ v|floatformat:2 }}</td>
+        <th>{{ v|floatformat:2 }}</th>
         {% endif %}
       {% endfor %}
     </tr>

@@ -34,11 +34,11 @@ Balance Report
   <tfoot class="thead-light">
     {% if report.summary %}
     <tr>
-      <td>{{ report.summary.from|date:"SHORT_DATE_FORMAT"}}</td>
-      <td>{{ report.summary.to|date:"SHORT_DATE_FORMAT"}}</td>
-      <td>{{ report.summary.opening_balance|floatformat:2 }}</td>
-      <td>{{ report.summary.ending_balance|floatformat:2 }}</td>
-      <td>{{ report.summary.difference|floatformat:2 }}</td>
+      <th>{{ report.summary.from|date:"SHORT_DATE_FORMAT"}}</th>
+      <th>{{ report.summary.to|date:"SHORT_DATE_FORMAT"}}</th>
+      <th>{{ report.summary.opening_balance|floatformat:2 }}</th>
+      <th>{{ report.summary.ending_balance|floatformat:2 }}</th>
+      <th>{{ report.summary.difference|floatformat:2 }}</th>
     </tr>
     {% endif %}
   </tfoot>

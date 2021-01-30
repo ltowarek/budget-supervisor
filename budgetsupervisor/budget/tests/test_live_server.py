@@ -1453,7 +1453,7 @@ class TestReportIncome:
         selenium = authenticate_selenium(user=user_foo)
         self.report_income(selenium, live_server_path, [account_foo])
 
-        elements = selenium.find_elements_by_xpath("//table/tfoot/tr/td")
+        elements = selenium.find_elements_by_xpath("//table/tfoot/tr/th")
         columns = 5
         assert len(elements) == columns
 
@@ -1537,7 +1537,7 @@ class TestReportBalance:
         selenium = authenticate_selenium(user=user_foo)
         self.report_balance(selenium, live_server_path, [account_foo])
 
-        elements = selenium.find_elements_by_xpath("//table/tfoot/tr/td")
+        elements = selenium.find_elements_by_xpath("//table/tfoot/tr/th")
         columns = 5
         assert len(elements) == columns
 
@@ -1635,7 +1635,7 @@ class TestReportCategoryBalance:
             selenium, live_server_path, categories, [account_foo]
         )
 
-        elements = selenium.find_elements_by_xpath("//table/tfoot/tr/td")
+        elements = selenium.find_elements_by_xpath("//table/tfoot/tr/th")
         columns = 4
         assert len(elements) == columns
 
