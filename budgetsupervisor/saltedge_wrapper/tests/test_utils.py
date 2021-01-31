@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 import swagger_client as saltedge_client
 from saltedge_wrapper.factory import (
@@ -23,6 +25,59 @@ def test_create_connect_session(predefined_customer: saltedge_client.Customer) -
     redirect = "http://www.example.com"
     url = create_connect_session(
         redirect, predefined_customer.id, connect_sessions_api()
+    )
+    assert "https://www.saltedge.com/connect?token=" in url
+
+
+def test_create_connect_session_with_from_date(
+    predefined_customer: saltedge_client.Customer,
+) -> None:
+    redirect = "http://www.example.com"
+    url = create_connect_session(
+        redirect,
+        predefined_customer.id,
+        connect_sessions_api(),
+        from_date=datetime.date.today(),
+    )
+    assert "https://www.saltedge.com/connect?token=" in url
+
+
+def test_create_connect_session_with_from_date_365_days_ago(
+    predefined_customer: saltedge_client.Customer,
+) -> None:
+    redirect = "http://www.example.com"
+    url = create_connect_session(
+        redirect,
+        predefined_customer.id,
+        connect_sessions_api(),
+        from_date=datetime.date.today() - datetime.timedelta(days=365),
+    )
+    assert "https://www.saltedge.com/connect?token=" in url
+
+
+def test_create_connect_session_with_to_date(
+    predefined_customer: saltedge_client.Customer,
+) -> None:
+    redirect = "http://www.example.com"
+    url = create_connect_session(
+        redirect,
+        predefined_customer.id,
+        connect_sessions_api(),
+        to_date=datetime.date.today(),
+    )
+    assert "https://www.saltedge.com/connect?token=" in url
+
+
+def test_create_connect_session_with_from_and_to_date(
+    predefined_customer: saltedge_client.Customer,
+) -> None:
+    redirect = "http://www.example.com"
+    url = create_connect_session(
+        redirect,
+        predefined_customer.id,
+        connect_sessions_api(),
+        from_date=datetime.date.today(),
+        to_date=datetime.date.today(),
     )
     assert "https://www.saltedge.com/connect?token=" in url
 

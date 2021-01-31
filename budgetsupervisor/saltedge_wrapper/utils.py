@@ -1,4 +1,5 @@
-from typing import List
+import datetime
+from typing import List, Optional
 
 import swagger_client as saltedge_client
 
@@ -7,9 +8,13 @@ def create_connect_session(
     redirect_url: str,
     customer_id: str,
     connect_sessions_api: saltedge_client.ConnectSessionsApi,
+    from_date: Optional[datetime.date] = None,
+    to_date: Optional[datetime.date] = None,
 ) -> str:
     consent = saltedge_client.ConsentRequestBody(
-        scopes=["account_details", "transactions_details"]
+        scopes=["account_details", "transactions_details"],
+        from_date=from_date,
+        to_date=to_date,
     )
     attempt = saltedge_client.AttemptRequestBody(
         return_to=redirect_url, store_credentials=False

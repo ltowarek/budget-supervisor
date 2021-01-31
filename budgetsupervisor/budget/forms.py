@@ -1,3 +1,4 @@
+import datetime
 from typing import Any
 
 from django import forms
@@ -12,7 +13,30 @@ date_input_with_placeholder = forms.DateInput(
 
 
 class CreateConnectionForm(forms.Form):
-    pass
+    from_date = forms.DateField(
+        widget=date_input_with_placeholder, localize=True, required=False
+    )
+    to_date = forms.DateField(
+        widget=date_input_with_placeholder, localize=True, required=False
+    )
+
+    def clean(self) -> None:
+        cleaned_data = super().clean()
+        from_date = cleaned_data.get("from_date")
+        to_date = cleaned_data.get("to_date")
+
+        if from_date and from_date < (
+            datetime.date.today() - datetime.timedelta(days=365)
+        ):
+            self.add_error(
+                "from_date", "From date must be within exactly 365 days ago."
+            )
+        if from_date and from_date > datetime.date.today():
+            self.add_error("from_date", "From date can't be in future.")
+        if to_date and to_date < datetime.date.today():
+            self.add_error("to_date", "To date can't be in past.")
+        if from_date and to_date and to_date < from_date:
+            self.add_error("to_date", "To date can't point before from date.")
 
 
 class RefreshConnectionForm(forms.Form):

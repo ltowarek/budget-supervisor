@@ -142,6 +142,21 @@ class TestConnectionCreate:
             reverse("connections:connection_list")
         )
 
+    def test_saltedge_connect_session_creation_with_date_range(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        predefined_profile: Profile,
+        remove_temporary_connections: Callable[..., None],
+    ) -> None:
+        selenium = authenticate_selenium(user=predefined_profile.user)
+        self.create_saltedge_connection(
+            selenium, live_server_path, datetime.date.today(), datetime.date.today()
+        )
+        assert selenium.current_url == live_server_path(
+            reverse("connections:connection_list")
+        )
+
     def test_cant_create_connection_if_external_synchronization_is_disabled(
         self,
         authenticate_selenium: Callable[..., WebDriver],
@@ -159,10 +174,20 @@ class TestConnectionCreate:
 
     @classmethod
     def create_saltedge_connection(
-        cls, selenium: WebDriver, live_server_path: Callable[[str], str]
+        cls,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        from_date: Optional[datetime.date] = None,
+        to_date: Optional[datetime.date] = None,
     ) -> None:
         url = live_server_path(reverse("connections:connection_create"))
         selenium.get(url)
+        if from_date:
+            element = selenium.find_element_by_name("from_date")
+            element.send_keys(date_format(from_date, "SHORT_DATE_FORMAT"))
+        if to_date:
+            element = selenium.find_element_by_name("to_date")
+            element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
         element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
         element = selenium.find_element_by_id("providers-search")

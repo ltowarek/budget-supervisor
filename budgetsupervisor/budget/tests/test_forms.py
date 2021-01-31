@@ -18,9 +18,70 @@ from budget.services import create_initial_balance
 from users.models import User
 
 
-def test_create_connection_form_valid() -> None:
+def test_create_connection_form_default() -> None:
     form = CreateConnectionForm(data={})
     assert form.is_valid() is True
+
+
+def test_create_connection_form_from_date_valid() -> None:
+    data = {
+        "from_date": datetime.date.today(),
+    }
+    form = CreateConnectionForm(data=data)
+    assert form.is_valid() is True
+
+
+def test_create_connection_form_from_date_365_days_ago() -> None:
+    data = {
+        "from_date": datetime.date.today() - datetime.timedelta(days=365),
+    }
+    form = CreateConnectionForm(data=data)
+    assert form.is_valid() is True
+
+
+def test_create_connection_form_from_date_366_days_ago() -> None:
+    data = {
+        "from_date": datetime.date.today() - datetime.timedelta(days=366),
+    }
+    form = CreateConnectionForm(data=data)
+    form.is_valid()
+    assert "from_date" in form.errors
+
+
+def test_create_connection_form_from_date_in_future() -> None:
+    data = {
+        "from_date": datetime.date.today() + datetime.timedelta(days=1),
+    }
+    form = CreateConnectionForm(data=data)
+    form.is_valid()
+    assert "from_date" in form.errors
+
+
+def test_create_connection_form_to_date_valid() -> None:
+    data = {
+        "to_date": datetime.date.today(),
+    }
+    form = CreateConnectionForm(data=data)
+    assert form.is_valid() is True
+
+
+def test_create_connection_form_to_date_in_past() -> None:
+    data = {
+        "to_date": datetime.date.today() - datetime.timedelta(days=1),
+    }
+    form = CreateConnectionForm(data=data)
+    form.is_valid()
+    assert "to_date" in form.errors
+
+
+def test_create_connection_form_to_date_before_from_date() -> None:
+    data = {
+        "from_date": datetime.date.today(),
+        "to_date": datetime.date.today() - datetime.timedelta(days=1),
+    }
+    form = CreateConnectionForm(data=data)
+    form.is_valid()
+    assert "to_date" in form.errors
 
 
 def test_update_account_form_valid(account_foo: Account) -> None:

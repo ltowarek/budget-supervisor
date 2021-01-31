@@ -90,6 +90,8 @@ class ConnectionCreate(LoginRequiredMixin, FormView):
             redirect_url,
             str(self.request.user.profile.external_id),
             connect_sessions_api(),
+            form.cleaned_data["from_date"],
+            form.cleaned_data["to_date"],
         )
         return redirect(connect_url)
 
