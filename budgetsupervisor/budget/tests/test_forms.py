@@ -63,13 +63,13 @@ def test_update_account_alias_field_disabled(account_foo_external: Account,) -> 
 
 
 def test_create_transaction_accounts_are_ordered(
-    account_factory: Callable[..., Account],
+    user_foo: User, account_factory: Callable[..., Account],
 ) -> None:
     account_c = account_factory(name="f", alias="c")
     account_b = account_factory(name="e", alias="b")
     account_d = account_factory(name="d")
     account_a = account_factory(name="a")
-    form = CreateTransactionForm()
+    form = CreateTransactionForm(user=user_foo)
     assert list(form.fields["account"].queryset) == [
         account_a,
         account_b,
@@ -79,12 +79,12 @@ def test_create_transaction_accounts_are_ordered(
 
 
 def test_create_transaction_categories_are_ordered(
-    category_factory: Callable[..., Category],
+    user_foo: User, category_factory: Callable[..., Category],
 ) -> None:
     category_c = category_factory(name="c")
     category_b = category_factory(name="b")
     category_a = category_factory(name="a")
-    form = CreateTransactionForm()
+    form = CreateTransactionForm(user=user_foo)
     assert list(form.fields["category"].queryset) == [
         category_a,
         category_b,
