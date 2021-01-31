@@ -237,13 +237,10 @@ class TransactionCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
-    def get_form(self, *args: Any, **kwargs: Any) -> ModelForm:
-        form = super().get_form(*args, **kwargs)
-        form.fields["account"].queryset = Account.objects.filter(user=self.request.user)
-        form.fields["category"].queryset = Category.objects.filter(
-            user=self.request.user
-        )
-        return form
+    def get_form_kwargs(self) -> Dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class TransactionUpdate(
@@ -257,14 +254,6 @@ class TransactionUpdate(
     def test_func(self) -> bool:
         obj = self.get_object()
         return obj.user == self.request.user
-
-    def get_form(self, *args: Any, **kwargs: Any) -> ModelForm:
-        form = super().get_form(*args, **kwargs)
-        form.fields["account"].queryset = Account.objects.filter(user=self.request.user)
-        form.fields["category"].queryset = Category.objects.filter(
-            user=self.request.user
-        )
-        return form
 
 
 class TransactionDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):

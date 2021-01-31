@@ -119,7 +119,7 @@ def test_update_transaction_date_field_disabled(
     assert form.fields["date"].disabled is True
 
 
-def test_update_transaction_amount_field_enabled(transaction_foo: Transaction,) -> None:
+def test_update_transaction_amount_field_enabled(transaction_foo: Transaction) -> None:
     form = UpdateTransactionForm(data={}, instance=transaction_foo)
     assert form.fields["amount"].disabled is False
 
@@ -177,9 +177,7 @@ def test_update_transaction_initial_transaction_description_field_enabled(
     assert form.fields["description"].disabled is False
 
 
-def test_update_transaction_account_field_enabled(
-    transaction_foo: Transaction,
-) -> None:
+def test_update_transaction_account_field_enabled(transaction_foo: Transaction) -> None:
     form = UpdateTransactionForm(data={}, instance=transaction_foo)
     assert form.fields["account"].disabled is False
 
@@ -192,33 +190,62 @@ def test_update_transaction_account_field_disabled(
 
 
 def test_update_transaction_accounts_are_ordered(
-    account_factory: Callable[..., Account],
+    transaction_foo: Transaction, account_factory: Callable[..., Account]
 ) -> None:
-    account_c = account_factory(name="f", alias="c")
-    account_b = account_factory(name="e", alias="b")
-    account_d = account_factory(name="d")
-    account_a = account_factory(name="a")
-    form = UpdateTransactionForm()
+    account_c = account_factory(name="f", alias="c", user=transaction_foo.user)
+    account_b = account_factory(name="e", alias="b", user=transaction_foo.user)
+    account_d = account_factory(name="d", user=transaction_foo.user)
+    account_a = account_factory(name="a", user=transaction_foo.user)
+    form = UpdateTransactionForm(instance=transaction_foo)
     assert list(form.fields["account"].queryset) == [
         account_a,
         account_b,
         account_c,
         account_d,
+        transaction_foo.account,
     ]
 
 
 def test_update_transaction_categories_are_ordered(
-    category_factory: Callable[..., Category],
+    transaction_foo: Transaction, category_factory: Callable[..., Category]
 ) -> None:
-    category_c = category_factory(name="c")
-    category_b = category_factory(name="b")
-    category_a = category_factory(name="a")
-    form = UpdateTransactionForm()
+    category_c = category_factory(name="c", user=transaction_foo.user)
+    category_b = category_factory(name="b", user=transaction_foo.user)
+    category_a = category_factory(name="a", user=transaction_foo.user)
+    form = UpdateTransactionForm(instance=transaction_foo)
     assert list(form.fields["category"].queryset) == [
         category_a,
         category_b,
         category_c,
     ]
+
+
+def test_update_transaction_other_users_accounts_are_not_visible(
+    user_factory: Callable[..., User],
+    account_factory: Callable[..., Account],
+    transaction_factory: Callable[..., Transaction],
+) -> None:
+    user_a = user_factory(username="a")
+    account_a = account_factory(name="a", user=user_a)
+    user_b = user_factory(username="b")
+    _ = account_factory(name="b", user=user_b)
+    transaction = transaction_factory(account=account_a, user=user_a)
+    form = UpdateTransactionForm(instance=transaction)
+    assert list(form.fields["account"].queryset) == [account_a]
+
+
+def test_update_transaction_other_users_categories_are_not_visible(
+    user_factory: Callable[..., User],
+    category_factory: Callable[..., Category],
+    transaction_factory: Callable[..., Transaction],
+) -> None:
+    user_a = user_factory(username="a")
+    category_a = category_factory(name="a", user=user_a)
+    user_b = user_factory(username="b")
+    _ = category_factory(name="b", user=user_b)
+    transaction = transaction_factory(category=category_a, user=user_a)
+    form = UpdateTransactionForm(instance=transaction)
+    assert list(form.fields["category"].queryset) == [category_a]
 
 
 def test_refresh_connection_form_valid() -> None:

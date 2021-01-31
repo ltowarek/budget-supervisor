@@ -40,11 +40,12 @@ class CreateTransactionForm(forms.ModelForm):
         widgets = {"date": date_input_with_placeholder}
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
-        self.fields["account"].queryset = self.fields["account"].queryset.order_by(
+        self.fields["account"].queryset = Account.objects.filter(user=user).order_by(
             Case(When(alias="", then="name"), default="alias")
         )
-        self.fields["category"].queryset = self.fields["category"].queryset.order_by(
+        self.fields["category"].queryset = Category.objects.filter(user=user).order_by(
             "name"
         )
 
@@ -58,10 +59,11 @@ class UpdateTransactionForm(forms.ModelForm):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.fields["account"].queryset = self.fields["account"].queryset.order_by(
+        user = self.instance.user
+        self.fields["account"].queryset = Account.objects.filter(user=user).order_by(
             Case(When(alias="", then="name"), default="alias")
         )
-        self.fields["category"].queryset = self.fields["category"].queryset.order_by(
+        self.fields["category"].queryset = Category.objects.filter(user=user).order_by(
             "name"
         )
         if self.instance.external_id:
