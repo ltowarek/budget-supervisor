@@ -5,6 +5,7 @@ import pytest
 import swagger_client as saltedge_client
 from budget.forms import (
     CreateConnectionForm,
+    CreateTransactionForm,
     RefreshConnectionForm,
     ReportBalanceForm,
     ReportCategoryBalanceForm,
@@ -59,6 +60,36 @@ def test_update_account_account_type_field_disabled(
 def test_update_account_alias_field_disabled(account_foo_external: Account,) -> None:
     form = UpdateAccountForm(data={}, instance=account_foo_external)
     assert form.fields["alias"].disabled is True
+
+
+def test_create_transaction_accounts_are_ordered(
+    account_factory: Callable[..., Account],
+) -> None:
+    account_c = account_factory(name="f", alias="c")
+    account_b = account_factory(name="e", alias="b")
+    account_d = account_factory(name="d")
+    account_a = account_factory(name="a")
+    form = CreateTransactionForm()
+    assert list(form.fields["account"].queryset) == [
+        account_a,
+        account_b,
+        account_c,
+        account_d,
+    ]
+
+
+def test_create_transaction_categories_are_ordered(
+    category_factory: Callable[..., Category],
+) -> None:
+    category_c = category_factory(name="c")
+    category_b = category_factory(name="b")
+    category_a = category_factory(name="a")
+    form = CreateTransactionForm()
+    assert list(form.fields["category"].queryset) == [
+        category_a,
+        category_b,
+        category_c,
+    ]
 
 
 def test_update_transaction_form_valid(transaction_foo: Transaction) -> None:
@@ -158,6 +189,36 @@ def test_update_transaction_account_field_disabled(
 ) -> None:
     form = UpdateTransactionForm(data={}, instance=transaction_foo_external)
     assert form.fields["account"].disabled is True
+
+
+def test_update_transaction_accounts_are_ordered(
+    account_factory: Callable[..., Account],
+) -> None:
+    account_c = account_factory(name="f", alias="c")
+    account_b = account_factory(name="e", alias="b")
+    account_d = account_factory(name="d")
+    account_a = account_factory(name="a")
+    form = UpdateTransactionForm()
+    assert list(form.fields["account"].queryset) == [
+        account_a,
+        account_b,
+        account_c,
+        account_d,
+    ]
+
+
+def test_update_transaction_categories_are_ordered(
+    category_factory: Callable[..., Category],
+) -> None:
+    category_c = category_factory(name="c")
+    category_b = category_factory(name="b")
+    category_a = category_factory(name="a")
+    form = UpdateTransactionForm()
+    assert list(form.fields["category"].queryset) == [
+        category_a,
+        category_b,
+        category_c,
+    ]
 
 
 def test_refresh_connection_form_valid() -> None:
@@ -277,6 +338,40 @@ def test_report_income_form_with_unknown_excluded_category(
     assert "excluded_categories" in form.errors
 
 
+def test_report_income_form_accounts_are_ordered(
+    user_foo: User,
+    account_factory: Callable[..., Account],
+    user_factory: Callable[..., User],
+) -> None:
+    account_c = account_factory(name="f", alias="c")
+    account_b = account_factory(name="e", alias="b")
+    account_d = account_factory(name="d")
+    account_a = account_factory(name="a")
+    form = ReportIncomeForm(user=user_foo)
+    assert list(form.fields["accounts"].queryset) == [
+        account_a,
+        account_b,
+        account_c,
+        account_d,
+    ]
+
+
+def test_report_income_form_excluded_categories_are_ordered(
+    user_foo: User,
+    category_factory: Callable[..., Category],
+    user_factory: Callable[..., User],
+) -> None:
+    category_c = category_factory(name="c")
+    category_b = category_factory(name="b")
+    category_a = category_factory(name="a")
+    form = ReportIncomeForm(user=user_foo)
+    assert list(form.fields["excluded_categories"].queryset) == [
+        category_a,
+        category_b,
+        category_c,
+    ]
+
+
 def test_report_balance_form_valid_single_account(
     user_foo: User, account_foo: Account
 ) -> None:
@@ -337,6 +432,24 @@ def test_report_balance_form_to_date_before_from_date(
     form = ReportBalanceForm(data=data, user=user_foo)
     form.is_valid()
     assert "to_date" in form.errors
+
+
+def test_report_balance_form_accounts_are_ordered(
+    user_foo: User,
+    account_factory: Callable[..., Account],
+    user_factory: Callable[..., User],
+) -> None:
+    account_c = account_factory(name="f", alias="c")
+    account_b = account_factory(name="e", alias="b")
+    account_d = account_factory(name="d")
+    account_a = account_factory(name="a")
+    form = ReportBalanceForm(user=user_foo)
+    assert list(form.fields["accounts"].queryset) == [
+        account_a,
+        account_b,
+        account_c,
+        account_d,
+    ]
 
 
 def test_report_category_balance_form_valid_single_category(
@@ -448,3 +561,37 @@ def test_report_category_balance_form_to_date_before_from_date(
     form = ReportCategoryBalanceForm(data=data, user=user_foo)
     form.is_valid()
     assert "to_date" in form.errors
+
+
+def test_report_category_balance_form_accounts_are_ordered(
+    user_foo: User,
+    account_factory: Callable[..., Account],
+    user_factory: Callable[..., User],
+) -> None:
+    account_c = account_factory(name="f", alias="c")
+    account_b = account_factory(name="e", alias="b")
+    account_d = account_factory(name="d")
+    account_a = account_factory(name="a")
+    form = ReportCategoryBalanceForm(user=user_foo)
+    assert list(form.fields["accounts"].queryset) == [
+        account_a,
+        account_b,
+        account_c,
+        account_d,
+    ]
+
+
+def test_report_category_balance_form_categories_are_ordered(
+    user_foo: User,
+    category_factory: Callable[..., Category],
+    user_factory: Callable[..., User],
+) -> None:
+    category_c = category_factory(name="c")
+    category_b = category_factory(name="b")
+    category_a = category_factory(name="a")
+    form = ReportCategoryBalanceForm(user=user_foo)
+    assert list(form.fields["categories"].queryset) == [
+        category_a,
+        category_b,
+        category_c,
+    ]

@@ -2,6 +2,7 @@ from typing import Any
 
 from django import forms
 from django.conf import settings
+from django.db.models import Case, When
 
 from .models import Account, Category, Transaction
 
@@ -38,6 +39,15 @@ class CreateTransactionForm(forms.ModelForm):
         localized_fields = "__all__"
         widgets = {"date": date_input_with_placeholder}
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["account"].queryset = self.fields["account"].queryset.order_by(
+            Case(When(alias="", then="name"), default="alias")
+        )
+        self.fields["category"].queryset = self.fields["category"].queryset.order_by(
+            "name"
+        )
+
 
 class UpdateTransactionForm(forms.ModelForm):
     class Meta:
@@ -48,6 +58,12 @@ class UpdateTransactionForm(forms.ModelForm):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        self.fields["account"].queryset = self.fields["account"].queryset.order_by(
+            Case(When(alias="", then="name"), default="alias")
+        )
+        self.fields["category"].queryset = self.fields["category"].queryset.order_by(
+            "name"
+        )
         if self.instance.external_id:
             self.fields["date"].disabled = True
             self.fields["amount"].disabled = True
@@ -64,9 +80,13 @@ class ReportIncomeForm(forms.Form):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
-        self.fields["accounts"].queryset = Account.objects.filter(user=user)
+        self.fields["accounts"].queryset = Account.objects.filter(user=user).order_by(
+            Case(When(alias="", then="name"), default="alias")
+        )
         # TODO: Add Uncategorized/None option
-        self.fields["excluded_categories"].queryset = Category.objects.filter(user=user)
+        self.fields["excluded_categories"].queryset = Category.objects.filter(
+            user=user
+        ).order_by("name")
 
     def clean(self) -> None:
         cleaned_data = super().clean()
@@ -85,7 +105,9 @@ class ReportBalanceForm(forms.Form):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
-        self.fields["accounts"].queryset = Account.objects.filter(user=user)
+        self.fields["accounts"].queryset = Account.objects.filter(user=user).order_by(
+            Case(When(alias="", then="name"), default="alias")
+        )
 
     def clean(self) -> None:
         cleaned_data = super().clean()
@@ -105,8 +127,12 @@ class ReportCategoryBalanceForm(forms.Form):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
-        self.fields["categories"].queryset = Category.objects.filter(user=user)
-        self.fields["accounts"].queryset = Account.objects.filter(user=user)
+        self.fields["categories"].queryset = Category.objects.filter(
+            user=user
+        ).order_by("name")
+        self.fields["accounts"].queryset = Account.objects.filter(user=user).order_by(
+            Case(When(alias="", then="name"), default="alias")
+        )
 
     def clean(self) -> None:
         cleaned_data = super().clean()
