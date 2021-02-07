@@ -9,7 +9,12 @@ Transactions
     <a class="btn btn-primary m-1" href="{% url 'transactions:transaction_create' %}">Create</a>
 </div>
 
-<table class="table table-bordered text-center">
+<form action="" method="get">
+  {% include "budget/form_snippet.html" %}
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+<table class="table table-bordered text-center mt-1">
     <thead class="thead-light">
         <tr>
             <th>Date</th>

@@ -698,6 +698,27 @@ def test_transaction_list_view_get_current_user(
     assert list(response.context["transaction_list"]) == [transaction_a]
 
 
+def test_transaction_list_view_get_form_in_context(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
+    login_user(user_foo)
+    url = reverse("transactions:transaction_list")
+    response = client.get(url)
+    assert response.status_code == 200
+    assert "form" in response.context
+
+
+def test_transaction_list_view_get_query_string_in_context(
+    client: Client, user_foo: User, login_user: Callable[[User], None]
+) -> None:
+    login_user(user_foo)
+    query_string = "min_amount=100&max_amount=200&accounts=1&accounts=2"
+    url = reverse("transactions:transaction_list") + "?" + query_string
+    response = client.get(url)
+    assert response.status_code == 200
+    assert response.context["query_string"] == query_string
+
+
 def test_transaction_create_view_get(
     client: Client, user_foo: User, login_user: Callable[[User], None]
 ) -> None:

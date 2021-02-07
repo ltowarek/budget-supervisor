@@ -6,6 +6,7 @@ import swagger_client as saltedge_client
 from budget.forms import (
     CreateConnectionForm,
     CreateTransactionForm,
+    FilterTransactionsForm,
     RefreshConnectionForm,
     ReportBalanceForm,
     ReportCategoryBalanceForm,
@@ -652,9 +653,7 @@ def test_report_category_balance_form_to_date_before_from_date(
 
 
 def test_report_category_balance_form_accounts_are_ordered(
-    user_foo: User,
-    account_factory: Callable[..., Account],
-    user_factory: Callable[..., User],
+    user_foo: User, account_factory: Callable[..., Account],
 ) -> None:
     account_c = account_factory(name="f", alias="c")
     account_b = account_factory(name="e", alias="b")
@@ -670,9 +669,7 @@ def test_report_category_balance_form_accounts_are_ordered(
 
 
 def test_report_category_balance_form_categories_are_ordered(
-    user_foo: User,
-    category_factory: Callable[..., Category],
-    user_factory: Callable[..., User],
+    user_foo: User, category_factory: Callable[..., Category],
 ) -> None:
     category_c = category_factory(name="c")
     category_b = category_factory(name="b")
@@ -682,4 +679,135 @@ def test_report_category_balance_form_categories_are_ordered(
         category_a,
         category_b,
         category_c,
+    ]
+
+
+def test_filter_transactions_form_empty(user_foo: User) -> None:
+    form = FilterTransactionsForm(data={}, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_transactions_form_from_date(user_foo: User) -> None:
+    data = {
+        "from_date": "2020-05-03",
+    }
+    form = FilterTransactionsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_transactions_form_to_date(user_foo: User) -> None:
+    data = {
+        "to_date": "2020-05-03",
+    }
+    form = FilterTransactionsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_transactions_form_to_date_after_from_date(user_foo: User) -> None:
+    data = {
+        "from_date": "2020-05-03",
+        "to_date": "2020-06-03",
+    }
+    form = FilterTransactionsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_transactions_form_to_date_before_from_date(user_foo: User) -> None:
+    data = {
+        "from_date": "2020-05-03",
+        "to_date": "2020-04-03",
+    }
+    form = FilterTransactionsForm(data=data, user=user_foo)
+    form.is_valid()
+    assert "to_date" in form.errors
+
+
+def test_filter_transactions_form_min_amount(user_foo: User) -> None:
+    data = {"min_amount": 100.0}
+    form = FilterTransactionsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_transactions_form_max_amount(user_foo: User) -> None:
+    data = {"max_amount": 100.0}
+    form = FilterTransactionsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_transactions_form_max_amount_larger_than_min_amount(
+    user_foo: User,
+) -> None:
+    data = {"min_amount": 50.0, "max_amount": 100.0}
+    form = FilterTransactionsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_transactions_form_max_amount_smaller_than_min_amount(
+    user_foo: User,
+) -> None:
+    data = {"min_amount": 150.0, "max_amount": 100.0}
+    form = FilterTransactionsForm(data=data, user=user_foo)
+    form.is_valid()
+    assert "max_amount" in form.errors
+
+
+def test_filter_transactions_form_categories(
+    user_foo: User, category_factory: Callable[..., Category]
+) -> None:
+    category_a = category_factory("a")
+    category_b = category_factory("b")
+    data = {
+        "categories": [category_a, category_b],
+    }
+    form = FilterTransactionsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_transactions_form_categories_are_ordered(
+    user_foo: User, category_factory: Callable[..., Category],
+) -> None:
+    category_c = category_factory(name="c")
+    category_b = category_factory(name="b")
+    category_a = category_factory(name="a")
+    form = FilterTransactionsForm(user=user_foo)
+    assert list(form.fields["categories"].queryset) == [
+        category_a,
+        category_b,
+        category_c,
+    ]
+
+
+def test_filter_transactions_form_description(user_foo: User) -> None:
+    data = {
+        "description": "foo",
+    }
+    form = FilterTransactionsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_transactions_form_accounts(
+    user_foo: User, account_factory: Callable[..., Account]
+) -> None:
+    account_a = account_factory("a")
+    account_b = account_factory("b")
+    data = {
+        "accounts": [account_a, account_b],
+    }
+    form = FilterTransactionsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_transactions_form_accounts_are_ordered(
+    user_foo: User, account_factory: Callable[..., Account],
+) -> None:
+    account_c = account_factory(name="f", alias="c")
+    account_b = account_factory(name="e", alias="b")
+    account_d = account_factory(name="d")
+    account_a = account_factory(name="a")
+    form = FilterTransactionsForm(user=user_foo)
+    assert list(form.fields["accounts"].queryset) == [
+        account_a,
+        account_b,
+        account_c,
+        account_d,
     ]

@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import swagger_client as saltedge_client
 from budget.models import Account, Category, Connection, Transaction
 from django.db.models import QuerySet, Sum
+from django.http.request import QueryDict
 from users.models import User
 
 
@@ -357,3 +358,60 @@ def get_category_balance_records_summary(
     from_date = records[0]["from"] if records else datetime.date.today()
     to_date = records[-1]["to"] if records else datetime.date.today()
     return {"from": from_date, "to": to_date, **balance}
+
+
+def filter_transactions(user: User, **kwargs: Any) -> QuerySet:
+    query: Dict[str, Any] = {
+        "user": user,
+    }
+    if "from_date" in kwargs:
+        query["date__gte"] = kwargs["from_date"]
+    if "to_date" in kwargs:
+        query["date__lte"] = kwargs["to_date"]
+    if "min_amount" in kwargs:
+        query["amount__gte"] = kwargs["min_amount"]
+    if "max_amount" in kwargs:
+        query["amount__lte"] = kwargs["max_amount"]
+    if "categories" in kwargs:
+        query["category__in"] = kwargs["categories"]
+    if "description" in kwargs:
+        query["description__icontains"] = kwargs["description"]
+    if "accounts" in kwargs:
+        query["account__in"] = kwargs["accounts"]
+    return Transaction.objects.filter(**query)
+
+
+def query_dict_to_filter_query(query_dict: QueryDict) -> Dict[str, Any]:
+    single_value_keys = [
+        "from_date",
+        "to_date",
+        "min_amount",
+        "max_amount",
+        "description",
+    ]
+    multiple_values_keys = ["categories", "accounts"]
+    output = {}
+    for k, v in query_dict.lists():
+        if k in single_value_keys and v[0] != "":
+            output[k] = v[0]
+        elif k in multiple_values_keys and v[0] != "":
+            output[k] = v
+    return output
+
+
+def filter_query_to_query_dict(filter_query: Dict[str, Any]) -> QueryDict:
+    single_value_keys = [
+        "from_date",
+        "to_date",
+        "min_amount",
+        "max_amount",
+        "description",
+    ]
+    multiple_values_keys = ["categories", "accounts"]
+    output = QueryDict("", mutable=True)
+    for k, v in filter_query.items():
+        if k in single_value_keys:
+            output[k] = v
+        elif k in multiple_values_keys:
+            output.setlist(k, v)
+    return output

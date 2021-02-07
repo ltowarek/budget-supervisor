@@ -1,6 +1,6 @@
 import datetime
 from decimal import Decimal
-from typing import Callable, List
+from typing import Any, Callable, Dict, List
 
 import pytest
 import swagger_client as saltedge_client
@@ -9,6 +9,8 @@ from budget.services import (
     add_month,
     create_initial_balance,
     diff_month,
+    filter_query_to_query_dict,
+    filter_transactions,
     get_balance_record,
     get_balance_record_per_month,
     get_balance_records_summary,
@@ -34,7 +36,9 @@ from budget.services import (
     import_saltedge_connection,
     import_saltedge_connections,
     import_saltedge_transactions,
+    query_dict_to_filter_query,
 )
+from django.http.request import QueryDict
 from pytest_mock import MockFixture
 from users.models import User
 
@@ -1389,3 +1393,335 @@ class TestGetCategoryBalanceRecordsSummary:
             "category_a": sum(r["category_a"] for r in records),
             "category_b": sum(r["category_b"] for r in records),
         }
+
+
+class TestFilterTransactions:
+    def test_no_transactions(self, user_foo: User) -> None:
+        output = filter_transactions(user_foo)
+        assert list(output) == list(Transaction.objects.none())
+
+    def test_user_transactions(
+        self, user_foo: User, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        transactions = [
+            transaction_factory(description="foo", user=user_foo),
+            transaction_factory(description="bar", user=user_foo),
+        ]
+        output = filter_transactions(user_foo)
+        assert list(output) == transactions
+
+    def test_different_users(
+        self,
+        user_factory: Callable[..., User],
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        user_a = user_factory(username="a")
+        user_b = user_factory(username="b")
+        transactions = [
+            transaction_factory(description="a", user=user_a),
+        ]
+        transaction_factory(description="b", user=user_b)
+        output = filter_transactions(user_a)
+        assert list(output) == transactions
+
+    def test_valid_filter_from_date(
+        self, user_foo: User, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        today = datetime.date.today()
+        yesterday = today - datetime.timedelta(days=1)
+        tomorrow = today + datetime.timedelta(days=1)
+        transactions = [
+            transaction_factory(description="foo", date=yesterday, user=user_foo),
+            transaction_factory(description="bar", date=today, user=user_foo),
+            transaction_factory(description="baz", date=tomorrow, user=user_foo),
+        ]
+        output = filter_transactions(user_foo, from_date=today)
+        assert list(output) == transactions[1:3]
+
+    def test_valid_filter_to_date(
+        self, user_foo: User, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        today = datetime.date.today()
+        yesterday = today - datetime.timedelta(days=1)
+        tomorrow = today + datetime.timedelta(days=1)
+        transactions = [
+            transaction_factory(description="foo", date=yesterday, user=user_foo),
+            transaction_factory(description="bar", date=today, user=user_foo),
+            transaction_factory(description="baz", date=tomorrow, user=user_foo),
+        ]
+        output = filter_transactions(user_foo, to_date=today)
+        assert list(output) == transactions[0:2]
+
+    def test_valid_filter_min_amount(
+        self, user_foo: User, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        transactions = [
+            transaction_factory(description="foo", amount=100, user=user_foo),
+            transaction_factory(description="bar", amount=200, user=user_foo),
+            transaction_factory(description="baz", amount=300, user=user_foo),
+        ]
+        output = filter_transactions(user_foo, min_amount=200)
+        assert list(output) == transactions[1:3]
+
+    def test_valid_filter_max_amount(
+        self, user_foo: User, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        transactions = [
+            transaction_factory(description="foo", amount=100, user=user_foo),
+            transaction_factory(description="bar", amount=200, user=user_foo),
+            transaction_factory(description="baz", amount=300, user=user_foo),
+        ]
+        output = filter_transactions(user_foo, max_amount=200)
+        assert list(output) == transactions[0:2]
+
+    def test_valid_filter_categories(
+        self,
+        user_foo: User,
+        transaction_factory: Callable[..., Transaction],
+        category_factory: Callable[..., Category],
+    ) -> None:
+        categories = [
+            category_factory("a"),
+            category_factory("b"),
+            category_factory("c"),
+        ]
+        transactions = [
+            transaction_factory(
+                description="foo", category=categories[0], user=user_foo
+            ),
+            transaction_factory(
+                description="bar", category=categories[1], user=user_foo
+            ),
+            transaction_factory(
+                description="baz", category=categories[2], user=user_foo
+            ),
+        ]
+        output = filter_transactions(
+            user_foo, categories=[categories[0], categories[1]]
+        )
+        assert list(output) == transactions[0:2]
+
+    def test_valid_filter_description(
+        self, user_foo: User, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        transactions = [
+            transaction_factory(description="foo", user=user_foo),
+            transaction_factory(description="xxfooxx", user=user_foo),
+            transaction_factory(description="a foo b", user=user_foo),
+            transaction_factory(description="FOO", user=user_foo),
+            transaction_factory(description="bar", user=user_foo),
+        ]
+        output = filter_transactions(user_foo, description="foo")
+        assert list(output) == transactions[0:4]
+
+    def test_valid_filter_accounts(
+        self,
+        user_foo: User,
+        transaction_factory: Callable[..., Transaction],
+        account_factory: Callable[..., Account],
+    ) -> None:
+        accounts = [
+            account_factory("a"),
+            account_factory("b"),
+            account_factory("c"),
+        ]
+        transactions = [
+            transaction_factory(description="foo", account=accounts[0], user=user_foo),
+            transaction_factory(description="bar", account=accounts[1], user=user_foo),
+            transaction_factory(description="baz", account=accounts[2], user=user_foo),
+        ]
+        output = filter_transactions(user_foo, accounts=[accounts[0], accounts[1]])
+        assert list(output) == transactions[0:2]
+
+    def test_invalid_filters(
+        self, user_foo: User, transaction_factory: Callable[..., Transaction]
+    ) -> None:
+        transactions = [
+            transaction_factory(description="foo", amount=50, user=user_foo),
+            transaction_factory(description="foo", amount=100, user=user_foo),
+            transaction_factory(description="foo", amount=200, user=user_foo),
+            transaction_factory(description="bar", amount=300, user=user_foo),
+        ]
+        output = filter_transactions(
+            user_foo, description="foo", description__asdf="asdf", foo=9000
+        )
+        assert list(output) == transactions[0:3]
+
+
+class TestQueryDictToFilterQuery:
+    def test_empty_dict(self) -> None:
+        d = QueryDict()
+        output = query_dict_to_filter_query(d)
+        assert output == {}
+
+    def test_from_date_empty(self) -> None:
+        d = QueryDict("from_date=")
+        output = query_dict_to_filter_query(d)
+        assert output == {}
+
+    def test_from_date(self) -> None:
+        d = QueryDict("from_date=2020-01-02")
+        output = query_dict_to_filter_query(d)
+        assert output == {"from_date": "2020-01-02"}
+
+    def test_to_date_empty(self) -> None:
+        d = QueryDict("to_date=")
+        output = query_dict_to_filter_query(d)
+        assert output == {}
+
+    def test_to_date(self) -> None:
+        d = QueryDict("to_date=2020-01-02")
+        output = query_dict_to_filter_query(d)
+        assert output == {"to_date": "2020-01-02"}
+
+    def test_min_amount_empty(self) -> None:
+        d = QueryDict("min_amount=")
+        output = query_dict_to_filter_query(d)
+        assert output == {}
+
+    def test_min_amount(self) -> None:
+        d = QueryDict("min_amount=200.00")
+        output = query_dict_to_filter_query(d)
+        assert output == {"min_amount": "200.00"}
+
+    def test_max_amount_empty(self) -> None:
+        d = QueryDict("max_amount=")
+        output = query_dict_to_filter_query(d)
+        assert output == {}
+
+    def test_max_amount(self) -> None:
+        d = QueryDict("max_amount=200.00")
+        output = query_dict_to_filter_query(d)
+        assert output == {"max_amount": "200.00"}
+
+    def test_categories_empty(self) -> None:
+        d = QueryDict("categories=")
+        output = query_dict_to_filter_query(d)
+        assert output == {}
+
+    def test_categoires_single(self) -> None:
+        d = QueryDict("categories=1")
+        output = query_dict_to_filter_query(d)
+        assert output == {"categories": ["1"]}
+
+    def test_categoires_multiple(self) -> None:
+        d = QueryDict("categories=1&categories=10")
+        output = query_dict_to_filter_query(d)
+        assert output == {"categories": ["1", "10"]}
+
+    def test_description_empty(self) -> None:
+        d = QueryDict("description=")
+        output = query_dict_to_filter_query(d)
+        assert output == {}
+
+    def test_description(self) -> None:
+        d = QueryDict("description=foo")
+        output = query_dict_to_filter_query(d)
+        assert output == {"description": "foo"}
+
+    def test_accountes_empty(self) -> None:
+        d = QueryDict("accounts=")
+        output = query_dict_to_filter_query(d)
+        assert output == {}
+
+    def test_accounts_single(self) -> None:
+        d = QueryDict("accounts=1")
+        output = query_dict_to_filter_query(d)
+        assert output == {"accounts": ["1"]}
+
+    def test_accounts_multiple(self) -> None:
+        d = QueryDict("accounts=1&accounts=10")
+        output = query_dict_to_filter_query(d)
+        assert output == {"accounts": ["1", "10"]}
+
+    def test_all_keys(self) -> None:
+        d = QueryDict(
+            "from_date=2020-01-01&to_date=2020-02-01&min_amount=100.00&max_amount=200.00&categories=1&description=foo&accounts=1&accounts=2"
+        )
+        output = query_dict_to_filter_query(d)
+        assert output == {
+            "from_date": "2020-01-01",
+            "to_date": "2020-02-01",
+            "min_amount": "100.00",
+            "max_amount": "200.00",
+            "categories": ["1"],
+            "description": "foo",
+            "accounts": ["1", "2"],
+        }
+
+    def test_invalid_key(self) -> None:
+        d = QueryDict("foo=bar")
+        output = query_dict_to_filter_query(d)
+        assert output == {}
+
+
+class TestFilterQueryToQueryDict:
+    def test_empty_dict(self) -> None:
+        d: Dict[str, Any] = {}
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict()
+
+    def test_from_date(self) -> None:
+        d = {"from_date": "2020-01-02"}
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict("from_date=2020-01-02")
+
+    def test_to_date(self) -> None:
+        d = {"to_date": "2020-01-02"}
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict("to_date=2020-01-02")
+
+    def test_min_amount(self) -> None:
+        d = {"min_amount": "200.00"}
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict("min_amount=200.00")
+
+    def test_max_amount(self) -> None:
+        d = {"max_amount": "200.00"}
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict("max_amount=200.00")
+
+    def test_categoires_single(self) -> None:
+        d = {"categories": ["1"]}
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict("categories=1")
+
+    def test_categoires_multiple(self) -> None:
+        d = {"categories": ["1", "10"]}
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict("categories=1&categories=10")
+
+    def test_description(self) -> None:
+        d = {"description": "foo"}
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict("description=foo")
+
+    def test_accounts_single(self) -> None:
+        d = {"accounts": ["1"]}
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict("accounts=1")
+
+    def test_accounts_multiple(self) -> None:
+        d = {"accounts": ["1", "10"]}
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict("accounts=1&accounts=10")
+
+    def test_all_keys(self) -> None:
+        d = {
+            "from_date": "2020-01-01",
+            "to_date": "2020-02-01",
+            "min_amount": "100.00",
+            "max_amount": "200.00",
+            "categories": ["1"],
+            "description": "foo",
+            "accounts": ["1", "2"],
+        }
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict(
+            "from_date=2020-01-01&to_date=2020-02-01&min_amount=100.00&max_amount=200.00&categories=1&description=foo&accounts=1&accounts=2"
+        )
+
+    def test_invalid_key(self) -> None:
+        d = {"foo": "bar"}
+        output = filter_query_to_query_dict(d)
+        assert output == QueryDict()

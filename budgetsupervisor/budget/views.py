@@ -8,6 +8,7 @@ import OpenSSL.crypto
 from budget.forms import (
     CreateConnectionForm,
     CreateTransactionForm,
+    FilterTransactionsForm,
     RefreshConnectionForm,
     ReportBalanceForm,
     ReportCategoryBalanceForm,
@@ -18,12 +19,15 @@ from budget.forms import (
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
     create_initial_balance,
+    filter_query_to_query_dict,
+    filter_transactions,
     get_balance_report,
     get_category_balance_report,
     get_income_report,
     import_saltedge_accounts,
     import_saltedge_connection,
     import_saltedge_transactions,
+    query_dict_to_filter_query,
 )
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -224,9 +228,18 @@ class TransactionListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self) -> QuerySet:
-        return Transaction.objects.filter(user=self.request.user).order_by(
-            "-date", "pk"
+        query = query_dict_to_filter_query(self.request.GET)
+        return filter_transactions(self.request.user, **query).order_by("-date", "pk")
+
+    def get_context_data(self, **kwargs: Any) -> Any:
+        context = super().get_context_data(**kwargs)
+        context["form"] = FilterTransactionsForm(
+            data=self.request.GET, user=self.request.user
         )
+        query = query_dict_to_filter_query(self.request.GET)
+        query_dict = filter_query_to_query_dict(query)
+        context["query_string"] = query_dict.urlencode()
+        return context
 
 
 class TransactionCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):

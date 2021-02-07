@@ -97,6 +97,43 @@ class UpdateTransactionForm(forms.ModelForm):
             self.fields["account"].disabled = True
 
 
+class FilterTransactionsForm(forms.Form):
+    from_date = forms.DateField(
+        widget=date_input_with_placeholder, localize=True, required=False
+    )
+    to_date = forms.DateField(
+        widget=date_input_with_placeholder, localize=True, required=False
+    )
+    min_amount = forms.DecimalField(required=False)
+    max_amount = forms.DecimalField(required=False)
+    categories = forms.ModelMultipleChoiceField(queryset=None, required=False)
+    description = forms.CharField(required=False)
+    accounts = forms.ModelMultipleChoiceField(queryset=None, required=False)
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        self.fields["categories"].queryset = Category.objects.filter(
+            user=user
+        ).order_by("name")
+        self.fields["accounts"].queryset = Account.objects.filter(user=user).order_by(
+            Case(When(alias="", then="name"), default="alias")
+        )
+
+    def clean(self) -> None:
+        cleaned_data = super().clean()
+
+        from_date = cleaned_data.get("from_date")
+        to_date = cleaned_data.get("to_date")
+        if from_date and to_date and to_date < from_date:
+            self.add_error("to_date", "To date can't point before from date.")
+
+        min_amount = cleaned_data.get("min_amount")
+        max_amount = cleaned_data.get("max_amount")
+        if min_amount and max_amount and max_amount < min_amount:
+            self.add_error("max_amount", "Max amount can't be smaller than min amount.")
+
+
 class ReportIncomeForm(forms.Form):
     accounts = forms.ModelMultipleChoiceField(queryset=None)
     from_date = forms.DateField(widget=date_input_with_placeholder, localize=True)

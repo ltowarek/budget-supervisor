@@ -860,6 +860,120 @@ class TestTransactionList:
         elements = selenium.find_elements_by_class_name("pagination")
         assert elements
 
+    def test_filtering(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_factory: Callable[..., Transaction],
+        category_foo: Category,
+        account_foo: Account,
+    ) -> None:
+        transaction_factory(
+            date=datetime.date.today(),
+            amount=150.0,
+            category=category_foo,
+            description="foo",
+            account=account_foo,
+            user=user_foo,
+        )
+        transaction_factory(
+            date=datetime.date.today(),
+            amount=50.0,
+            category=category_foo,
+            description="bar",
+            account=account_foo,
+            user=user_foo,
+        )
+
+        selenium = authenticate_selenium(user=user_foo)
+        self.filter_transactions(
+            selenium,
+            live_server_path,
+            from_date=datetime.date.today(),
+            to_date=datetime.date.today(),
+            min_amount=100.0,
+            max_amount=200.0,
+            categories=[category_foo],
+            description="foo",
+            accounts=[account_foo],
+        )
+
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr")
+        assert len(elements) == 1
+
+    def test_empty_filtering(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_factory: Callable[..., Transaction],
+        category_foo: Category,
+        account_foo: Account,
+    ) -> None:
+        transaction_factory(
+            date=datetime.date.today(),
+            amount=150.0,
+            category=category_foo,
+            description="foo",
+            account=account_foo,
+            user=user_foo,
+        )
+        transaction_factory(
+            date=datetime.date.today(),
+            amount=50.0,
+            category=category_foo,
+            description="bar",
+            account=account_foo,
+            user=user_foo,
+        )
+
+        selenium = authenticate_selenium(user=user_foo)
+        self.filter_transactions(selenium, live_server_path)
+
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr")
+        assert len(elements) == 2
+
+    def filter_transactions(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        from_date: Optional[datetime.date] = None,
+        to_date: Optional[datetime.date] = None,
+        min_amount: Optional[float] = None,
+        max_amount: Optional[float] = None,
+        categories: Optional[List[Category]] = None,
+        description: Optional[str] = None,
+        accounts: Optional[List[Account]] = None,
+    ) -> None:
+        url = live_server_path(reverse("transactions:transaction_list"))
+        selenium.get(url)
+        if from_date:
+            element = selenium.find_element_by_name("from_date")
+            element.send_keys(from_date.strftime("%Y-%m-%d"))
+        if to_date:
+            element = selenium.find_element_by_name("to_date")
+            element.send_keys(to_date.strftime("%Y-%m-%d"))
+        if min_amount:
+            element = selenium.find_element_by_name("min_amount")
+            element.send_keys(str(min_amount))
+        if max_amount:
+            element = selenium.find_element_by_name("max_amount")
+            element.send_keys(str(max_amount))
+        if categories:
+            select = Select(selenium.find_element_by_name("categories"))
+            for c in categories:
+                select.select_by_visible_text(str(c))
+        if description:
+            element = selenium.find_element_by_name("description")
+            element.send_keys(description)
+        if accounts:
+            select = Select(selenium.find_element_by_name("accounts"))
+            for a in accounts:
+                select.select_by_visible_text(str(a))
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
+        element.click()
+
 
 class TestTransactionCreate:
     def test_transaction_is_created(
@@ -1874,3 +1988,65 @@ class TestPagination:
         assert elements[2].get_attribute("href") == base_url + "?page=2"
         assert elements[3].text == "Next"
         assert elements[3].get_attribute("href") == base_url + "?page=2"
+
+    def test_query_string_without_page(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        number_of_pages = 2
+        paginate_by = 25
+        for _ in range(number_of_pages * paginate_by):
+            transaction_factory(user=user_foo)
+
+        base_url = live_server_path(reverse("transactions:transaction_list"))
+        query_string = "min_amount=100&max_amount=200"
+        url = base_url + "?" + query_string
+
+        selenium = authenticate_selenium(user=user_foo)
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath(
+            '//nav/ul[contains(@class, "pagination")]/li/a'
+        )
+        assert elements[0].text == "Previous"
+        assert elements[0].get_attribute("href") == url + "#"
+        assert elements[1].text == "1"
+        assert elements[1].get_attribute("href") == base_url + "?page=1&" + query_string
+        assert elements[2].text == "2"
+        assert elements[2].get_attribute("href") == base_url + "?page=2&" + query_string
+        assert elements[3].text == "Next"
+        assert elements[3].get_attribute("href") == base_url + "?page=2&" + query_string
+
+    def test_query_string_with_page(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        transaction_factory: Callable[..., Transaction],
+    ) -> None:
+        number_of_pages = 2
+        paginate_by = 25
+        for _ in range(number_of_pages * paginate_by):
+            transaction_factory(user=user_foo)
+
+        base_url = live_server_path(reverse("transactions:transaction_list"))
+        query_string = "min_amount=100&max_amount=200"
+        url = base_url + "?page=1&" + query_string
+
+        selenium = authenticate_selenium(user=user_foo)
+        selenium.get(url)
+
+        elements = selenium.find_elements_by_xpath(
+            '//nav/ul[contains(@class, "pagination")]/li/a'
+        )
+        assert elements[0].text == "Previous"
+        assert elements[0].get_attribute("href") == url + "#"
+        assert elements[1].text == "1"
+        assert elements[1].get_attribute("href") == base_url + "?page=1&" + query_string
+        assert elements[2].text == "2"
+        assert elements[2].get_attribute("href") == base_url + "?page=2&" + query_string
+        assert elements[3].text == "Next"
+        assert elements[3].get_attribute("href") == base_url + "?page=2&" + query_string
