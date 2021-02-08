@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Callable, Iterator, List, Optional
+from typing import Callable, Iterator, List, Optional, Tuple
 
 import pytest
 import swagger_client as saltedge_client
@@ -522,6 +522,99 @@ class TestAccountList:
 
         elements = selenium.find_elements_by_class_name("pagination")
         assert elements
+
+    def test_filtering(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_factory: Callable[..., Account],
+        connection_foo: Connection,
+    ) -> None:
+        account_factory(
+            name="foo",
+            alias="foo_alias",
+            account_type=Account.AccountType.ACCOUNT,
+            connection=connection_foo,
+            user=user_foo,
+        )
+        account_factory(
+            name="bar",
+            alias="bar_alias",
+            account_type=Account.AccountType.CASH,
+            connection=connection_foo,
+            user=user_foo,
+        )
+
+        selenium = authenticate_selenium(user=user_foo)
+        self.filter_accounts(
+            selenium,
+            live_server_path,
+            name="foo",
+            alias="foo_alias",
+            account_types=[Account.AccountType.ACCOUNT],
+            connections=[connection_foo],
+        )
+
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr")
+        assert len(elements) == 1
+
+    def test_empty_filtering(
+        self,
+        authenticate_selenium: Callable[..., WebDriver],
+        live_server_path: Callable[[str], str],
+        user_foo: User,
+        account_factory: Callable[..., Account],
+        connection_foo: Connection,
+    ) -> None:
+        account_factory(
+            name="foo",
+            alias="foo_alias",
+            account_type=Account.AccountType.ACCOUNT,
+            connection=connection_foo,
+            user=user_foo,
+        )
+        account_factory(
+            name="bar",
+            alias="bar_alias",
+            account_type=Account.AccountType.CASH,
+            connection=connection_foo,
+            user=user_foo,
+        )
+
+        selenium = authenticate_selenium(user=user_foo)
+        self.filter_accounts(selenium, live_server_path)
+
+        elements = selenium.find_elements_by_xpath("//table/tbody/tr")
+        assert len(elements) == 2
+
+    def filter_accounts(
+        self,
+        selenium: WebDriver,
+        live_server_path: Callable[[str], str],
+        name: Optional[str] = None,
+        alias: Optional[str] = None,
+        account_types: Optional[List[Tuple[str, str]]] = None,
+        connections: Optional[List[Connection]] = None,
+    ) -> None:
+        url = live_server_path(reverse("accounts:account_list"))
+        selenium.get(url)
+        if name:
+            element = selenium.find_element_by_name("name")
+            element.send_keys(name)
+        if alias:
+            element = selenium.find_element_by_name("alias")
+            element.send_keys(alias)
+        if account_types:
+            select = Select(selenium.find_element_by_name("account_types"))
+            for t in account_types:
+                select.select_by_visible_text(dict(Account.AccountType.choices)[t])
+        if connections:
+            select = Select(selenium.find_element_by_name("connections"))
+            for c in connections:
+                select.select_by_visible_text(str(c))
+        element = selenium.find_element_by_xpath('//button[@type="submit"]')
+        element.click()
 
 
 class TestAccountCreate:

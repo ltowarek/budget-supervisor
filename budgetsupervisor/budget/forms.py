@@ -5,7 +5,7 @@ from django import forms
 from django.conf import settings
 from django.db.models import Case, When
 
-from .models import Account, Category, Transaction
+from .models import Account, Category, Connection, Transaction
 
 date_input_with_placeholder = forms.DateInput(
     attrs={"placeholder": settings.DATE_INPUT_FORMATS[0].replace("%", "")}
@@ -54,6 +54,22 @@ class UpdateAccountForm(forms.ModelForm):
             self.fields["name"].disabled = True
             self.fields["alias"].disabled = True
             self.fields["account_type"].disabled = True
+
+
+class FilterAccountsForm(forms.Form):
+    name = forms.CharField(required=False)
+    alias = forms.CharField(required=False)
+    account_types = forms.MultipleChoiceField(
+        choices=Account.AccountType.choices, required=False
+    )
+    connections = forms.ModelMultipleChoiceField(queryset=None, required=False)
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        self.fields["connections"].queryset = Connection.objects.filter(
+            user=user
+        ).order_by("provider")
 
 
 class CreateTransactionForm(forms.ModelForm):

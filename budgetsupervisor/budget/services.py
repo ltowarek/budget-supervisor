@@ -360,6 +360,32 @@ def get_category_balance_records_summary(
     return {"from": from_date, "to": to_date, **balance}
 
 
+def query_dict_to_filter_query(
+    query_dict: QueryDict, single_value_keys: List[str], multiple_values_keys: List[str]
+) -> Dict[str, Any]:
+    output = {}
+    for k, v in query_dict.lists():
+        if k in single_value_keys and v[0] != "":
+            output[k] = v[0]
+        elif k in multiple_values_keys and v[0] != "":
+            output[k] = v
+    return output
+
+
+def filter_query_to_query_dict(
+    filter_query: Dict[str, Any],
+    single_value_keys: List[str],
+    multiple_values_keys: List[str],
+) -> QueryDict:
+    output = QueryDict("", mutable=True)
+    for k, v in filter_query.items():
+        if k in single_value_keys:
+            output[k] = v
+        elif k in multiple_values_keys:
+            output.setlist(k, v)
+    return output
+
+
 def filter_transactions(user: User, **kwargs: Any) -> QuerySet:
     query: Dict[str, Any] = {
         "user": user,
@@ -390,13 +416,9 @@ def query_dict_to_transaction_filter_query(query_dict: QueryDict) -> Dict[str, A
         "description",
     ]
     multiple_values_keys = ["categories", "accounts"]
-    output = {}
-    for k, v in query_dict.lists():
-        if k in single_value_keys and v[0] != "":
-            output[k] = v[0]
-        elif k in multiple_values_keys and v[0] != "":
-            output[k] = v
-    return output
+    return query_dict_to_filter_query(
+        query_dict, single_value_keys, multiple_values_keys
+    )
 
 
 def transaction_filter_query_to_query_dict(filter_query: Dict[str, Any]) -> QueryDict:
@@ -408,10 +430,43 @@ def transaction_filter_query_to_query_dict(filter_query: Dict[str, Any]) -> Quer
         "description",
     ]
     multiple_values_keys = ["categories", "accounts"]
-    output = QueryDict("", mutable=True)
-    for k, v in filter_query.items():
-        if k in single_value_keys:
-            output[k] = v
-        elif k in multiple_values_keys:
-            output.setlist(k, v)
-    return output
+    return filter_query_to_query_dict(
+        filter_query, single_value_keys, multiple_values_keys
+    )
+
+
+def filter_accounts(user: User, **kwargs: Any) -> QuerySet:
+    query: Dict[str, Any] = {
+        "user": user,
+    }
+    if "name" in kwargs:
+        query["name__icontains"] = kwargs["name"]
+    if "alias" in kwargs:
+        query["alias__icontains"] = kwargs["alias"]
+    if "account_types" in kwargs:
+        query["account_type__in"] = kwargs["account_types"]
+    if "connections" in kwargs:
+        query["connection__in"] = kwargs["connections"]
+    return Account.objects.filter(**query)
+
+
+def query_dict_to_account_filter_query(query_dict: QueryDict) -> Dict[str, Any]:
+    single_value_keys = [
+        "name",
+        "alias",
+    ]
+    multiple_values_keys = ["account_types", "connections"]
+    return query_dict_to_filter_query(
+        query_dict, single_value_keys, multiple_values_keys
+    )
+
+
+def account_filter_query_to_query_dict(filter_query: Dict[str, Any]) -> QueryDict:
+    single_value_keys = [
+        "name",
+        "alias",
+    ]
+    multiple_values_keys = ["account_types", "connections"]
+    return filter_query_to_query_dict(
+        filter_query, single_value_keys, multiple_values_keys
+    )

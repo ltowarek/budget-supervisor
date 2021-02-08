@@ -6,6 +6,7 @@ import swagger_client as saltedge_client
 from budget.forms import (
     CreateConnectionForm,
     CreateTransactionForm,
+    FilterAccountsForm,
     FilterTransactionsForm,
     RefreshConnectionForm,
     ReportBalanceForm,
@@ -14,7 +15,7 @@ from budget.forms import (
     UpdateAccountForm,
     UpdateTransactionForm,
 )
-from budget.models import Account, Category, Transaction
+from budget.models import Account, Category, Connection, Transaction
 from budget.services import create_initial_balance
 from users.models import User
 
@@ -810,4 +811,61 @@ def test_filter_transactions_form_accounts_are_ordered(
         account_b,
         account_c,
         account_d,
+    ]
+
+
+def test_filter_accounts_form_empty(user_foo: User) -> None:
+    form = FilterAccountsForm(data={}, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_accounts_form_name(user_foo: User) -> None:
+    data = {
+        "name": "foo",
+    }
+    form = FilterAccountsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_accounts_form_alias(user_foo: User) -> None:
+    data = {
+        "alias": "foo",
+    }
+    form = FilterAccountsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_accounts_form_account_types(user_foo: User) -> None:
+    data = {
+        "account_types": [Account.AccountType.ACCOUNT, Account.AccountType.CASH],
+    }
+    form = FilterAccountsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_accounts_form_connections(
+    user_foo: User, connection_factory: Callable[..., Connection]
+) -> None:
+    connection_a = connection_factory(provider="a")
+    connection_b = connection_factory(provider="b")
+    data = {
+        "connections": [connection_a, connection_b],
+    }
+    form = FilterAccountsForm(data=data, user=user_foo)
+    assert form.is_valid() is True
+
+
+def test_filter_accounts_form_connections_are_ordered(
+    user_foo: User, connection_factory: Callable[..., Connection],
+) -> None:
+    connection_c = connection_factory(provider="c")
+    connection_b = connection_factory(provider="b")
+    connection_d = connection_factory(provider="d")
+    connection_a = connection_factory(provider="a")
+    form = FilterAccountsForm(user=user_foo)
+    assert list(form.fields["connections"].queryset) == [
+        connection_a,
+        connection_b,
+        connection_c,
+        connection_d,
     ]

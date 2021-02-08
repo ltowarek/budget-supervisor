@@ -9,6 +9,11 @@ Accounts
     <a class="btn btn-primary m-1" href="{% url 'accounts:account_create' %}">Create</a>
 </div>
 
+<form action="" method="get">
+  {% include "budget/form_snippet.html" %}
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
 <table class="table table-bordered text-center">
     <thead class="thead-light">
         <tr>

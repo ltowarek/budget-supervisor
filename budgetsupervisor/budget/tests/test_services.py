@@ -6,9 +6,11 @@ import pytest
 import swagger_client as saltedge_client
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
+    account_filter_query_to_query_dict,
     add_month,
     create_initial_balance,
     diff_month,
+    filter_accounts,
     filter_transactions,
     get_balance_record,
     get_balance_record_per_month,
@@ -35,6 +37,7 @@ from budget.services import (
     import_saltedge_connection,
     import_saltedge_connections,
     import_saltedge_transactions,
+    query_dict_to_account_filter_query,
     query_dict_to_transaction_filter_query,
     transaction_filter_query_to_query_dict,
 )
@@ -1619,7 +1622,7 @@ class TestQueryDictToTransactionFilterQuery:
         output = query_dict_to_transaction_filter_query(d)
         assert output == {"description": "foo"}
 
-    def test_accountes_empty(self) -> None:
+    def test_accounts_empty(self) -> None:
         d = QueryDict("accounts=")
         output = query_dict_to_transaction_filter_query(d)
         assert output == {}
@@ -1724,4 +1727,231 @@ class TestTransactionFilterQueryToQueryDict:
     def test_invalid_key(self) -> None:
         d = {"foo": "bar"}
         output = transaction_filter_query_to_query_dict(d)
+        assert output == QueryDict()
+
+
+class TestFilterAccounts:
+    def test_no_accounts(self, user_foo: User) -> None:
+        output = filter_accounts(user_foo)
+        assert list(output) == list(Account.objects.none())
+
+    def test_user_accounts(
+        self, user_foo: User, account_factory: Callable[..., Account]
+    ) -> None:
+        accounts = [
+            account_factory(name="foo", user=user_foo),
+            account_factory(name="bar", user=user_foo),
+        ]
+        output = filter_accounts(user_foo)
+        assert list(output) == accounts
+
+    def test_different_users(
+        self,
+        user_factory: Callable[..., User],
+        account_factory: Callable[..., Account],
+    ) -> None:
+        user_a = user_factory(username="a")
+        user_b = user_factory(username="b")
+        accounts = [
+            account_factory(name="a", user=user_a),
+        ]
+        account_factory(name="b", user=user_b)
+        output = filter_accounts(user_a)
+        assert list(output) == accounts
+
+    def test_valid_filter_name(
+        self, user_foo: User, account_factory: Callable[..., Account]
+    ) -> None:
+        accounts = [
+            account_factory(name="foo", user=user_foo),
+            account_factory(name="xxfooxx", user=user_foo),
+            account_factory(name="a foo b", user=user_foo),
+            account_factory(name="FOO", user=user_foo),
+            account_factory(name="bar", user=user_foo),
+        ]
+        output = filter_accounts(user_foo, name="foo")
+        assert list(output) == accounts[0:4]
+
+    def test_valid_filter_alias(
+        self, user_foo: User, account_factory: Callable[..., Account]
+    ) -> None:
+        accounts = [
+            account_factory(name="a", alias="foo", user=user_foo),
+            account_factory(name="b", alias="xxfooxx", user=user_foo),
+            account_factory(name="c", alias="a foo b", user=user_foo),
+            account_factory(name="d", alias="FOO", user=user_foo),
+            account_factory(name="e", alias="bar", user=user_foo),
+        ]
+        output = filter_accounts(user_foo, alias="foo")
+        assert list(output) == accounts[0:4]
+
+    def test_valid_filter_account_types(
+        self, user_foo: User, account_factory: Callable[..., Account],
+    ) -> None:
+        accounts = [
+            account_factory(
+                name="foo", account_type=Account.AccountType.ACCOUNT, user=user_foo
+            ),
+            account_factory(
+                name="bar", account_type=Account.AccountType.CASH, user=user_foo
+            ),
+        ]
+        output = filter_accounts(user_foo, account_types=[Account.AccountType.CASH])
+        assert list(output) == [accounts[1]]
+
+    def test_valid_filter_connections(
+        self,
+        user_foo: User,
+        account_factory: Callable[..., Account],
+        connection_factory: Callable[..., Connection],
+    ) -> None:
+        connections = [
+            connection_factory("a"),
+            connection_factory("b"),
+            connection_factory("c"),
+        ]
+        accounts = [
+            account_factory(name="foo", connection=connections[0], user=user_foo),
+            account_factory(name="bar", connection=connections[1], user=user_foo),
+            account_factory(name="baz", connection=connections[2], user=user_foo),
+        ]
+        output = filter_accounts(user_foo, connections=[connections[0], connections[1]])
+        assert list(output) == accounts[0:2]
+
+    def test_invalid_filters(
+        self, user_foo: User, account_factory: Callable[..., Account]
+    ) -> None:
+        accounts = [
+            account_factory(name="foo", user=user_foo),
+            account_factory(name="foo", user=user_foo),
+            account_factory(name="foo", user=user_foo),
+            account_factory(name="bar", user=user_foo),
+        ]
+        output = filter_accounts(user_foo, name="foo", name__asdf="asdf", foo=9000)
+        assert list(output) == accounts[0:3]
+
+
+class TestQueryDictToAccountFilterQuery:
+    def test_empty_dict(self) -> None:
+        d = QueryDict()
+        output = query_dict_to_account_filter_query(d)
+        assert output == {}
+
+    def test_name_empty(self) -> None:
+        d = QueryDict("name=")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {}
+
+    def test_name(self) -> None:
+        d = QueryDict("name=foo")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {"name": "foo"}
+
+    def test_alias_empty(self) -> None:
+        d = QueryDict("alias=")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {}
+
+    def test_alias(self) -> None:
+        d = QueryDict("alias=foo")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {"alias": "foo"}
+
+    def test_account_types_empty(self) -> None:
+        d = QueryDict("account_types=")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {}
+
+    def test_account_types_single(self) -> None:
+        d = QueryDict("account_types=1")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {"account_types": ["1"]}
+
+    def test_account_types_multiple(self) -> None:
+        d = QueryDict("account_types=1&account_types=10")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {"account_types": ["1", "10"]}
+
+    def test_connections_empty(self) -> None:
+        d = QueryDict("connections=")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {}
+
+    def test_connections_single(self) -> None:
+        d = QueryDict("connections=1")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {"connections": ["1"]}
+
+    def test_connections_multiple(self) -> None:
+        d = QueryDict("connections=1&connections=10")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {"connections": ["1", "10"]}
+
+    def test_all_keys(self) -> None:
+        d = QueryDict("name=foo&alias=bar&account_types=A&connections=1&connections=2")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {
+            "name": "foo",
+            "alias": "bar",
+            "account_types": ["A"],
+            "connections": ["1", "2"],
+        }
+
+    def test_invalid_key(self) -> None:
+        d = QueryDict("foo=bar")
+        output = query_dict_to_account_filter_query(d)
+        assert output == {}
+
+
+class TestAccountFilterQueryToQueryDict:
+    def test_empty_dict(self) -> None:
+        d: Dict[str, Any] = {}
+        output = account_filter_query_to_query_dict(d)
+        assert output == QueryDict()
+
+    def test_name(self) -> None:
+        d = {"name": "foo"}
+        output = account_filter_query_to_query_dict(d)
+        assert output == QueryDict("name=foo")
+
+    def test_alias(self) -> None:
+        d = {"alias": "foo"}
+        output = account_filter_query_to_query_dict(d)
+        assert output == QueryDict("alias=foo")
+
+    def test_account_types_single(self) -> None:
+        d = {"account_types": ["1"]}
+        output = account_filter_query_to_query_dict(d)
+        assert output == QueryDict("account_types=1")
+
+    def test_account_types_multiple(self) -> None:
+        d = {"account_types": ["1", "10"]}
+        output = account_filter_query_to_query_dict(d)
+        assert output == QueryDict("account_types=1&account_types=10")
+
+    def test_connections_single(self) -> None:
+        d = {"connections": ["1"]}
+        output = account_filter_query_to_query_dict(d)
+        assert output == QueryDict("connections=1")
+
+    def test_connections_multiple(self) -> None:
+        d = {"connections": ["1", "10"]}
+        output = account_filter_query_to_query_dict(d)
+        assert output == QueryDict("connections=1&connections=10")
+
+    def test_all_keys(self) -> None:
+        d = {
+            "name": "foo",
+            "alias": "bar",
+            "account_types": ["A"],
+            "connections": ["1", "2"],
+        }
+        output = account_filter_query_to_query_dict(d)
+        assert output == QueryDict(
+            "name=foo&alias=bar&account_types=A&connections=1&connections=2"
+        )
+
+    def test_invalid_key(self) -> None:
+        d = {"foo": "bar"}
+        output = account_filter_query_to_query_dict(d)
         assert output == QueryDict()
