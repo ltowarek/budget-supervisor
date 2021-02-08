@@ -190,6 +190,9 @@ class TestConnectionCreate:
             element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
         element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
+        WebDriverWait(selenium, 20).until(
+            EC.visibility_of_element_located((By.ID, "providers-search"))
+        )
         element = selenium.find_element_by_id("providers-search")
         element.send_keys("Fake Demo Bank")
         element = selenium.find_element_by_class_name("tt-dropdown-menu")
