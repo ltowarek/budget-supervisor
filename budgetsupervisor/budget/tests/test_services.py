@@ -9,7 +9,6 @@ from budget.services import (
     add_month,
     create_initial_balance,
     diff_month,
-    filter_query_to_query_dict,
     filter_transactions,
     get_balance_record,
     get_balance_record_per_month,
@@ -36,7 +35,8 @@ from budget.services import (
     import_saltedge_connection,
     import_saltedge_connections,
     import_saltedge_transactions,
-    query_dict_to_filter_query,
+    query_dict_to_transaction_filter_query,
+    transaction_filter_query_to_query_dict,
 )
 from django.http.request import QueryDict
 from pytest_mock import MockFixture
@@ -1548,97 +1548,97 @@ class TestFilterTransactions:
         assert list(output) == transactions[0:3]
 
 
-class TestQueryDictToFilterQuery:
+class TestQueryDictToTransactionFilterQuery:
     def test_empty_dict(self) -> None:
         d = QueryDict()
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {}
 
     def test_from_date_empty(self) -> None:
         d = QueryDict("from_date=")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {}
 
     def test_from_date(self) -> None:
         d = QueryDict("from_date=2020-01-02")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {"from_date": "2020-01-02"}
 
     def test_to_date_empty(self) -> None:
         d = QueryDict("to_date=")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {}
 
     def test_to_date(self) -> None:
         d = QueryDict("to_date=2020-01-02")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {"to_date": "2020-01-02"}
 
     def test_min_amount_empty(self) -> None:
         d = QueryDict("min_amount=")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {}
 
     def test_min_amount(self) -> None:
         d = QueryDict("min_amount=200.00")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {"min_amount": "200.00"}
 
     def test_max_amount_empty(self) -> None:
         d = QueryDict("max_amount=")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {}
 
     def test_max_amount(self) -> None:
         d = QueryDict("max_amount=200.00")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {"max_amount": "200.00"}
 
     def test_categories_empty(self) -> None:
         d = QueryDict("categories=")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {}
 
     def test_categoires_single(self) -> None:
         d = QueryDict("categories=1")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {"categories": ["1"]}
 
     def test_categoires_multiple(self) -> None:
         d = QueryDict("categories=1&categories=10")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {"categories": ["1", "10"]}
 
     def test_description_empty(self) -> None:
         d = QueryDict("description=")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {}
 
     def test_description(self) -> None:
         d = QueryDict("description=foo")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {"description": "foo"}
 
     def test_accountes_empty(self) -> None:
         d = QueryDict("accounts=")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {}
 
     def test_accounts_single(self) -> None:
         d = QueryDict("accounts=1")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {"accounts": ["1"]}
 
     def test_accounts_multiple(self) -> None:
         d = QueryDict("accounts=1&accounts=10")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {"accounts": ["1", "10"]}
 
     def test_all_keys(self) -> None:
         d = QueryDict(
             "from_date=2020-01-01&to_date=2020-02-01&min_amount=100.00&max_amount=200.00&categories=1&description=foo&accounts=1&accounts=2"
         )
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {
             "from_date": "2020-01-01",
             "to_date": "2020-02-01",
@@ -1651,59 +1651,59 @@ class TestQueryDictToFilterQuery:
 
     def test_invalid_key(self) -> None:
         d = QueryDict("foo=bar")
-        output = query_dict_to_filter_query(d)
+        output = query_dict_to_transaction_filter_query(d)
         assert output == {}
 
 
-class TestFilterQueryToQueryDict:
+class TestTransactionFilterQueryToQueryDict:
     def test_empty_dict(self) -> None:
         d: Dict[str, Any] = {}
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict()
 
     def test_from_date(self) -> None:
         d = {"from_date": "2020-01-02"}
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict("from_date=2020-01-02")
 
     def test_to_date(self) -> None:
         d = {"to_date": "2020-01-02"}
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict("to_date=2020-01-02")
 
     def test_min_amount(self) -> None:
         d = {"min_amount": "200.00"}
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict("min_amount=200.00")
 
     def test_max_amount(self) -> None:
         d = {"max_amount": "200.00"}
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict("max_amount=200.00")
 
     def test_categoires_single(self) -> None:
         d = {"categories": ["1"]}
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict("categories=1")
 
     def test_categoires_multiple(self) -> None:
         d = {"categories": ["1", "10"]}
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict("categories=1&categories=10")
 
     def test_description(self) -> None:
         d = {"description": "foo"}
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict("description=foo")
 
     def test_accounts_single(self) -> None:
         d = {"accounts": ["1"]}
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict("accounts=1")
 
     def test_accounts_multiple(self) -> None:
         d = {"accounts": ["1", "10"]}
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict("accounts=1&accounts=10")
 
     def test_all_keys(self) -> None:
@@ -1716,12 +1716,12 @@ class TestFilterQueryToQueryDict:
             "description": "foo",
             "accounts": ["1", "2"],
         }
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict(
             "from_date=2020-01-01&to_date=2020-02-01&min_amount=100.00&max_amount=200.00&categories=1&description=foo&accounts=1&accounts=2"
         )
 
     def test_invalid_key(self) -> None:
         d = {"foo": "bar"}
-        output = filter_query_to_query_dict(d)
+        output = transaction_filter_query_to_query_dict(d)
         assert output == QueryDict()

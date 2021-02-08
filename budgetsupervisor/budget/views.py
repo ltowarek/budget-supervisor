@@ -19,7 +19,6 @@ from budget.forms import (
 from budget.models import Account, Category, Connection, Transaction
 from budget.services import (
     create_initial_balance,
-    filter_query_to_query_dict,
     filter_transactions,
     get_balance_report,
     get_category_balance_report,
@@ -27,7 +26,8 @@ from budget.services import (
     import_saltedge_accounts,
     import_saltedge_connection,
     import_saltedge_transactions,
-    query_dict_to_filter_query,
+    query_dict_to_transaction_filter_query,
+    transaction_filter_query_to_query_dict,
 )
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -228,7 +228,7 @@ class TransactionListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self) -> QuerySet:
-        query = query_dict_to_filter_query(self.request.GET)
+        query = query_dict_to_transaction_filter_query(self.request.GET)
         return filter_transactions(self.request.user, **query).order_by("-date", "pk")
 
     def get_context_data(self, **kwargs: Any) -> Any:
@@ -236,8 +236,8 @@ class TransactionListView(LoginRequiredMixin, ListView):
         context["form"] = FilterTransactionsForm(
             data=self.request.GET, user=self.request.user
         )
-        query = query_dict_to_filter_query(self.request.GET)
-        query_dict = filter_query_to_query_dict(query)
+        query = query_dict_to_transaction_filter_query(self.request.GET)
+        query_dict = transaction_filter_query_to_query_dict(query)
         context["query_string"] = query_dict.urlencode()
         return context
 

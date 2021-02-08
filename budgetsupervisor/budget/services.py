@@ -381,7 +381,7 @@ def filter_transactions(user: User, **kwargs: Any) -> QuerySet:
     return Transaction.objects.filter(**query)
 
 
-def query_dict_to_filter_query(query_dict: QueryDict) -> Dict[str, Any]:
+def query_dict_to_transaction_filter_query(query_dict: QueryDict) -> Dict[str, Any]:
     single_value_keys = [
         "from_date",
         "to_date",
@@ -399,7 +399,7 @@ def query_dict_to_filter_query(query_dict: QueryDict) -> Dict[str, Any]:
     return output
 
 
-def filter_query_to_query_dict(filter_query: Dict[str, Any]) -> QueryDict:
+def transaction_filter_query_to_query_dict(filter_query: Dict[str, Any]) -> QueryDict:
     single_value_keys = [
         "from_date",
         "to_date",
