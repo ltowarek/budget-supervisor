@@ -8,7 +8,10 @@ from django.db.models import Case, When
 from .models import Account, Category, Connection, Transaction
 
 date_input_with_placeholder = forms.DateInput(
-    attrs={"placeholder": settings.DATE_INPUT_FORMATS[0].replace("%", "")}
+    attrs={
+        "placeholder": settings.DATE_INPUT_FORMATS[0].replace("%", ""),
+        "type": "date",
+    }
 )
 
 

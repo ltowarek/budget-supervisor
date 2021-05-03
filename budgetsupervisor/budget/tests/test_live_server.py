@@ -8,7 +8,6 @@ from budget.models import Account, Category, Connection, Transaction
 from budget.services import import_saltedge_connections
 from django.shortcuts import reverse
 from django.utils.dateparse import parse_date
-from django.utils.formats import date_format
 from saltedge_wrapper.factory import connections_api
 from saltedge_wrapper.utils import get_connections, remove_connection_from_saltedge
 from selenium.webdriver.common.by import By
@@ -184,10 +183,10 @@ class TestConnectionCreate:
         selenium.get(url)
         if from_date:
             element = selenium.find_element_by_name("from_date")
-            element.send_keys(date_format(from_date, "SHORT_DATE_FORMAT"))
+            element.send_keys(from_date.isoformat())
         if to_date:
             element = selenium.find_element_by_name("to_date")
-            element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
+            element.send_keys(to_date.isoformat())
         element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
         WebDriverWait(selenium, 20).until(
@@ -1184,7 +1183,7 @@ class TestTransactionCreate:
         url = live_server_path(reverse("transactions:transaction_create"))
         selenium.get(url)
         element = selenium.find_element_by_name("date")
-        element.send_keys(date_format(date, "SHORT_DATE_FORMAT"))
+        element.send_keys(date.isoformat())
         element = selenium.find_element_by_name("amount")
         element.send_keys(str(amount))
         element = selenium.find_element_by_name("payee")
@@ -1301,7 +1300,7 @@ class TestTransactionUpdate:
         selenium.get(url)
         element = selenium.find_element_by_name("date")
         element.clear()
-        element.send_keys(date_format(date, "SHORT_DATE_FORMAT"))
+        element.send_keys(date.isoformat())
         element = selenium.find_element_by_name("amount")
         element.clear()
         element.send_keys(str(amount))
@@ -1711,9 +1710,9 @@ class TestReportIncome:
         for account in accounts:
             select.select_by_visible_text(account.name)
         element = selenium.find_element_by_name("from_date")
-        element.send_keys(date_format(from_date, "SHORT_DATE_FORMAT"))
+        element.send_keys(from_date.isoformat())
         element = selenium.find_element_by_name("to_date")
-        element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
+        element.send_keys(to_date.isoformat())
         if excluded_categories:
             select = Select(selenium.find_element_by_name("excluded_categories"))
             for c in excluded_categories:
@@ -1794,9 +1793,9 @@ class TestReportBalance:
         for account in accounts:
             select.select_by_visible_text(account.name)
         element = selenium.find_element_by_name("from_date")
-        element.send_keys(date_format(from_date, "SHORT_DATE_FORMAT"))
+        element.send_keys(from_date.isoformat())
         element = selenium.find_element_by_name("to_date")
-        element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
+        element.send_keys(to_date.isoformat())
         element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
@@ -1896,9 +1895,9 @@ class TestReportCategoryBalance:
         for account in accounts:
             select.select_by_visible_text(account.name)
         element = selenium.find_element_by_name("from_date")
-        element.send_keys(date_format(from_date, "SHORT_DATE_FORMAT"))
+        element.send_keys(from_date.isoformat())
         element = selenium.find_element_by_name("to_date")
-        element.send_keys(date_format(to_date, "SHORT_DATE_FORMAT"))
+        element.send_keys(to_date.isoformat())
         element = selenium.find_element_by_xpath('//button[@type="submit"]')
         element.click()
 
